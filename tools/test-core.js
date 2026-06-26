@@ -401,7 +401,8 @@ function fillWild(L) {
     { name: 'dietary inference', tier: 14, marker: 'CANNOT eat meat' },
     { name: 'shared property (colour)', tier: 11, marker: 'share the same colour' },
     { name: 'normative keywords', tier: 15, marker: 'Order rules!' },
-    { name: 'not-in-combination exception', tier: 14, marker: 'should NOT have' }
+    { name: 'not-in-combination exception', tier: 14, marker: 'should NOT have' },
+    { name: 'uneven share', tier: 18, marker: 'will eat MORE than' }
   ];
   CONSTRUCTS.forEach(function (c) {
     var found = null;
@@ -512,6 +513,50 @@ function fillWild(L) {
       return s;
     });
     ok(Core.grade(twoBare, o.acceptable).accuracy < 1, 'leaving two slices bare fails (only one should be)');
+  }
+})();
+
+// ---- Uneven share: one half split 3-to-1 between two kids. ----
+(function () {
+  var o = null;
+  for (var seed = 1; seed <= 6000 && !o; seed++) {
+    var g = Core.generateOrder({ difficulty: 18, unlocked: Core.UNLOCK_ORDER, rng: lcg(seed * 17 + 7) });
+    if (g && (g.core || g.text).indexOf('will eat MORE than') !== -1) o = g;
+  }
+  ok(!!o, 'uneven-share order is reachable');
+  if (o) {
+    var canon = o.acceptable[0];
+    eq(Core.grade(canon, o.acceptable).accuracy, 1, 'uneven share: the 3-to-1 split scores 1.0');
+    // identify the speaker topping S (4 slices), the bigger share P (3) and the single Q.
+    var counts = {};
+    canon.forEach(function (s) { var k = (s.toppings || []).join(','); counts[k] = (counts[k] || 0) + 1; });
+    var keys = Object.keys(counts);
+    var S = keys.filter(function (k) { return counts[k] === 4; })[0];
+    var P = keys.filter(function (k) { return counts[k] === 3; })[0];
+    var Q = keys.filter(function (k) { return counts[k] === 1; })[0];
+    ok(S && P && Q, 'uneven share has a 4 / 3 / 1 slice split');
+    var base = canon[0].base;
+    // an EQUAL 2-2 split of the kids' half must fail (not "more than")
+    var twoTwo = canon.map(function (s) {
+      var k = (s.toppings || []).join(',');
+      if (k === S) return s;                      // speaker's half unchanged
+      return s;                                   // placeholder; rebuilt below
+    });
+    // rebuild: keep the 4 S slices, make the other 4 a 2-2 split of P and Q
+    var made = 0;
+    twoTwo = canon.map(function (s) {
+      var k = (s.toppings || []).join(',');
+      if (k === S) return s;
+      made++;
+      return Core.makeSlice(base, [made <= 2 ? P : Q]);
+    });
+    ok(Core.grade(twoTwo, o.acceptable).accuracy < 1, 'uneven share: an equal 2-2 split fails');
+    // giving the smaller eater ZERO (all P) must fail
+    var allP = canon.map(function (s) {
+      var k = (s.toppings || []).join(',');
+      return k === S ? s : Core.makeSlice(base, [P]);
+    });
+    ok(Core.grade(allP, o.acceptable).accuracy < 1, 'uneven share: leaving the smaller eater nothing fails');
   }
 })();
 

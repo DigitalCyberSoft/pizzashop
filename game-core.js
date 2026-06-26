@@ -588,8 +588,8 @@
       15: [t_comboHalves, t_comboQuarter, t_tripleHalf, t_threeBases, t_recipeRemove, t_eitherOr, t_intersectionCat, t_normative],
       16: [t_comboQuarter, t7_nestedException, t7_share, t7_namedDiagonal, t_recipeSwap, t_intersectionCat, t_conditionTrue, t_notException],
       17: [t8_fourQuarters, t_composite3, t7_inOrderDistractor, t_threeBaseConditional, t_gapShare, t_recipeHalfMinus, t_notBoth, t_elimination],
-      18: [t_composite3, t10_perSlice, t7_constraint, t7_layerConditional, t_threeBaseConditional, t_normative],
-      19: [t_composite4, t_dietaryShare, t20_recipeHalvesException, t9_quarterRecipes, t11_compound],
+      18: [t_composite3, t10_perSlice, t7_constraint, t7_layerConditional, t_threeBaseConditional, t_normative, t_unevenShare],
+      19: [t_composite4, t_dietaryShare, t20_recipeHalvesException, t9_quarterRecipes, t11_compound, t_unevenShare],
       20: [t_composite4, t_dietaryShare, t20_recipeHalvesException, t9_quarterRecipes]
     };
     return T[tier] || T[1];
@@ -1414,6 +1414,28 @@
     var L = paint(emptyLayout(), REGION.whole, { base: B, addTopping: A });
     L[0] = makeSlice(B, []); // exactly one slice has NO A on it
     return { text: 'Cover the whole ' + baseWord(B) + ' base in ' + tn(A) + '. But ONE single slice - any one you pick - should NOT have ' + tn(A) + ' on it. Leave that one slice with just the base.', acceptable: rotAcc(L), teach: null, concept: 'except' };
+  }
+
+  // Uneven share: one half is the speaker's; the OTHER half is split between two
+  // kids unequally - the named child who "eats more" gets 3 slices, the other 1.
+  // Combines sharing (a half = 4 slices) with inequality (more than). The single
+  // smaller-share slice may sit anywhere in the half, so two canonical internal
+  // positions (each via rotAcc) cover all four arrangements.
+  var KIDNAMES = ['Sam', 'Joey', 'Mia', 'Leo', 'Ava', 'Max', 'Kit', 'Roo'];
+  function t_unevenShare(rng, av, un) {
+    if (av.length < 3) return null;
+    var t = pickN(rng, av, 3), S = t[0], P = t[1], Q = t[2], B = pickBase(rng, un);
+    var names = pickN(rng, KIDNAMES, 2);
+    var accs = [];
+    [0, 1].forEach(function (pos) { // pos 0 (->0,3 by reflection) and 1 (->1,2) cover all four
+      var L = paint(emptyLayout(), REGION.whole, { base: B });
+      REGION.left.forEach(function (i) { paint(L, [i], { addTopping: S }); }); // speaker's half
+      REGION.right.forEach(function (i) { paint(L, [i], { addTopping: P }); }); // bigger eater
+      L[REGION.right[pos]] = makeSlice(B, [Q]);                                 // the one smaller-share slice
+      accs = accs.concat(rotAcc(L));
+    });
+    var text = 'I want one half all ' + tn(S) + ' for me. Give my other half to my two kids: ' + names[0] + ' wants ' + tn(P) + ' and ' + names[1] + ' wants ' + tn(Q) + '. But ' + names[0] + ' will eat MORE than ' + names[1] + ', so ' + names[0] + ' gets 3 slices and ' + names[1] + ' gets just 1.';
+    return { text: text, acceptable: accs, teach: null, concept: 'half' };
   }
 
   function tn(id) { return toppingName(id); }
