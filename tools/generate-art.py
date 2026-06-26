@@ -63,6 +63,12 @@ CUSTOMERS = [
     ("wizard", "a friendly cartoon wizard with a pizza-slice hat and a starry robe"),
     ("astro", "a cute cartoon ant in a tiny astronaut suit, cheerful"),
     ("dino", "a friendly round cartoon green dinosaur with a big smile"),
+    ("knight", "a friendly cartoon knight in shiny armor holding a pizza-slice shield, big smile"),
+    ("mermaid", "a cheerful cartoon mermaid with a seashell crown and a wavy blue-green tail"),
+    ("robot", "a cute boxy cartoon robot with an antenna and a happy smiley screen face"),
+    ("vampire", "a goofy friendly cartoon vampire kid with a little cape and tiny fangs, not scary, smiling"),
+    ("cowgirl", "a cheerful cartoon cowgirl with a big hat and a red bandana, freckles"),
+    ("family", "a cheerful cartoon family of four standing close together: two grown-ups and two kids, all smiling and waving, for a big family order"),
     # not in the game CAST: used as the default avatar placeholder on the start screen.
     ("kid", "a happy friendly cartoon child with rosy cheeks, bright eyes and a big "
             "cheerful grin, short tidy hair"),
@@ -125,6 +131,17 @@ SCENE = [
     ("shop-18", "a cartoon cloud-city sky pizzeria up among fluffy clouds and rainbows" + _COUNTER),
     ("shop-19", "a cartoon volcano-side lava pizza forge with glowing orange rock and steam" + _COUNTER),
     ("shop-20", "a grand cartoon rainbow wizard-tower pizza kitchen with sparkles, stars and floating books" + _COUNTER),
+    # The order-intro playbill background: the FRONT of the shop facing the
+    # customer (the per-level scenes above face the oven/counter from inside).
+    ("shopfront", "the OUTSIDE FRONT of a cosy cartoon pizzeria as a customer walking up to it sees it: a welcoming shopfront with a big glass window, a friendly door, a hanging round PIZZA sign, a striped awning, warm golden light glowing from inside, flower boxes by the door; no people, no readable text"),
+    ("shop-party", "a festive cartoon pizzeria decorated for a party with balloons, bunting and confetti" + _COUNTER),
+    ("shop-night", "a cosy cartoon pizzeria at night with warm lamplight, a starry window and fairy lights" + _COUNTER),
+]
+
+# Multi-pizza feature art (transparent icons), used by the two-board mechanic.
+FEATURE = [
+    ("two-pizza-box", "an open cartoon pizza delivery box containing TWO whole pizzas side by side, cheerful, top-down view"),
+    ("fraction-pizza", "a cartoon pizza divided into clearly different colored wedge groups like a pie chart, fun and simple, showing fractions of a pizza"),
 ]
 
 # Brand logos (transparent). `logo` is the full wordmark badge for the landing
@@ -157,6 +174,7 @@ OUT = {
     "scene": os.path.join(ROOT, "assets", "scene"),
     "bases": os.path.join(ROOT, "assets", "bases"),
     "logo": os.path.join(ROOT, "assets", "logo"),
+    "feature": os.path.join(ROOT, "assets", "feature"),
 }
 
 
@@ -193,12 +211,15 @@ def prompt_for(group, desc):
                 "colors, centered, filling most of the frame. Fully transparent "
                 "background, NO plate, NO box, NO drop-shadow rectangle, NO border "
                 "— just the logo floating on transparency.")
+    if group == "feature":
+        return (CARTOON + desc + ". Centered, filling most of the frame. Fully "
+                "transparent background, NO plate, NO border, NO drop shadow, NO text.")
     return (CARTOON + desc + ". Wide background illustration, no people, no text.")
 
 
 def request(group, prompt, key):
     body = {"model": MODEL, "prompt": prompt, "n": 1}
-    if group == "toppings" or group == "logo":
+    if group in ("toppings", "logo", "feature"):
         body.update({"size": "1024x1024", "background": "transparent", "output_format": "png"})
     elif group == "scene":
         body.update({"size": "1536x1024"})
@@ -220,7 +241,7 @@ def request(group, prompt, key):
     raise RuntimeError("unexpected response shape")
 
 
-GROUPS = {"customers": CUSTOMERS, "toppings": TOPPINGS, "scene": SCENE, "bases": BASES, "logo": LOGO}
+GROUPS = {"customers": CUSTOMERS, "toppings": TOPPINGS, "scene": SCENE, "bases": BASES, "logo": LOGO, "feature": FEATURE}
 
 
 def main():
@@ -234,7 +255,7 @@ def main():
     if not key:
         sys.exit("No OPENAI_API_KEY (set it in the environment or ./.env).")
     only = set(filter(None, args.only.split(",")))
-    groups = [args.group] if args.group else ["customers", "toppings", "scene", "bases", "logo"]
+    groups = [args.group] if args.group else ["customers", "toppings", "scene", "bases", "logo", "feature"]
 
     todo = []
     for g in groups:
