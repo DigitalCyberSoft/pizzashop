@@ -38,27 +38,35 @@
   function hide(id) { el(id).classList.remove('show'); }
 
   // ---- persistent state ----
+  // Safe storage. On a locked-down profile (e.g. a managed/school Chromebook with
+  // site data blocked) `localStorage` access THROWS a SecurityError; fall back to
+  // an in-memory store so the game still RUNS for the session instead of crashing.
+  // It simply won't persist across reloads in that case (a device-policy limit no
+  // code can beat). When storage works, everything persists as normal.
+  var memStore = {};
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return (k in memStore) ? memStore[k] : null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { memStore[k] = '' + v; } }
   var LS = {
-    get high() { return +(localStorage.getItem('pizzashop.highscore') || 0); },
-    set high(v) { localStorage.setItem('pizzashop.highscore', v); },
-    get meme() { return localStorage.getItem('pizzashop.meme') !== 'off'; },
-    set meme(v) { localStorage.setItem('pizzashop.meme', v ? 'on' : 'off'); },
-    get muted() { return localStorage.getItem('pizzashop.muted') === 'on'; },
-    set muted(v) { localStorage.setItem('pizzashop.muted', v ? 'on' : 'off'); },
-    get seen() { try { return JSON.parse(localStorage.getItem('pizzashop.seen') || '[]'); } catch (e) { return []; } },
-    set seen(v) { localStorage.setItem('pizzashop.seen', JSON.stringify(v)); },
+    get high() { return +(lsGet('pizzashop.highscore') || 0); },
+    set high(v) { lsSet('pizzashop.highscore', v); },
+    get meme() { return lsGet('pizzashop.meme') !== 'off'; },
+    set meme(v) { lsSet('pizzashop.meme', v ? 'on' : 'off'); },
+    get muted() { return lsGet('pizzashop.muted') === 'on'; },
+    set muted(v) { lsSet('pizzashop.muted', v ? 'on' : 'off'); },
+    get seen() { try { return JSON.parse(lsGet('pizzashop.seen') || '[]'); } catch (e) { return []; } },
+    set seen(v) { lsSet('pizzashop.seen', JSON.stringify(v)); },
     // recipes the player has already had defined for them (scaffold-then-fade)
-    get taught() { try { return JSON.parse(localStorage.getItem('pizzashop.taught') || '[]'); } catch (e) { return []; } },
-    set taught(v) { localStorage.setItem('pizzashop.taught', JSON.stringify(v)); },
-    get difficulty() { var v = parseFloat(localStorage.getItem('pizzashop.difficulty')); return (isFinite(v) && v >= 1) ? v : 1; },
-    set difficulty(v) { localStorage.setItem('pizzashop.difficulty', v); },
+    get taught() { try { return JSON.parse(lsGet('pizzashop.taught') || '[]'); } catch (e) { return []; } },
+    set taught(v) { lsSet('pizzashop.taught', JSON.stringify(v)); },
+    get difficulty() { var v = parseFloat(lsGet('pizzashop.difficulty')); return (isFinite(v) && v >= 1) ? v : 1; },
+    set difficulty(v) { lsSet('pizzashop.difficulty', v); },
     // The live run (money + orders served) is persisted too, so closing or
     // reloading mid-run resumes exactly where the child left off, not just at the
     // saved level. Cleared (back to a fresh $20 run) only on game-over or reset.
-    get money() { var v = parseFloat(localStorage.getItem('pizzashop.money')); return (isFinite(v) && v >= 0) ? v : 20; },
-    set money(v) { localStorage.setItem('pizzashop.money', v); },
-    get served() { return +(localStorage.getItem('pizzashop.served') || 0); },
-    set served(v) { localStorage.setItem('pizzashop.served', v); }
+    get money() { var v = parseFloat(lsGet('pizzashop.money')); return (isFinite(v) && v >= 0) ? v : 20; },
+    set money(v) { lsSet('pizzashop.money', v); },
+    get served() { return +(lsGet('pizzashop.served') || 0); },
+    set served(v) { lsSet('pizzashop.served', v); }
   };
 
   var S = null;
@@ -152,12 +160,14 @@
   // they finish loading. Deferred to idle time so it never delays the first paint.
   var WARM_CACHE = [];
   function preloadAll() {
+    // The loading screen already preloaded all faces, the shopfront and the
+    // current level's kitchen scene. Here we only warm the NEXT few levels' scenes
+    // (the rest load on demand via setScene, which keeps the current scene until
+    // the new one is ready). Warming all 21 scenes was ~60MB of background download
+    // that kept the browser's loading indicator up for a long time.
+    var lvl = Math.max(1, Math.min(C.MAX_TIER, Math.round(LS.difficulty)));
     var urls = [];
-    C.CAST.forEach(function (c) { urls.push('assets/customers/' + c.id + '.png'); });
-    urls.push('assets/customers/kid.png');
-    urls.push('assets/scene/shop.png');
-    urls.push('assets/scene/shopfront.png');
-    for (var t = 1; t <= C.MAX_TIER; t++) urls.push('assets/scene/shop-' + t + '.png');
+    for (var t = lvl; t <= Math.min(C.MAX_TIER, lvl + 3); t++) urls.push('assets/scene/shop-' + t + '.png');
     var i = 0;
     function next() {
       if (i >= urls.length) return;
