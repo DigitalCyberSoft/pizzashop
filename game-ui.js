@@ -98,6 +98,33 @@
     });
   }
 
+  // Warm the browser cache for every customer face and every shop scene so they
+  // appear instantly when first shown instead of popping in. References are held
+  // in WARM_CACHE so the in-flight Image objects are not garbage-collected before
+  // they finish loading. Deferred to idle time so it never delays the first paint.
+  var WARM_CACHE = [];
+  function preloadAll() {
+    var urls = [];
+    C.CAST.forEach(function (c) { urls.push('assets/customers/' + c.id + '.png'); });
+    urls.push('assets/customers/kid.png');
+    urls.push('assets/scene/shop.png');
+    for (var t = 1; t <= C.MAX_TIER; t++) urls.push('assets/scene/shop-' + t + '.png');
+    var i = 0;
+    function next() {
+      if (i >= urls.length) return;
+      var im = new Image();
+      im.onload = im.onerror = next; // chain so we never fire more than a few at once
+      im.src = urls[i++];
+      WARM_CACHE.push(im);
+    }
+    // a few parallel chains: fast warm-up without saturating the connection pool
+    for (var k = 0; k < 4; k++) next();
+  }
+  function deferPreloadAll() {
+    if (typeof requestIdleCallback === 'function') requestIdleCallback(preloadAll, { timeout: 2000 });
+    else setTimeout(preloadAll, 600);
+  }
+
   // =========================================================================
   // Pizza rendering (shared by the main pizza and the small compare previews)
   // =========================================================================
@@ -797,6 +824,7 @@
     el('victory-btn').onclick = function () { hide('victory-overlay'); hide('result-overlay'); nextCustomer(); };
     preloadArt();
     preloadClips();
+    deferPreloadAll();
 
     if (location.hash.indexOf('selftest') !== -1) runSelfTest();
     if (location.hash.indexOf('glossary') !== -1) window.Glossary.openPage();
