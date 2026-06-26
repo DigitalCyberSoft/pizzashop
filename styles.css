@@ -137,7 +137,8 @@ button.eraser.on { background: var(--ink); color: #fff; }
 #gloss-modal-overlay, #gloss-page-overlay { z-index: 60; } /* above the result card */
 .gloss-pizza { width: 150px; height: 150px; filter: drop-shadow(0 4px 0 rgba(0,0,0,.1)); }
 .gloss-line { width: 220px; height: 66px; }
-.gloss-icons { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; font-size: 2.4rem; max-width: 260px; }
+.gloss-icons { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; font-size: 2.4rem; max-width: 280px; }
+.gloss-topping { width: 50px; height: 50px; object-fit: contain; }
 .gloss-swatches { display: flex; gap: 16px; }
 .gloss-swatch { display: flex; flex-direction: column; align-items: center; gap: 4px; font-weight: 700; text-transform: capitalize; }
 .gloss-dot { width: 38px; height: 38px; border-radius: 50%; border: 2px solid rgba(0,0,0,.18); display: inline-block; }

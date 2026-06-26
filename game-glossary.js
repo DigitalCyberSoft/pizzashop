@@ -83,11 +83,22 @@
     return svg;
   }
 
-  // a row of food emoji, for the category terms (meat / veg / fruit / silly) that
-  // are about which toppings belong together, not about where they sit.
-  function iconRow(emojis) {
+  // a row of real topping art (assets/toppings/<id>.png), for the category terms
+  // (meat / veg / fruit / silly) that are about which toppings belong together.
+  // Falls back to the emoji if the PNG can't load (e.g. opened outside the game).
+  var ICON_EMOJI = {
+    pepperoni: '🔴', ham: '🍖', bacon: '🥓', sausage: '🌭', meatball: '🧆', chicken: '🍗',
+    mushroom: '🍄', pepper: '🫑', onion: '🧅', olive: '⚫', spinach: '🍃', sweetcorn: '🌽',
+    pineapple: '🍍', banana: '🍌', raisins: '🍇', broccoli: '🥦', marshmallow: '⚪', 'fish-heads': '🐟'
+  };
+  function iconRow(ids) {
     var d = document.createElement('div'); d.className = 'gloss-icons';
-    emojis.forEach(function (e) { var s = document.createElement('span'); s.textContent = e; d.appendChild(s); });
+    ids.forEach(function (id) {
+      var img = document.createElement('img');
+      img.className = 'gloss-topping'; img.alt = id; img.src = 'assets/toppings/' + id + '.png';
+      img.onerror = function () { var s = document.createElement('span'); s.textContent = ICON_EMOJI[id] || '🍕'; img.replaceWith(s); };
+      d.appendChild(img);
+    });
     return d;
   }
   // three colour swatches for the three bases, each labelled.
@@ -132,13 +143,13 @@
     { id: 'except', label: 'Except', syn: ['everything except', 'all but', 'except for', 'except', 'without'], def: 'Except means do the whole thing, but leave that one part out.', math: 'all 8 − the bit named = what you cover', demo: function () { return miniPizza((function () { var f = fillSet(REG.whole, ACCENT); REG['top-right'].forEach(function (i) { f[i] = DIM; }); return f; })()); } },
     { id: 'notTouch', label: 'Not touching', syn: ['must not touch', 'never touch', 'do not touch', "don't touch", 'not touching', 'kept apart', 'apart'], def: 'Not touching means leave a gap so two groups never share an edge. Here the meat (blue) and the veg (green) are kept apart.', math: 'leave at least one empty slice between them', demo: function () { return miniPizza((function () { var f = {}; for (var i = 0; i < N; i++) f[i] = CRUST; [0, 1].forEach(function (i) { f[i] = TINT_A; }); [4, 5].forEach(function (i) { f[i] = TINT_B; }); return f; })()); } },
     // ---- food categories: which toppings belong together ----
-    { id: 'meat', label: 'Meat', syn: ['meats', 'meat'], def: 'Meat toppings come from animals: pepperoni, ham, bacon, sausage, meatball and chicken.', math: '6 meats in the kitchen', demo: function () { return iconRow(['🔴', '🍖', '🥓', '🌭', '🧆', '🍗']); } },
-    { id: 'vegetable', label: 'Vegetable', syn: ['vegetables', 'veggies', 'vegetable'], def: 'Vegetables are plant toppings: mushroom, pepper, onion, olive, spinach and sweetcorn. Some silly ones, like broccoli, count too.', math: 'a vegetable is a plant you eat', demo: function () { return iconRow(['🍄', '🫑', '🧅', '⚫', '🍃', '🌽']); } },
-    { id: 'fruit', label: 'Fruit', syn: ['fruits', 'fruit'], def: 'Fruit toppings are sweet: pineapple, banana and raisins.', math: 'only 3 fruits on the menu', demo: function () { return iconRow(['🍍', '🍌', '🍇']); } },
-    { id: 'silly', label: 'Silly topping', syn: ['silly toppings', 'silly topping', 'silly'], def: "Silly toppings are funny foods you don't usually see on a pizza, like broccoli, banana, marshmallow and fish heads.", math: 'a topping can be silly AND a vegetable (broccoli!)', demo: function () { return iconRow(['🥦', '🍌', '⚪', '🐟']); } },
+    { id: 'meat', label: 'Meat', syn: ['meats', 'meat'], def: 'Meat toppings come from animals: pepperoni, ham, bacon, sausage, meatball and chicken.', math: '6 meats in the kitchen', demo: function () { return iconRow(['pepperoni', 'ham', 'bacon', 'sausage', 'meatball', 'chicken']); } },
+    { id: 'vegetable', label: 'Vegetable', syn: ['vegetables', 'veggies', 'vegetable'], def: 'Vegetables are plant toppings: mushroom, pepper, onion, olive, spinach and sweetcorn. Some silly ones, like broccoli, count too.', math: 'a vegetable is a plant you eat', demo: function () { return iconRow(['mushroom', 'pepper', 'onion', 'olive', 'spinach', 'sweetcorn']); } },
+    { id: 'fruit', label: 'Fruit', syn: ['fruits', 'fruit'], def: 'Fruit toppings are sweet: pineapple, banana and raisins.', math: 'only 3 fruits on the menu', demo: function () { return iconRow(['pineapple', 'banana', 'raisins']); } },
+    { id: 'silly', label: 'Silly topping', syn: ['silly toppings', 'silly topping', 'silly'], def: "Silly toppings are funny foods you don't usually see on a pizza, like broccoli, banana, marshmallow and fish heads.", math: 'a topping can be silly AND a vegetable (broccoli!)', demo: function () { return iconRow(['broccoli', 'banana', 'marshmallow', 'fish-heads']); } },
     // ---- bases and named pizzas ----
     { id: 'base', label: 'Base', syn: ['base', 'sauce'], def: 'The base is the sauce you lay down first, before any toppings. There are three: tomato, cheese and BBQ.', math: 'every slice gets exactly one base', demo: function () { return baseSwatches(); } },
-    { id: 'recipe', label: 'Named pizza', syn: ['named pizza', 'recipe'], def: 'A named pizza is a recipe: the name stands for a fixed set of toppings. A Hawaiian means ham and pineapple on a tomato base.', math: 'one name = one base + its toppings', demo: function () { return recipeCard('Hawaiian', 'tomato', ['🍖', '🍍']); } }
+    { id: 'recipe', label: 'Named pizza', syn: ['named pizza', 'recipe'], def: 'A named pizza is a recipe: the name stands for a fixed set of toppings. A Hawaiian means ham and pineapple on a tomato base.', math: 'one name = one base + its toppings', demo: function () { return recipeCard('Hawaiian', 'tomato', ['ham', 'pineapple']); } }
   ];
   var BY_ID = {}; TERMS.forEach(function (t) { BY_ID[t.id] = t; });
 
