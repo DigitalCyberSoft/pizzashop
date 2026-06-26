@@ -15,6 +15,7 @@
     <span class="stat">🏆 best $<b id="highscore">0</b></span>
     <span class="stat">✨ aura <b id="aura">0</b></span>
     <span class="spacer"></span>
+    <button class="toggle" id="gloss-btn">📖 Words</button>
     <button class="toggle" id="mute-toggle">🔊 Sound on</button>
     <button class="toggle" id="meme-toggle">Meme mode: ON</button>
   </div>
@@ -77,6 +78,7 @@
         <li>😠 Get it wrong and you lose your $3.</li>
       </ul>
       <button class="big box" id="start-btn">Start the day ▶</button>
+      <p class="resume-line"><button class="toggle" id="welcome-gloss-btn">📖 Learn the pizza words</button></p>
       <p class="resume-line">Resuming at <b id="resume-level">Level 1</b>.
         <button class="toggle" id="reset-btn">New player? Reset to Level 1</button></p>
     </div>
@@ -88,6 +90,7 @@
       <h2 id="result-title">Order up!</h2>
       <div class="reaction" id="result-reaction"></div>
       <div class="money-line" id="result-money"></div>
+      <div class="concept" id="result-concept"></div>
       <div class="compare" id="result-compare"></div>
       <ul class="mistakes" id="result-mistakes"></ul>
       <button class="big box" id="next-btn">Next customer ▶</button>
@@ -133,6 +136,7 @@
   </div>
 
   <script src="game-core.js"></script>
+  <script src="game-glossary.js"></script>
   <script src="game-ui.js"></script>
 </body>
 </html>

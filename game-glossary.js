@@ -1,0 +1,247 @@
+/*
+ * Glossary: turns the game's spatial / number vocabulary into a little maths
+ * lesson. Key words in the order and the result screen become tappable; tapping
+ * one opens a modal with a mini 8-slice pizza demonstrating the idea, a plain
+ * definition, and a maths line (a quarter = 2 of 8 = 1/4). A standalone page
+ * lists every concept so a parent can review what is being taught.
+ *
+ * UMD-ish: exposes window.Glossary. No dependencies; geometry mirrors game-core's
+ * REGION map and game-ui's wedge angles so the demos match the real pizza.
+ */
+(function () {
+  var SVGNS = 'http://www.w3.org/2000/svg';
+  var N = 8, CX = 50, CY = 50, R = 44;
+  var ACCENT = '#e8542a', DIM = '#ead9bd', CRUST = '#f2d8a8';
+  var TINT_A = '#7db8e8', TINT_B = '#88cf9a', TINT_BOTH = '#e8542a'; // intersection Venn
+
+  // same wedge angles as the game: wedge i spans [45i, 45(i+1)] deg clockwise from 12.
+  function pt(a) { var r = a * Math.PI / 180; return [CX + R * Math.sin(r), CY - R * Math.cos(r)]; }
+  function wedgePath(i) {
+    var p0 = pt(45 * i), p1 = pt(45 * (i + 1));
+    return 'M' + CX + ',' + CY + ' L' + p0[0] + ',' + p0[1] + ' A' + R + ',' + R + ' 0 0 1 ' + p1[0] + ',' + p1[1] + ' Z';
+  }
+  var REG = {
+    whole: [0, 1, 2, 3, 4, 5, 6, 7], right: [0, 1, 2, 3], left: [4, 5, 6, 7],
+    top: [0, 1, 6, 7], bottom: [2, 3, 4, 5],
+    'top-right': [0, 1], 'bottom-right': [2, 3], 'bottom-left': [4, 5], 'top-left': [6, 7]
+  };
+
+  // a mini pizza where `fills[i]` is the colour for slice i (default crust).
+  function miniPizza(fills) {
+    var svg = document.createElementNS(SVGNS, 'svg');
+    svg.setAttribute('viewBox', '0 0 100 100');
+    svg.setAttribute('class', 'gloss-pizza');
+    for (var i = 0; i < N; i++) {
+      var p = document.createElementNS(SVGNS, 'path');
+      p.setAttribute('d', wedgePath(i));
+      p.setAttribute('fill', fills[i] || CRUST);
+      p.setAttribute('stroke', '#c98a3c'); p.setAttribute('stroke-width', '1.4');
+      svg.appendChild(p);
+    }
+    return svg;
+  }
+  function fillSet(slices, colour, base) {
+    var f = {}; for (var i = 0; i < N; i++) f[i] = base || CRUST;
+    slices.forEach(function (i) { f[i] = colour; });
+    return f;
+  }
+  function lit(slices) { return miniPizza(fillSet(slices, ACCENT)); }
+
+  // intersection Venn: region A and region B, overlap in a third colour.
+  function venn(a, b) {
+    var f = {};
+    for (var i = 0; i < N; i++) {
+      var inA = a.indexOf(i) !== -1, inB = b.indexOf(i) !== -1;
+      f[i] = (inA && inB) ? TINT_BOTH : (inA ? TINT_A : (inB ? TINT_B : CRUST));
+    }
+    return miniPizza(f);
+  }
+
+  // a 0..hi number line with a highlighted band and an arrow, for more/fewer than.
+  function numberLine(hi, from, to) {
+    var svg = document.createElementNS(SVGNS, 'svg');
+    svg.setAttribute('viewBox', '0 0 200 60'); svg.setAttribute('class', 'gloss-line');
+    var x = function (n) { return 14 + n * (172 / hi); };
+    var band = document.createElementNS(SVGNS, 'rect');
+    band.setAttribute('x', x(Math.min(from, to))); band.setAttribute('y', 18);
+    band.setAttribute('width', Math.abs(x(to) - x(from))); band.setAttribute('height', 16);
+    band.setAttribute('rx', 6); band.setAttribute('fill', ACCENT); band.setAttribute('opacity', '.85');
+    svg.appendChild(band);
+    var line = document.createElementNS(SVGNS, 'line');
+    line.setAttribute('x1', x(0)); line.setAttribute('y1', 26); line.setAttribute('x2', x(hi)); line.setAttribute('y2', 26);
+    line.setAttribute('stroke', '#3a2a16'); line.setAttribute('stroke-width', '2');
+    svg.appendChild(line);
+    for (var n = 0; n <= hi; n++) {
+      var t = document.createElementNS(SVGNS, 'line');
+      t.setAttribute('x1', x(n)); t.setAttribute('y1', 22); t.setAttribute('x2', x(n)); t.setAttribute('y2', 30);
+      t.setAttribute('stroke', '#3a2a16'); t.setAttribute('stroke-width', '2'); svg.appendChild(t);
+      var lab = document.createElementNS(SVGNS, 'text');
+      lab.setAttribute('x', x(n)); lab.setAttribute('y', 48); lab.setAttribute('text-anchor', 'middle');
+      lab.setAttribute('font-size', '12'); lab.setAttribute('fill', '#3a2a16'); lab.textContent = n;
+      svg.appendChild(lab);
+    }
+    return svg;
+  }
+
+  // The glossary. `syn` are phrases linkified in text (longest win, first per term).
+  var TERMS = [
+    { id: 'whole', label: 'Whole', syn: ['the whole pizza', 'whole'], def: 'The whole pizza means every single slice, all the way around.', math: 'all 8 slices = 1 whole (8/8)', demo: function () { return lit(REG.whole); } },
+    { id: 'half', label: 'Half', syn: ['halves', 'half'], def: 'A half is one of the two equal pieces when you split the pizza down the middle.', math: '4 of 8 slices = one half = 1/2', demo: function () { return lit(REG.top); } },
+    { id: 'quarter', label: 'Quarter', syn: ['quarters', 'quarter'], def: 'A quarter is one of the four equal pieces, like cutting the pizza into 4.', math: '2 of 8 slices = one quarter = 1/4', demo: function () { return lit(REG['top-right']); } },
+    { id: 'slice', label: 'Slice', syn: ['slices', 'slice'], def: 'A slice is one single piece of the eight.', math: '1 of 8 slices = 1/8', demo: function () { return lit([0]); } },
+    { id: 'opposite', label: 'Opposite', syn: ['directly across', 'straight across', 'across from', 'opposite', 'across'], def: 'Opposite slices are straight across the pizza from each other, as far apart as they can be.', math: 'slice + 4 = the one opposite (1 and 5, 2 and 6...)', demo: function () { return lit([0, 4]); } },
+    { id: 'nextTo', label: 'Next to', syn: ['next to each other', 'right next to', 'next to', 'side by side', 'touching', 'touch'], def: 'Slices next to each other share an edge, sitting side by side.', math: 'neighbours: slice and the one beside it', demo: function () { return lit([0, 1]); } },
+    { id: 'everyOther', label: 'Every other', syn: ['every other slice', 'every other', 'alternating'], def: 'Every other means skip one each time, all the way around.', math: 'take slice 1, skip 2, take 3... (the odd ones)', demo: function () { return lit([0, 2, 4, 6]); } },
+    { id: 'theRest', label: 'The rest', syn: ['everything else', 'all the others', 'the rest'], def: 'The rest means all the slices left over after the ones already named.', math: '8 total − the ones used = the rest', demo: function () { return miniPizza((function () { var f = fillSet([0, 1, 2], DIM); [3, 4, 5, 6, 7].forEach(function (i) { f[i] = ACCENT; }); return f; })()); } },
+    { id: 'threeInRow', label: 'Three in a row', syn: ['three slices in a row', 'three in a row', 'in a row'], def: 'Three in a row are three slices touching in a line, one after another.', math: '3 slices side by side by side', demo: function () { return lit([0, 1, 2]); } },
+    { id: 'diagonal', label: 'Diagonal', syn: ['diagonally opposite', 'diagonally', 'diagonal', 'corner to corner'], def: 'Diagonal quarters are corner to corner from each other.', math: 'two quarters straight across = opposite corners', demo: function () { return lit(REG['top-right'].concat(REG['bottom-left'])); } },
+    { id: 'intersection', label: 'Intersection', syn: ['intersection', 'overlap', 'where they meet', 'in both', 'meets', 'both'], def: 'The intersection is where two groups overlap — the part that belongs to BOTH. Here blue is one half, green is the other, and the orange slices are in both.', math: 'in A AND in B = the overlap', demo: function () { return venn(REG.top, REG.right); } },
+    { id: 'moreThan', label: 'More than', syn: ['more than'], def: 'More than a number means you need a bigger amount than that — at least one extra.', math: 'more than 2 = 3, 4, 5 ... (greater than)', demo: function () { return numberLine(6, 3, 6); } },
+    { id: 'fewerThan', label: 'Fewer than', syn: ['no more than', 'fewer than', 'less than'], def: 'Fewer than a number means you need a smaller amount than that.', math: 'fewer than 5 = 4, 3, 2, 1 (less than)', demo: function () { return numberLine(6, 1, 4); } }
+  ];
+  var BY_ID = {}; TERMS.forEach(function (t) { BY_ID[t.id] = t; });
+
+  // concept -> a plain-English sentence shown on the result screen. The words in
+  // the sentence are themselves linkified, so they are tappable too.
+  var CONCEPTS = {
+    whole: 'This order was about covering the WHOLE pizza the same way.',
+    half: 'This order was about splitting the pizza into HALVES.',
+    quarter: 'This order was about the QUARTERS of the pizza.',
+    slice: 'This order was about single SLICES.',
+    opposite: 'This order was about two slices OPPOSITE each other.',
+    nextTo: 'This order was about slices NEXT TO each other.',
+    everyOther: 'This order was about EVERY OTHER slice, going around.',
+    diagonal: 'This order was about DIAGONAL quarters, corner to corner.',
+    except: 'This order was about doing the whole pizza, except one QUARTER.',
+    theRest: 'This order was about a few slices and THE REST.',
+    catCount: 'This order was about putting a number of toppings from one group on every SLICE.',
+    compare: 'This order was about a number: MORE THAN or FEWER THAN.',
+    intersection: 'This order was about the INTERSECTION — where two groups overlap.',
+    notTouch: 'This order was about keeping two groups from TOUCHING.',
+    ordinalRun: 'This order was about going around in a run, then THE REST.'
+  };
+
+  // ---- text linkifying ----
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  // phrases sorted longest-first so "every other slice" beats "slice".
+  var PHRASES = [];
+  TERMS.forEach(function (t) { t.syn.forEach(function (p) { PHRASES.push({ term: t.id, p: p }); }); });
+  PHRASES.sort(function (a, b) { return b.p.length - a.p.length; });
+  function rxEsc(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+  // wrap the FIRST occurrence of each term's longest matching phrase. One link per
+  // term keeps the bubble readable. Operates on escaped HTML.
+  function linkify(text) {
+    var html = esc(text), used = {};
+    PHRASES.forEach(function (ph) {
+      if (used[ph.term]) return;
+      var re = new RegExp('\\b(' + rxEsc(ph.p) + ')\\b', 'i');
+      var m = re.exec(html);
+      if (!m) return;
+      used[ph.term] = 1;
+      html = html.slice(0, m.index) + '<span class="gloss" data-term="' + ph.term + '">' + m[0] + '</span>' + html.slice(m.index + m[0].length);
+    });
+    return html;
+  }
+  function detectTerms(text) {
+    var html = ' ' + String(text || '') + ' ', out = [], seen = {};
+    PHRASES.forEach(function (ph) {
+      if (seen[ph.term]) return;
+      if (new RegExp('\\b' + rxEsc(ph.p) + '\\b', 'i').test(html)) { seen[ph.term] = 1; out.push(ph.term); }
+    });
+    return out;
+  }
+  function conceptExplanation(order) {
+    var s = order && order.concept && CONCEPTS[order.concept];
+    if (!s) {
+      var found = detectTerms(order ? (order.core || order.text) : '');
+      if (found.length) s = 'This order was about: ' + found.map(function (id) { return BY_ID[id].label.toUpperCase(); }).join(', ') + '.';
+      else s = 'Read the order carefully. Tap any underlined word to see what it means.';
+    }
+    return linkify(s);
+  }
+
+  // ---- modal + page DOM (built once, appended to body) ----
+  // host hooks let the game pause its timers while the glossary is open.
+  var modalEl, pageEl, hooks = { pause: function () {}, resume: function () {} };
+  function overlay(id) { var d = document.createElement('div'); d.className = 'overlay'; d.id = id; return d; }
+  function card(extra) { var d = document.createElement('div'); d.className = 'card ' + (extra || ''); return d; }
+
+  function termCard(t, withClose) {
+    var c = card('gloss-card');
+    var demo = document.createElement('div'); demo.className = 'gloss-demo'; demo.appendChild(t.demo());
+    var h = document.createElement('h2'); h.textContent = t.label; h.className = 'gloss-h';
+    var def = document.createElement('p'); def.className = 'gloss-def'; def.textContent = t.def;
+    var math = document.createElement('p'); math.className = 'gloss-math'; math.textContent = t.math;
+    c.appendChild(demo); c.appendChild(h); c.appendChild(def); c.appendChild(math);
+    if (withClose) {
+      var b = document.createElement('button'); b.className = 'big box'; b.textContent = 'Got it!';
+      b.onclick = closeModal; c.appendChild(b);
+    }
+    return c;
+  }
+  function ensureModal() {
+    if (modalEl) return;
+    modalEl = overlay('gloss-modal-overlay');
+    modalEl.addEventListener('click', function (e) { if (e.target === modalEl) closeModal(); });
+    document.body.appendChild(modalEl);
+  }
+  function openTerm(id) {
+    var t = BY_ID[id]; if (!t) return;
+    ensureModal();
+    modalEl.innerHTML = '';
+    modalEl.appendChild(termCard(t, true));
+    modalEl.classList.add('show');
+    hooks.pause();
+  }
+  function closeModal() { if (modalEl) modalEl.classList.remove('show'); hooks.resume(); }
+
+  // The glossary page is a one-concept-per-page flip book (Back / Next), not a
+  // long scroll, so a young child meets one idea at a time.
+  var pageIdx = 0, pageBody, pageCount, prevBtn, nextBtn;
+  function renderPage() {
+    pageBody.innerHTML = '';
+    pageBody.appendChild(termCard(TERMS[pageIdx], false));
+    pageCount.textContent = (pageIdx + 1) + ' / ' + TERMS.length;
+    prevBtn.disabled = pageIdx === 0;
+    nextBtn.disabled = pageIdx === TERMS.length - 1;
+  }
+  function step(d) { pageIdx = Math.max(0, Math.min(TERMS.length - 1, pageIdx + d)); renderPage(); }
+  function closePage() { if (pageEl) pageEl.classList.remove('show'); hooks.resume(); }
+  function openPage() {
+    if (!pageEl) {
+      pageEl = overlay('gloss-page-overlay');
+      pageEl.addEventListener('click', function (e) { if (e.target === pageEl) closePage(); });
+      var c = card('gloss-page-card');
+      var h = document.createElement('h2'); h.textContent = '📖 Pizza Words'; c.appendChild(h);
+      pageBody = document.createElement('div'); pageBody.className = 'gloss-page-body'; c.appendChild(pageBody);
+      var nav = document.createElement('div'); nav.className = 'gloss-nav';
+      prevBtn = document.createElement('button'); prevBtn.className = 'big clear'; prevBtn.textContent = '◀ Back';
+      prevBtn.onclick = function () { step(-1); };
+      pageCount = document.createElement('span'); pageCount.className = 'gloss-count';
+      nextBtn = document.createElement('button'); nextBtn.className = 'big box'; nextBtn.textContent = 'Next ▶';
+      nextBtn.onclick = function () { step(1); };
+      nav.appendChild(prevBtn); nav.appendChild(pageCount); nav.appendChild(nextBtn);
+      c.appendChild(nav);
+      var b = document.createElement('button'); b.className = 'big clear gloss-close'; b.textContent = 'Close';
+      b.onclick = closePage; c.appendChild(b);
+      pageEl.appendChild(c);
+      document.body.appendChild(pageEl);
+    }
+    pageIdx = 0; renderPage();
+    pageEl.classList.add('show');
+    hooks.pause();
+  }
+
+  function init(opts) {
+    if (opts && opts.pause) hooks.pause = opts.pause;
+    if (opts && opts.resume) hooks.resume = opts.resume;
+    // one delegated handler: any .gloss span opens its term.
+    document.addEventListener('click', function (e) {
+      var g = e.target.closest && e.target.closest('.gloss');
+      if (g && g.dataset.term) { e.preventDefault(); openTerm(g.dataset.term); }
+    });
+  }
+
+  window.Glossary = { linkify: linkify, conceptExplanation: conceptExplanation, openTerm: openTerm, openPage: openPage, init: init, TERMS: TERMS };
+})();

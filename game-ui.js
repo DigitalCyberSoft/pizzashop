@@ -402,7 +402,7 @@
     setAvatar(cust);
     S.order._cust = cust;
 
-    el('bubble').textContent = S.order.text;
+    el('bubble').innerHTML = window.Glossary.linkify(S.order.text);
     el('tier-pill').style.display = 'inline-block';
     el('tier-pill').textContent = 'Level ' + S.order.tier;
     setScene(S.order.tier);
@@ -509,6 +509,19 @@
     if (bar && left <= 8000) bar.style.background = 'linear-gradient(90deg,#ff9d3c,#ff6a00)';
   }
   function stopPatienceTimer() { if (S.patienceTimer) { clearInterval(S.patienceTimer); S.patienceTimer = null; } }
+  // Freeze both countdowns (e.g. while a glossary is open) and resume exactly where
+  // they left off, so looking up a word never costs the tip or the customer's
+  // patience. No-ops if no order is running or a timer already finished.
+  function pauseTimers() {
+    if (!S) return;
+    if (S.tipTimer) { S.tipPausedLeft = S.tipDeadline - Date.now(); clearInterval(S.tipTimer); S.tipTimer = null; }
+    if (S.patienceTimer) { S.patPausedLeft = S.patienceDeadline - Date.now(); clearInterval(S.patienceTimer); S.patienceTimer = null; }
+  }
+  function resumeTimers() {
+    if (!S) return;
+    if (S.tipPausedLeft != null) { S.tipDeadline = Date.now() + S.tipPausedLeft; S.tipPausedLeft = null; S.tipTimer = setInterval(tickTip, 100); tickTip(); }
+    if (S.patPausedLeft != null) { S.patienceDeadline = Date.now() + S.patPausedLeft; S.patPausedLeft = null; S.patienceTimer = setInterval(tickPatience, 100); tickPatience(); }
+  }
 
   // ---- box it ----
   // Simple, explicit economy a kid can hold in their head: a pizza costs $3 of
@@ -577,6 +590,7 @@
     var compare = el('result-compare'), ul = el('result-mistakes');
     compare.innerHTML = ''; ul.innerHTML = '';
     compare.style.display = 'none'; ul.style.display = 'none';
+    el('result-concept').style.display = 'none';
     el('next-btn').textContent = 'Next customer ▶';
     show('result-overlay');
     autoAdvance(3500);
@@ -601,26 +615,24 @@
     el('result-money').innerHTML = parts.join(' · ') + ' ⇒ <span class="' + (net >= 0 ? 'plus' : 'minus') + '">' +
       (net >= 0 ? '+' : '−') + '$' + Math.abs(net) + '</span> (' + Math.round(acc * 100) + '% correct)';
 
-    // Only explain the pizza when there was a mistake.
-    var compare = el('result-compare'), ul = el('result-mistakes');
-    compare.innerHTML = ''; ul.innerHTML = '';
+    // Concept-first feedback. On a perfect pizza we just celebrate; otherwise we
+    // explain the IDEA the order was teaching (with tappable words) plus a gentle
+    // "you got X of 8 right", and show the two pizzas. No per-slice text diff.
+    var compare = el('result-compare'), ul = el('result-mistakes'), concept = el('result-concept');
+    compare.innerHTML = ''; ul.innerHTML = ''; ul.style.display = 'none';
+    el('next-btn').textContent = 'Next customer ▶';
     if (mistakes.length === 0) {
-      compare.style.display = 'none'; ul.style.display = 'none';
+      concept.style.display = 'none'; compare.style.display = 'none';
       show('result-overlay');
-      // quick win: auto-advance unless the player clicks first. Long enough to
-      // read the reaction before it disappears.
-      el('next-btn').textContent = 'Next customer ▶';
-      autoAdvance(3500);
+      autoAdvance(3500); // quick win: auto-advance unless they click first
     } else {
-      compare.style.display = 'flex'; ul.style.display = 'block';
+      var right = 8 - mistakes.length;
+      concept.innerHTML = window.Glossary.conceptExplanation(S.order) +
+        ' <span class="hint-line">You got <b>' + right + ' of 8</b> slices right.</span>';
+      concept.style.display = 'block';
+      compare.style.display = 'flex';
       compare.appendChild(miniFig('What you made', S.layout));
       compare.appendChild(miniFig('What they wanted', closest));
-      mistakes.forEach(function (m) {
-        var li = document.createElement('li');
-        li.textContent = '• On ' + m.where + ', they wanted ' + describeSlice(m.wantBase, m.wantToppings) + '.';
-        ul.appendChild(li);
-      });
-      el('next-btn').textContent = 'Next customer ▶';
       show('result-overlay');
     }
   }
@@ -766,6 +778,9 @@
     showResumeLevel();
     el('start-btn').onclick = function () { unlockAudio(); startGame(); };
     document.addEventListener('pointerdown', unlockAudio); // unlock audio on first touch anywhere
+    window.Glossary.init({ pause: pauseTimers, resume: resumeTimers });
+    el('gloss-btn').onclick = function () { window.Glossary.openPage(); };
+    el('welcome-gloss-btn').onclick = function () { window.Glossary.openPage(); };
     el('reset-btn').onclick = resetPlayer;
     el('restart-btn').onclick = function () { hide('over-overlay'); startGame(); };
     el('next-btn').onclick = nextCustomer;
@@ -784,6 +799,7 @@
     preloadClips();
 
     if (location.hash.indexOf('selftest') !== -1) runSelfTest();
+    if (location.hash.indexOf('glossary') !== -1) window.Glossary.openPage();
     if (location.hash.indexOf('nointro') !== -1) markSeen(C.UNLOCK_ORDER);
     if (location.hash.indexOf('play') !== -1) startGame();
     if (location.hash.indexOf('demo') !== -1) demoFill();
