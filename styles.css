@@ -38,7 +38,7 @@ body {
 
 /* ---- Layout ---- */
 /* Main reading column (customer on top, pizza below) + tray palette beside it. */
-#stage { display: grid; grid-template-columns: 1fr 250px; gap: 14px; padding: 14px; height: calc(100% - 52px); }
+#stage { display: grid; grid-template-columns: 1fr 340px; gap: 14px; padding: 14px; height: calc(100% - 52px); }
 #main-col { display: flex; flex-direction: column; gap: 14px; min-height: 0; overflow: hidden; }
 .panel { background: rgba(255,255,255,.62); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); border-radius: 18px; box-shadow: var(--shadow); padding: 14px; overflow: hidden; }
 
@@ -80,7 +80,8 @@ button.eraser.on { background: var(--ink); color: #fff; }
 /* ---- Tray ---- */
 #tray { overflow-y: auto; }
 #tray h3 { margin: 4px 0 8px; font-size: .9rem; text-transform: uppercase; letter-spacing: .5px; color: #9a7b4f; }
-#tray .chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+/* two columns so a young player sees more of the shelf at once */
+#tray .chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .chip {
   display: flex; align-items: center; gap: 6px; background: #fff; border: 2px solid #e8d6b0;
   border-radius: 12px; padding: 11px 10px; font-weight: 700; font-size: .9rem; cursor: pointer; touch-action: none;
