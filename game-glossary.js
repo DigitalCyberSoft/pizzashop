@@ -289,13 +289,20 @@
 
   // The glossary page is a one-concept-per-page flip book (Back / Next), not a
   // long scroll, so a young child meets one idea at a time.
-  var PER_PAGE = 4; // a 2x2 grid of cards per page
+  // Cards per page adapt to the screen: 4 (a 2x2 grid) when there is room, else
+  // 2. Columns track width independently, so the 2-card case is a stacked single
+  // column on a narrow phone and a side-by-side pair on a short-but-wide screen.
   var pageIdx = 0, pageBody, pageCount, prevBtn, nextBtn;
-  function pageTotal() { return Math.ceil(TERMS.length / PER_PAGE); }
+  function cols() { return window.innerWidth >= 620 ? 2 : 1; }
+  function perPage() { return (window.innerWidth >= 620 && window.innerHeight >= 700) ? 4 : 2; }
+  function pageTotal() { return Math.ceil(TERMS.length / perPage()); }
   function renderPage() {
+    var pp = perPage();
+    pageBody.style.gridTemplateColumns = cols() === 2 ? '1fr 1fr' : '1fr';
+    pageIdx = Math.max(0, Math.min(pageTotal() - 1, pageIdx)); // reclamp after a layout change
     pageBody.innerHTML = '';
-    var start = pageIdx * PER_PAGE;
-    TERMS.slice(start, start + PER_PAGE).forEach(function (t) { pageBody.appendChild(termCard(t, false)); });
+    var start = pageIdx * pp;
+    TERMS.slice(start, start + pp).forEach(function (t) { pageBody.appendChild(termCard(t, false)); });
     pageCount.textContent = (pageIdx + 1) + ' / ' + pageTotal();
     prevBtn.disabled = pageIdx === 0;
     nextBtn.disabled = pageIdx >= pageTotal() - 1;
@@ -321,6 +328,9 @@
       b.onclick = closePage; c.appendChild(b);
       pageEl.appendChild(c);
       document.body.appendChild(pageEl);
+      // Re-flow (cards-per-page + column count) when the window crosses a
+      // breakpoint while the glossary is open; renderPage reclamps pageIdx.
+      window.addEventListener('resize', function () { if (pageEl && pageEl.classList.contains('show')) renderPage(); });
     }
     pageIdx = 0; renderPage();
     pageEl.classList.add('show');

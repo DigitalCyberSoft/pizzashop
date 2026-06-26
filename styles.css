@@ -154,7 +154,7 @@ button.eraser.on { background: var(--ink); color: #fff; }
 /* Fixed-height flex column so the Back/Next/Close row keeps the same on-screen
    position on every page; the card grid (below) absorbs the slack and scrolls
    internally when a page's content is taller. */
-.gloss-page-card { max-width: 640px; height: min(640px, 88vh); display: flex; flex-direction: column; }
+.gloss-page-card { max-width: 760px; height: min(780px, 92vh); display: flex; flex-direction: column; }
 .gloss-page-card h2 { flex: 0 0 auto; }
 .gloss-page-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: min-content; gap: 14px 18px; align-items: start; align-content: start; }
 .gloss-page-body .gloss-card { box-shadow: none; padding: 6px 4px; background: none; width: 100%; }
