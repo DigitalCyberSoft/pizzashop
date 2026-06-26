@@ -723,6 +723,45 @@ function fillWild(L) {
   ok(seen > 0, 'fake-half orders are reachable at tiers 4-8 (got ' + seen + ')');
 })();
 
+// ---- Meme/brainrot cast tagging: meme mode OFF drops these customers (the UI
+// picks from CAST.filter(c => !c.meme)), so the tags must be correct or the toggle
+// either leaks brainrot or hides generic customers. ----
+(function () {
+  function byId(id) { return Core.CAST.filter(function (c) { return c.id === id; })[0]; }
+  ['tralalero', 'bombardiro', 'tungtung', 'ballerina', 'sixseven'].forEach(function (id) {
+    ok(byId(id) && byId(id).meme === true, 'brainrot customer "' + id + '" is tagged meme:true');
+  });
+  ['nonna', 'chef-luigi', 'wizard', 'mermaid', 'knight', 'family'].forEach(function (id) {
+    ok(byId(id) && !byId(id).meme, 'generic customer "' + id + '" is NOT meme-tagged');
+  });
+  var plain = Core.CAST.filter(function (c) { return !c.meme; });
+  ok(plain.length > 0, 'meme-off customer pool is non-empty (' + plain.length + ' of ' + Core.CAST.length + ')');
+  ok(plain.every(function (c) { return !c.gag; }), 'no gag (e.g. 6-7) customer survives in the meme-off pool');
+})();
+
+// ---- Base instructions: any single-pizza order that lays a CHEESE or BBQ base
+// MUST name that base in its text, so a child always knows which base to lay
+// (tomato is the implied default). Caught t_unevenShare, which painted a cheese/
+// bbq base over the whole pizza but described only the toppings. ----
+(function () {
+  var bad = 0, checked = 0, example = '';
+  for (var tier = 1; tier <= Core.MAX_TIER; tier++) {
+    for (var seed = 1; seed <= 400; seed++) {
+      var o = Core.generateOrder({ difficulty: tier, unlocked: Core.UNLOCK_ORDER, rng: lcg(seed * 17 + tier) });
+      if (!o || o.pizzas === 2) continue;
+      checked++;
+      var t = o.text.toLowerCase();
+      var spec = o.acceptable[0];
+      var usesCheese = spec.some(function (s) { return !s.wildcard && !s.catCount && s.base === 'cheese'; });
+      var usesBbq = spec.some(function (s) { return !s.wildcard && !s.catCount && s.base === 'bbq'; });
+      if (usesCheese && t.indexOf('cheese') === -1) { bad++; if (!example) example = 'CHEESE: ' + o.core; }
+      if (usesBbq && t.indexOf('bbq') === -1 && t.indexOf('barbecue') === -1) { bad++; if (!example) example = 'BBQ: ' + o.core; }
+    }
+  }
+  eq(bad, 0, 'every cheese/bbq base is named in the order text (first offender: ' + example + ')');
+  ok(checked > 0, 'base-naming sweep exercised single-pizza orders (' + checked + ')');
+})();
+
 // ---- Every order must be BUILDABLE from the inventory unlocked at that level.
 // The game unlocks ingredients gradually (game-ui unlockedFor: the first
 // 4+round(difficulty) of UNLOCK_ORDER), so an order generated at a low level must

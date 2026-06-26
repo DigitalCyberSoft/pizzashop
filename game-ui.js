@@ -544,7 +544,9 @@
     S.brush = null;
     renderPizza(); reflectBrush();
 
-    var cust = C.CAST[Math.floor(Math.random() * C.CAST.length)];
+    // meme mode OFF -> never select a brainrot (meme:true) customer.
+    var pool = LS.meme ? C.CAST : C.CAST.filter(function (c) { return !c.meme; });
+    var cust = pool[Math.floor(Math.random() * pool.length)];
     el('cust-name').textContent = cust.name;
     setAvatar(cust);
     S.order._cust = cust;

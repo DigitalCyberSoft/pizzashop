@@ -1546,7 +1546,7 @@
       L[REGION.right[pos]] = makeSlice(B, [Q]);                                 // the one smaller-share slice
       accs = accs.concat(rotAcc(L));
     });
-    var text = 'I want one half all ' + tn(S) + ' for me. Give my other half to my two kids: ' + names[0] + ' wants ' + tn(P) + ' and ' + names[1] + ' wants ' + tn(Q) + '. But ' + names[0] + ' will eat MORE than ' + names[1] + ', so ' + names[0] + ' gets 3 slices and ' + names[1] + ' gets just 1.';
+    var text = 'On a ' + baseWord(B) + ' base all over: I want one half all ' + tn(S) + ' for me. Give my other half to my two kids: ' + names[0] + ' wants ' + tn(P) + ' and ' + names[1] + ' wants ' + tn(Q) + '. But ' + names[0] + ' will eat MORE than ' + names[1] + ', so ' + names[0] + ' gets 3 slices and ' + names[1] + ' gets just 1.';
     return { text: text, acceptable: accs, teach: null, concept: 'half' };
   }
 
@@ -1640,14 +1640,17 @@
   // Customer cast + dialogue banks. Lines are split into a `meme` set (Gen-Alpha
   // slang) and a `plain` set; the UI's meme-mode toggle picks which to draw from.
   // ---------------------------------------------------------------------------
+  // meme:true marks the Gen-Alpha "brainrot" cast (the Italian brainrot crew plus
+  // the 6-7 kid). The UI drops these from customer selection when meme mode is OFF,
+  // the same toggle that gates the slang dialogue, so a parent can dial it all down.
   var CAST = [
-    { id: 'tralalero', name: 'Tralalero Tralala', prompt: 'Tralalero Tralala, the Italian brainrot meme: a blue cartoon shark with three legs wearing big blue sneakers, goofy grin, bright flat colors, kid-friendly, plain background' },
-    { id: 'bombardiro', name: 'Bombardiro Crocodilo', prompt: 'Bombardiro Crocodilo, the Italian brainrot meme: a cartoon crocodile whose body is a little toy bomber airplane, goofy happy face, bright flat colors, kid-friendly, plain background' },
-    { id: 'tungtung', name: 'Tung Tung Sahur', prompt: 'Tung Tung Tung Sahur, the Italian brainrot meme: a tall cartoon wooden-log person with a carved smiling face and little arms holding a small bat, bright flat colors, kid-friendly, plain background' },
-    { id: 'ballerina', name: 'Ballerina Cappuccina', prompt: 'Ballerina Cappuccina, the Italian brainrot meme: a cartoon ballerina in a tutu whose head is a cappuccino coffee cup, dancing, cheerful, bright flat colors, kid-friendly, plain background' },
+    { id: 'tralalero', name: 'Tralalero Tralala', meme: true, prompt: 'Tralalero Tralala, the Italian brainrot meme: a blue cartoon shark with three legs wearing big blue sneakers, goofy grin, bright flat colors, kid-friendly, plain background' },
+    { id: 'bombardiro', name: 'Bombardiro Crocodilo', meme: true, prompt: 'Bombardiro Crocodilo, the Italian brainrot meme: a cartoon crocodile whose body is a little toy bomber airplane, goofy happy face, bright flat colors, kid-friendly, plain background' },
+    { id: 'tungtung', name: 'Tung Tung Sahur', meme: true, prompt: 'Tung Tung Tung Sahur, the Italian brainrot meme: a tall cartoon wooden-log person with a carved smiling face and little arms holding a small bat, bright flat colors, kid-friendly, plain background' },
+    { id: 'ballerina', name: 'Ballerina Cappuccina', meme: true, prompt: 'Ballerina Cappuccina, the Italian brainrot meme: a cartoon ballerina in a tutu whose head is a cappuccino coffee cup, dancing, cheerful, bright flat colors, kid-friendly, plain background' },
     { id: 'nonna', name: 'Nonna Pepperoni', prompt: 'a warm smiling cartoon Italian grandmother in an apron, bright flat colors, kid-friendly storybook style, plain background' },
     { id: 'chef-luigi', name: 'Chef Luigi', prompt: 'a jolly cartoon Italian chef with a big moustache and white hat, bright flat colors, kid-friendly, plain background' },
-    { id: 'sixseven', name: 'Six-Seven Sam', prompt: 'an excited cartoon kid holding up six and seven fingers, big grin, bright flat colors, kid-friendly, plain background', gag: 'sixseven' },
+    { id: 'sixseven', name: 'Six-Seven Sam', meme: true, prompt: 'an excited cartoon kid holding up six and seven fingers, big grin, bright flat colors, kid-friendly, plain background', gag: 'sixseven' },
     { id: 'wizard', name: 'Pizza Wizard', prompt: 'a friendly cartoon wizard with a pizza-slice hat and starry robe, bright flat colors, kid-friendly, plain background' },
     { id: 'astro', name: 'Astro Ant', prompt: 'a cute cartoon ant in a tiny astronaut suit, cheerful, bright flat colors, kid-friendly mascot, plain background' },
     { id: 'dino', name: 'Chompy the Dino', prompt: 'a friendly round cartoon green dinosaur with a big smile, bright flat colors, kid-friendly mascot, plain background' },
