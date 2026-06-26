@@ -137,21 +137,29 @@
     var lvl = Math.max(1, Math.min(C.MAX_TIER, Math.round(LS.difficulty)));
     items.push({ u: 'assets/customers/kid.png' }, { u: 'assets/scene/shopfront.png' },
       { u: 'assets/scene/shop.png' }, { u: 'assets/scene/shop-' + lvl + '.png' });
-    var total = items.length, loaded = 0, finished = false;
+    var total = items.length, loaded = 0, finished = false, stall;
+    // Reveal the welcome ONLY when every asset has loaded. The watchdog is a STALL
+    // detector, not a deadline: it fires only if NO image resolves for 20s (a real
+    // hang), and every load resets it. A slow connection therefore never reveals
+    // the welcome early with half-loaded characters, however long the download
+    // takes (the old fixed 12s timeout did exactly that).
+    function arm() { clearTimeout(stall); stall = setTimeout(function () { if (!finished) finish(); }, 20000); }
     function bump(it) {
       if (it.top) IMG_OK[it.top] = true; else if (it.base) BASE_IMG_OK[it.base] = true;
       loaded++;
       var f = el('loading-fill'); if (f) f.style.width = Math.round(loaded / total * 100) + '%';
+      arm(); // progress -> reset the stall watchdog
       if (loaded >= total && !finished) finish();
     }
     function finish() {
+      clearTimeout(stall);
       finished = true;
       ov.classList.add('done');
       setTimeout(function () { if (ov.parentNode) ov.remove(); }, 400);
       if (done) done();
     }
     items.forEach(function (it) { var im = new Image(); im.onload = im.onerror = function () { bump(it); }; im.src = it.u; WARM_CACHE.push(im); });
-    setTimeout(function () { if (!finished) finish(); }, 12000); // never hang on a stuck asset
+    arm(); // start the stall watchdog (onload AND onerror count, so a 404 can't hang it)
   }
 
   // Warm the browser cache for every customer face and every shop scene so they
