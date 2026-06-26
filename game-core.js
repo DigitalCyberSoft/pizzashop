@@ -1748,12 +1748,37 @@
     t_catSeparate: 'notTouch', t_dietaryShare: 'notTouch', t_gapShare: 'notTouch'
   };
 
+  // Can this order actually be BUILT from the currently-unlocked inventory? The
+  // unlocked set (`av`) is narrower than the full palette at low levels, so an
+  // order could ask for more than the tray can supply: a catCount slice needing
+  // more distinct toppings of a category than are unlocked, or (defensively) a
+  // fixed slice naming a topping that isn't unlocked. Generate, check, and if it
+  // is not buildable the caller discards it and generates another. Templates
+  // guard their own cases inconsistently; this is the single source of truth.
+  function orderBuildable(acceptable, av) {
+    var spec = acceptable[0];
+    for (var i = 0; i < spec.length; i++) {
+      var s = spec[i];
+      if (!s || s.wildcard) continue;
+      if (s.catCount) {
+        var need = s.min != null ? s.min : s.count;
+        if (av.filter(catTest(s.cat)).length < need) return false;
+        continue;
+      }
+      var tops = s.toppings || [];
+      for (var j = 0; j < tops.length; j++) {
+        if (av.indexOf(tops[j]) === -1) return false; // names a topping not unlocked
+      }
+    }
+    return true;
+  }
   function buildOne(rng, av, unlocked, tier, taught) {
     for (var t = tier; t >= 1; t--) {
       var temps = templatesForTier(t).slice();
       while (temps.length) {
         var tmpl = temps.splice(Math.floor(rng() * temps.length), 1)[0];
         var order = tmpl(rng, av, unlocked, taught);
+        if (order && !orderBuildable(order.acceptable, av)) order = null; // not buildable from inventory -> try another
         if (order) {
           order.tier = t; order.core = order.text;
           if (order.concept === undefined) order.concept = CONCEPT_BY_TEMPLATE[tmpl.name] || null;
@@ -1797,7 +1822,7 @@
     expandRecipe: expandRecipe, recipeBuildable: recipeBuildable, buildableRecipes: buildableRecipes,
     recipeWords: recipeWords, recipeDescribe: recipeDescribe, RECIPE_ORDER: RECIPE_ORDER, toppingName: toppingName,
     grade: grade, layoutScore: layoutScore, sliceScore: sliceScore, describeMistakes: describeMistakes,
-    gradePool: gradePool, reduceFraction: reduceFraction,
+    gradePool: gradePool, reduceFraction: reduceFraction, orderBuildable: orderBuildable,
     CAST: CAST, DIALOGUE: DIALOGUE, reactionBand: reactionBand, pickReaction: pickReaction
   };
 });

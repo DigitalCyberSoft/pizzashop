@@ -611,6 +611,53 @@ function fillWild(L) {
   ok(threw, 'pool: kind counts not summing to slice total throws');
 })();
 
+// ---- Every order must be BUILDABLE from the inventory unlocked at that level.
+// The game unlocks ingredients gradually (game-ui unlockedFor: the first
+// 4+round(difficulty) of UNLOCK_ORDER), so an order generated at a low level must
+// never demand more than that partial inventory can supply (e.g. "any 3 different
+// silly" when only 2 silly toppings are unlocked). Samples the PARTIAL unlock the
+// per-tier tests above do not. ----
+(function () {
+  function unlockedFor(diff) { return Core.UNLOCK_ORDER.slice(0, Math.min(Core.UNLOCK_ORDER.length, 4 + Math.round(diff))); }
+  // independent of Core.orderBuildable: re-derive category availability here so a
+  // bug in the engine guard can't hide behind itself.
+  var MEAT = ['pepperoni', 'ham', 'bacon', 'sausage', 'meatball', 'chicken'];
+  var VEG = ['mushroom', 'pepper', 'onion', 'olive', 'spinach', 'sweetcorn', 'tomato-slice', 'broccoli', 'green-beans', 'brussels-sprout', 'peas', 'beetroot'];
+  var FRUIT = ['pineapple', 'banana', 'raisins'];
+  var SILLY = ['broccoli', 'green-beans', 'brussels-sprout', 'peas', 'beetroot', 'banana', 'raisins', 'marshmallow', 'fish-heads'];
+  var GREEN = ['pepper', 'spinach', 'broccoli', 'green-beans', 'brussels-sprout', 'peas'];
+  var RED = ['pepperoni', 'tomato-slice', 'chilli'];
+  function avail(av, cat) {
+    var L = cat === 'meat' ? MEAT : cat === 'veg' ? VEG : cat === 'fruit' ? FRUIT : cat === 'silly' ? SILLY :
+      cat === 'green' ? GREEN : cat === 'red' ? RED :
+      cat === 'fruitsilly' ? FRUIT.filter(function (x) { return SILLY.indexOf(x) !== -1; }) :
+      cat === 'puresilly' ? SILLY.filter(function (x) { return VEG.indexOf(x) === -1 && FRUIT.indexOf(x) === -1; }) :
+      cat === 'any' ? av : null;
+    if (L === null) return 99; // unknown category: don't false-fail
+    if (cat === 'any') return av.length;
+    return av.filter(function (id) { return L.indexOf(id) !== -1; }).length;
+  }
+  var checked = 0, impossible = 0;
+  for (var diff = 1; diff <= Core.MAX_TIER; diff++) {
+    var un = unlockedFor(diff), av = Core.availableToppings(un);
+    for (var seed = 1; seed <= 200; seed++) {
+      var o = Core.generateOrder({ difficulty: diff, unlocked: un, rng: lcg(seed * 17 + diff * 3) });
+      if (!o || !o.acceptable) continue;
+      checked++;
+      // engine's own guard must agree it's buildable
+      ok(Core.orderBuildable(o.acceptable, av), 'diff ' + diff + ' order passes Core.orderBuildable');
+      // independent category-availability check on every catCount slice
+      o.acceptable[0].forEach(function (s) {
+        if (s && s.catCount) {
+          var need = s.min != null ? s.min : s.count;
+          if (avail(av, s.cat) < need) { impossible++; ok(false, 'diff ' + diff + ' demands ' + need + ' ' + s.cat + ' but only ' + avail(av, s.cat) + ' unlocked :: ' + o.text.slice(0, 70)); }
+        }
+      });
+    }
+  }
+  ok(impossible === 0, 'no impossible catCount order across ' + checked + ' partial-unlock orders (' + impossible + ' impossible)');
+})();
+
 console.log((count - failures) + '/' + count + ' assertions passed.');
 if (failures) { console.error(failures + ' FAILURES'); process.exit(1); }
 console.log('OK');
