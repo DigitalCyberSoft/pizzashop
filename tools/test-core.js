@@ -402,7 +402,11 @@ function fillWild(L) {
     { name: 'shared property (colour)', tier: 11, marker: 'share the same colour' },
     { name: 'normative keywords', tier: 15, marker: 'Order rules!' },
     { name: 'not-in-combination exception', tier: 14, marker: 'should NOT have' },
-    { name: 'uneven share', tier: 18, marker: 'will eat MORE than' }
+    { name: 'uneven share', tier: 18, marker: 'will eat MORE than' },
+    { name: 'alternating recipes', tier: 14, marker: 'each slice between them a' },
+    { name: 'checkerboard two-base', tier: 12, marker: 'Make it a checkerboard' },
+    { name: 'count-compare by half', tier: 11, marker: 'two number rules' },
+    { name: 'buffer separation ring', tier: 19, marker: 'PLAIN buffer slice' }
   ];
   CONSTRUCTS.forEach(function (c) {
     var found = null;

@@ -579,18 +579,18 @@
       8: [t5_oneSlice, t6_oppositeOf, t_doubleHalf, t_pronoun, t_riddle],
       9: [t6_oppositeOf, t_catSeparate, t7_negationBase, t_sillyEvery, t_fruitEvery, t_atLeastOne],
       10: [t6_exceptQuarter, t_catSeparate, t7_negationBase, t_catCountWhole, t_fruitEvery, t_countCompare],
-      11: [t6_diagonalQuarters, t6_exceptQuarter, t7_selfCorrect, t_catCountWhole, t_countCompare, t_sharedProperty],
-      12: [t7_alternating, t7_twoBases, t7_selfCorrect, t6_diagonalQuarters, t_countCompare],
-      13: [t7_ordinalRun, t7_alternating, t7_wildcard, t_twoBaseConditional],
+      11: [t6_diagonalQuarters, t6_exceptQuarter, t7_selfCorrect, t_catCountWhole, t_countCompare, t_sharedProperty, t_countCompareHalves],
+      12: [t7_alternating, t7_twoBases, t7_selfCorrect, t6_diagonalQuarters, t_countCompare, t_countCompareHalves, t_checkerboard],
+      13: [t7_ordinalRun, t7_alternating, t7_wildcard, t_twoBaseConditional, t_checkerboard],
       // tiers 14+ carry the harder LOGIC constructs (inference, either/or, not-both,
       // set intersection, conditional, elimination) alongside the combo templates.
-      14: [t_comboWhole, t_comboHalves, t_doubleHalf, t_catCountHalves, t_twoBaseConditional, t_dietary, t_eitherOr, t_notException],
-      15: [t_comboHalves, t_comboQuarter, t_tripleHalf, t_threeBases, t_recipeRemove, t_eitherOr, t_intersectionCat, t_normative],
+      14: [t_comboWhole, t_comboHalves, t_doubleHalf, t_catCountHalves, t_twoBaseConditional, t_dietary, t_eitherOr, t_notException, t_altRecipes],
+      15: [t_comboHalves, t_comboQuarter, t_tripleHalf, t_threeBases, t_recipeRemove, t_eitherOr, t_intersectionCat, t_normative, t_altRecipes],
       16: [t_comboQuarter, t7_nestedException, t7_share, t7_namedDiagonal, t_recipeSwap, t_intersectionCat, t_conditionTrue, t_notException],
       17: [t8_fourQuarters, t_composite3, t7_inOrderDistractor, t_threeBaseConditional, t_gapShare, t_recipeHalfMinus, t_notBoth, t_elimination],
       18: [t_composite3, t10_perSlice, t7_constraint, t7_layerConditional, t_threeBaseConditional, t_normative, t_unevenShare],
-      19: [t_composite4, t_dietaryShare, t20_recipeHalvesException, t9_quarterRecipes, t11_compound, t_unevenShare],
-      20: [t_composite4, t_dietaryShare, t20_recipeHalvesException, t9_quarterRecipes]
+      19: [t_composite4, t_dietaryShare, t20_recipeHalvesException, t9_quarterRecipes, t11_compound, t_unevenShare, t_bufferRing],
+      20: [t_composite4, t_dietaryShare, t20_recipeHalvesException, t9_quarterRecipes, t_bufferRing]
     };
     return T[tier] || T[1];
   }
@@ -1446,6 +1446,90 @@
     });
     var text = 'I want one half all ' + tn(S) + ' for me. Give my other half to my two kids: ' + names[0] + ' wants ' + tn(P) + ' and ' + names[1] + ' wants ' + tn(Q) + '. But ' + names[0] + ' will eat MORE than ' + names[1] + ', so ' + names[0] + ' gets 3 slices and ' + names[1] + ' gets just 1.';
     return { text: text, acceptable: accs, teach: null, concept: 'half' };
+  }
+
+  // ---- Constructs distilled from the Levels 11-20 OpenAI consult --------------
+  // Each is a single, cleanly-gradeable mechanic lifted from the variation set.
+  // The dense 4-clause composites from 16-20 are NOT auto-wired: their grading
+  // would need bespoke enumerated acceptable-sets, so they stay authoring
+  // reference in VARIATIONS-11-20.md. These four are the genuinely-new gradeable
+  // ones.
+
+  // Alternating named recipes: every other slice recipe A, the slices between
+  // recipe B. Both interleavings accepted (the dihedral orbit covers them).
+  function t_altRecipes(rng, av, un, taught) {
+    var pool = buildableRecipes(un);
+    if (pool.length < 2) return null;
+    var two = pickN(rng, pool, 2);
+    var L = emptyLayout();
+    [0, 2, 4, 6].forEach(function (i) { paintRecipe(L, [i], two[0]); });
+    [1, 3, 5, 7].forEach(function (i) { paintRecipe(L, [i], two[1]); });
+    var names = untaught(two, taught);
+    var text = 'Going all the way around: make every other slice a ' + two[0] +
+      ', and each slice between them a ' + two[1] + '.' + recipeReminder(two);
+    return { text: text, acceptable: rotAcc(L), teach: names.length ? { type: 'recipe', names: names } : null, concept: 'everyOther' };
+  }
+
+  // Checkerboard of two different bases: every other slice base X with topping A,
+  // the slices between base Y with topping B. Needs a second base unlocked.
+  function availableBases(un) {
+    var o = ['tomato'];
+    if (un && un.indexOf('cheese-base') !== -1) o.push('cheese');
+    if (un && un.indexOf('bbq-base') !== -1) o.push('bbq');
+    return o;
+  }
+  function t_checkerboard(rng, av, un) {
+    var bases = availableBases(un);
+    if (bases.length < 2 || av.length < 2) return null;
+    var two = pickN(rng, bases, 2), B1 = two[0], B2 = two[1];
+    var t = pickN(rng, av, 2), A = t[0], C = t[1];
+    var L = emptyLayout();
+    [0, 2, 4, 6].forEach(function (i) { L[i] = makeSlice(B1, [A]); });
+    [1, 3, 5, 7].forEach(function (i) { L[i] = makeSlice(B2, [C]); });
+    var text = 'Make it a checkerboard! Every other slice is a ' + baseWord(B1) +
+      ' base with ' + tn(A) + ', and each slice between them is a ' + baseWord(B2) +
+      ' base with ' + tn(C) + '. All the way around.';
+    return { text: text, acceptable: rotAcc(L), teach: null, concept: 'everyOther' };
+  }
+
+  // Count comparison split by half: one half "more than N", the other half
+  // "fewer than M" of a category. The player picks which toppings on each slice.
+  function t_countCompareHalves(rng, av, un) {
+    var cats = ['any', 'meat', 'veg'].filter(function (c) {
+      return (c === 'any' ? av.length : av.filter(catTest(c)).length) >= 5;
+    });
+    if (!cats.length) return null;
+    var cat = pick(rng, cats);
+    var avail = cat === 'any' ? av.length : av.filter(catTest(cat)).length;
+    var word = catWord(cat).toUpperCase();
+    var n = 2, m = avail; // more-than-2 on one half; fewer-than-(avail) on the other
+    var B = pickBase(rng, un);
+    var L = [];
+    for (var i = 0; i < 8; i++) L.push(makeSlice(B, []));
+    REGION.right.forEach(function (i) { L[i] = { catCount: true, base: B, cat: cat, min: n + 1, max: avail, phrase: 'more than ' + numWord(n) + ' ' + catWord(cat) }; });
+    REGION.left.forEach(function (i) { L[i] = { catCount: true, base: B, cat: cat, min: 1, max: m - 1, phrase: 'fewer than ' + numWord(m) + ' ' + catWord(cat) + ' (at least one)' }; });
+    var text = 'A ' + baseWord(B) + ' base, with two number rules! On one half, every slice gets MORE THAN ' +
+      numWord(n).toUpperCase() + ' different ' + word + '. On the other half, every slice gets FEWER THAN ' +
+      numWord(m).toUpperCase() + ' different ' + word + ', but at least one. You pick which ones!';
+    return { text: text, acceptable: rotAcc(L), teach: null, concept: 'compare' };
+  }
+
+  // Separation with buffers: keep meat and vegetables from ever touching by
+  // putting a plain buffer slice between them. Ring pattern, going either way:
+  // meat, buffer, veg, buffer, meat, buffer, veg, buffer. The dominant theme of
+  // the Level 19-20 variations, reduced to its gradeable core.
+  function t_bufferRing(rng, av, un) {
+    var meats = av.filter(isMeat), vegs = av.filter(isVeg);
+    if (!meats.length || !vegs.length) return null;
+    var M = pick(rng, meats), V = pick(rng, vegs), B = pickBase(rng, un);
+    var L = [];
+    for (var i = 0; i < 8; i++) L.push(makeSlice(B, [])); // buffers are just base
+    [0, 4].forEach(function (i) { L[i] = makeSlice(B, [M]); });
+    [2, 6].forEach(function (i) { L[i] = makeSlice(B, [V]); });
+    var text = 'Keep the meat and the vegetables apart! On a ' + baseWord(B) +
+      ' base, going around in either direction: a ' + tn(M) + ' slice, then a PLAIN buffer slice, then a ' +
+      tn(V) + ' slice, then a PLAIN buffer slice, and repeat. The plain buffers stop the meat ever touching the veg.';
+    return { text: text, acceptable: rotAcc(L), teach: null, concept: 'notTouch' };
   }
 
   function tn(id) { return toppingName(id); }
