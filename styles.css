@@ -80,8 +80,10 @@ button.eraser.on { background: var(--ink); color: #fff; }
 /* ---- Tray ---- */
 #tray { overflow-y: auto; }
 #tray h3 { margin: 4px 0 8px; font-size: .9rem; text-transform: uppercase; letter-spacing: .5px; color: #9a7b4f; }
-/* two columns so a young player sees more of the shelf at once */
-#tray .chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+/* two columns that read top-to-bottom: fill the first column all the way down,
+   then the second, so an alphabetical shelf scans naturally. */
+#tray .chips { column-count: 2; column-gap: 8px; }
+#tray .chips .chip { break-inside: avoid; margin-bottom: 8px; }
 .chip {
   display: flex; align-items: center; gap: 6px; background: #fff; border: 2px solid #e8d6b0;
   border-radius: 12px; padding: 11px 10px; font-weight: 700; font-size: .9rem; cursor: pointer; touch-action: none;
