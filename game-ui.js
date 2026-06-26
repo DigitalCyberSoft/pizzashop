@@ -448,7 +448,7 @@
     var left = S.tipDeadline - Date.now(), frac = Math.max(0, left / S.tipWindowMs);
     el('tipbar').style.width = (frac * 100) + '%';
     var wrap = el('tipbar-wrap');
-    if (left <= 0) { el('tip-label').textContent = '💲1 tip: gone'; wrap.classList.add('gone'); clearInterval(S.tipTimer); S.tipTimer = null; }
+    if (left <= 0) { Snd.tipLost(); el('tip-label').textContent = '💲1 tip: gone'; wrap.classList.add('gone'); clearInterval(S.tipTimer); S.tipTimer = null; }
     else { el('tip-label').textContent = '💲1 tip: ' + Math.ceil(left / 1000) + 's'; wrap.classList.toggle('amber', left <= 4000); }
   }
   function stopTipTimer() { if (S.tipTimer) { clearInterval(S.tipTimer); S.tipTimer = null; } }
@@ -737,7 +737,9 @@
     fail: run(function () { tone({ from: 392, to: 196, dur: 0.2, type: 'sawtooth', vol: 0.15 }); tone({ from: 370, to: 165, dur: 0.26, type: 'sawtooth', vol: 0.13, at: 0.18 }); }),
     fanfare: run(function () { [392, 523, 659].forEach(function (f, i) { tone({ freq: f, dur: 0.13, type: 'square', vol: 0.15, at: i * 0.1 }); }); tone({ freq: 784, dur: 0.22, type: 'square', vol: 0.15, at: 0.3 }); }),
     legend: run(function () { [523, 659, 784, 1047, 784, 1047, 1319].forEach(function (f, i) { tone({ freq: f, dur: 0.2, type: 'triangle', vol: 0.18, at: i * 0.12 }); }); }),
-    sixseven: run(function () { tone({ freq: 587, dur: 0.18, type: 'square', vol: 0.16 }); tone({ freq: 784, dur: 0.26, type: 'square', vol: 0.16, at: 0.2 }); })
+    sixseven: run(function () { tone({ freq: 587, dur: 0.18, type: 'square', vol: 0.16 }); tone({ freq: 784, dur: 0.26, type: 'square', vol: 0.16, at: 0.2 }); }),
+    // the speed-tip window expiring: a soft, deflating "aww" (not the harsh fail buzz).
+    tipLost: run(function () { tone({ from: 660, to: 330, dur: 0.3, type: 'sine', vol: 0.13 }); tone({ from: 440, to: 210, dur: 0.34, type: 'triangle', vol: 0.1, at: 0.07 }); })
   };
 
   function kaching(amount) {
