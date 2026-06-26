@@ -151,9 +151,21 @@ button.eraser.on { background: var(--ink); color: #fff; }
 .gloss-h { margin: 4px 0 6px; font-size: 1.5rem; color: var(--accent); }
 .gloss-def { font-size: 1rem; line-height: 1.45; margin: 0 0 8px; font-weight: 600; }
 .gloss-math { font-size: .95rem; font-weight: 800; color: var(--accent2); background: #eafff5; border: 2px solid #bfe9d7; border-radius: 10px; padding: 6px 10px; display: inline-block; }
-.gloss-page-card { max-width: 460px; }
-.gloss-page-body { min-height: 320px; display: grid; place-items: center; }
-.gloss-page-body .gloss-card { box-shadow: none; padding: 0; background: none; width: 100%; }
+.gloss-page-card { max-width: 640px; }
+.gloss-page-body { min-height: 320px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px; align-items: start; }
+.gloss-page-body .gloss-card { box-shadow: none; padding: 6px 4px; background: none; width: 100%; }
+.gloss-page-body .gloss-pizza { width: 96px; height: 96px; }
+.gloss-page-body .gloss-line { width: 150px; height: 50px; }
+.gloss-page-body .gloss-mini { width: 64px; height: 64px; }
+.gloss-page-body .gloss-icons { font-size: 1.5rem; gap: 5px; max-width: 170px; }
+.gloss-page-body .gloss-topping { width: 34px; height: 34px; }
+.gloss-page-body .gloss-swatch { font-size: .8rem; }
+.gloss-page-body .gloss-dot { width: 26px; height: 26px; }
+.gloss-page-body .gloss-h { font-size: 1.1rem; margin: 2px 0 4px; }
+.gloss-page-body .gloss-def { font-size: .8rem; line-height: 1.32; margin: 0 0 5px; }
+.gloss-page-body .gloss-math { font-size: .72rem; padding: 4px 7px; }
+.gloss-pair { display: flex; align-items: center; gap: 10px; }
+.gloss-or { font-weight: 800; color: var(--accent); font-size: 1.1rem; }
 .gloss-nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 16px 0 10px; }
 .gloss-nav button { padding: 10px 18px; }
 .gloss-nav button[disabled] { opacity: .35; cursor: default; }

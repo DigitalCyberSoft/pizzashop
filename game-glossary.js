@@ -113,6 +113,24 @@
     });
     return d;
   }
+  // a small whole-colour pizza, for "either / or" (this one OR that one).
+  function smallPizza(colour) { var s = miniPizza(fillSet(REG.whole, colour)); s.classList.add('gloss-mini'); return s; }
+  function pairDemo() {
+    var d = document.createElement('div'); d.className = 'gloss-pair';
+    d.appendChild(smallPizza(TINT_A));
+    var o = document.createElement('span'); o.className = 'gloss-or'; o.textContent = 'OR'; d.appendChild(o);
+    d.appendChild(smallPizza(TINT_B));
+    return d;
+  }
+  // must (orange) / may (blue, your choice) / must-not (left bare) on one pizza.
+  function rulesDemo() {
+    var f = {};
+    [0, 1, 2, 3].forEach(function (i) { f[i] = ACCENT; }); // MUST
+    [4, 5, 6].forEach(function (i) { f[i] = TINT_A; });    // MAY
+    f[7] = DIM;                                            // MUST NOT (left off)
+    return miniPizza(f);
+  }
+
   // a recipe card: the named pizza, its base swatch, and its topping icons.
   function recipeCard(name, base, icons) {
     var d = document.createElement('div'); d.className = 'gloss-recipe';
@@ -149,7 +167,11 @@
     { id: 'silly', label: 'Silly topping', syn: ['silly toppings', 'silly topping', 'silly'], def: "Silly toppings are funny foods you don't usually see on a pizza, like broccoli, banana, marshmallow and fish heads.", math: 'a topping can be silly AND a vegetable (broccoli!)', demo: function () { return iconRow(['broccoli', 'banana', 'marshmallow', 'fish-heads']); } },
     // ---- bases and named pizzas ----
     { id: 'base', label: 'Base', syn: ['base', 'sauce'], def: 'The base is the sauce you lay down first, before any toppings. There are three: tomato, cheese and BBQ.', math: 'every slice gets exactly one base', demo: function () { return baseSwatches(); } },
-    { id: 'recipe', label: 'Named pizza', syn: ['named pizza', 'recipe'], def: 'A named pizza is a recipe: the name stands for a fixed set of toppings. A Hawaiian means ham and pineapple on a tomato base.', math: 'one name = one base + its toppings', demo: function () { return recipeCard('Hawaiian', 'tomato', ['ham', 'pineapple']); } }
+    { id: 'recipe', label: 'Named pizza', syn: ['named pizza', 'recipe'], def: 'A named pizza is a recipe: the name stands for a fixed set of toppings. A Hawaiian means ham and pineapple on a tomato base.', math: 'one name = one base + its toppings', demo: function () { return recipeCard('Hawaiian', 'tomato', ['ham', 'pineapple']); } },
+    // ---- choice, counting and rule-strength words ----
+    { id: 'eitherOr', label: 'Either / or', syn: ['either or', 'either'], def: 'Either this OR that means pick just ONE of the choices, never both. You decide which one.', math: 'A or B = choose one (not both)', demo: function () { return pairDemo(); } },
+    { id: 'atLeast', label: 'At least one', syn: ['at least one', 'at least'], def: 'At least one means one or more: one is fine, two is fine, lots is fine, but never zero.', math: 'at least 1 = 1, 2, 3 ... (1 or more)', demo: function () { return numberLine(6, 1, 6); } },
+    { id: 'rules', label: 'Must, may, must not', syn: ['must not', 'shall not', 'must', 'shall', 'required', 'recommended', 'optional', 'may'], def: 'These words say how strong a rule is. MUST (or shall, required) means you have to. MAY (or optional, should) means it is your choice. MUST NOT (or shall not) means never.', math: 'MUST = always · MAY = your choice · MUST NOT = never', demo: function () { return rulesDemo(); } }
   ];
   var BY_ID = {}; TERMS.forEach(function (t) { BY_ID[t.id] = t; });
 
@@ -250,15 +272,18 @@
 
   // The glossary page is a one-concept-per-page flip book (Back / Next), not a
   // long scroll, so a young child meets one idea at a time.
+  var PER_PAGE = 4; // a 2x2 grid of cards per page
   var pageIdx = 0, pageBody, pageCount, prevBtn, nextBtn;
+  function pageTotal() { return Math.ceil(TERMS.length / PER_PAGE); }
   function renderPage() {
     pageBody.innerHTML = '';
-    pageBody.appendChild(termCard(TERMS[pageIdx], false));
-    pageCount.textContent = (pageIdx + 1) + ' / ' + TERMS.length;
+    var start = pageIdx * PER_PAGE;
+    TERMS.slice(start, start + PER_PAGE).forEach(function (t) { pageBody.appendChild(termCard(t, false)); });
+    pageCount.textContent = (pageIdx + 1) + ' / ' + pageTotal();
     prevBtn.disabled = pageIdx === 0;
-    nextBtn.disabled = pageIdx === TERMS.length - 1;
+    nextBtn.disabled = pageIdx >= pageTotal() - 1;
   }
-  function step(d) { pageIdx = Math.max(0, Math.min(TERMS.length - 1, pageIdx + d)); renderPage(); }
+  function step(d) { pageIdx = Math.max(0, Math.min(pageTotal() - 1, pageIdx + d)); renderPage(); }
   function closePage() { if (pageEl) pageEl.classList.remove('show'); hooks.resume(); }
   function openPage() {
     if (!pageEl) {
