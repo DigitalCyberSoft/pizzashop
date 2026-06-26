@@ -330,8 +330,7 @@
       '<div class="boards">' +
         '<figure class="board"><svg id="pizzaA"></svg><figcaption>Pizza 1</figcaption></figure>' +
         '<figure class="board"><svg id="pizzaB"></svg><figcaption>Pizza 2</figcaption></figure>' +
-      '</div>' +
-      '<div id="fraction-strip"></div>';
+      '</div>';
     var pw = el('pizza-wrap'); pw.parentNode.insertBefore(wrap, pw.nextSibling);
     // read S.layout/S.layout1 LIVE at tap time (they are reassigned each order)
     el('pizzaA').addEventListener('pointerdown', function (e) { onBoardTap(e, S.layout, el('pizzaA')); });
@@ -343,29 +342,11 @@
     showMultiView();
     drawPizza(el('pizzaA'), S.layout, 'bA', 300);
     drawPizza(el('pizzaB'), S.layout1, 'bB', 300);
-    if (S.order.mode === 'B') renderFractionStrip(); else el('fraction-strip').style.display = 'none';
   }
-  // Mode B live fraction strip: 16 cells (one per slice) coloured by the kind each
-  // slice currently matches, plus a legend of have/need and the reduced fraction.
-  var KIND_COLORS = ['#cf3a22', '#f1c40f', '#9c5a23', '#2a8f5f', '#7d5fff', '#e67e22'];
+  // Which kind a built slice exactly matches (used by the results-screen reveal).
   function classifySlice(slice, kinds) {
     for (var i = 0; i < kinds.length; i++) if (C.sliceScore(slice, kinds[i].spec) === 1) return i;
     return -1;
-  }
-  function renderFractionStrip() {
-    var strip = el('fraction-strip'); strip.style.display = 'block';
-    var kinds = S.order.pool.kinds, slices = S.layout.concat(S.layout1);
-    var have = kinds.map(function () { return 0; });
-    var cells = slices.map(function (s) { var k = classifySlice(s, kinds); if (k >= 0) have[k]++; return k; });
-    var bar = '<div class="fstrip-bar">' + cells.map(function (k) {
-      return '<span class="fcell"' + (k >= 0 ? ' style="background:' + KIND_COLORS[k % KIND_COLORS.length] + '"' : '') + '></span>';
-    }).join('') + '</div>';
-    var legend = '<div class="fstrip-legend">' + kinds.map(function (k, i) {
-      var fr = C.reduceFraction(k.count, 16);
-      return '<span class="fkey"><i style="background:' + KIND_COLORS[i % KIND_COLORS.length] + '"></i>' +
-        k.label + ' <b>' + have[i] + '/' + k.count + '</b> <small>(' + fr[0] + '/' + fr[1] + ')</small></span>';
-    }).join('') + '</div>';
-    strip.innerHTML = bar + legend;
   }
 
   // ---- per-level shop scene: swap the body backdrop to match the order's tier.
