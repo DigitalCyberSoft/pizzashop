@@ -105,6 +105,19 @@ button.eraser.on { background: var(--ink); color: #fff; }
 /* ---- Overlays ---- */
 .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: center; justify-content: center; z-index: 50; }
 .overlay.show { display: flex; }
+
+/* Order intro "playbill": the customer on the shop scene with the order text and
+   a Ready? button. Held up until the player has read the order; on Ready the
+   card folds up toward the customer panel and the timers begin. */
+.order-intro { z-index: 58; background-size: cover; background-position: center; }
+.oi-card { background: rgba(255,255,255,.95); border-radius: 26px; padding: 22px 26px 26px; max-width: 460px; width: 88%;
+  text-align: center; box-shadow: var(--shadow); transform-origin: top center;
+  transition: transform .46s cubic-bezier(.4,.0,.2,1), opacity .46s ease; }
+.oi-face { width: 152px; height: 152px; border-radius: 22px; object-fit: cover; box-shadow: 0 6px 18px rgba(0,0,0,.3); }
+.oi-name { font-size: 1.45rem; font-weight: 800; color: #6a4a22; margin: 12px 0 8px; }
+.oi-bubble { font-size: 1.3rem; font-weight: 600; color: #3a2a16; line-height: 1.42; margin-bottom: 20px; }
+#oi-ready { width: 100%; }
+.order-intro.folding .oi-card { transform: translateY(-44vh) scale(.32); opacity: 0; }
 .card { background: #fff; border-radius: 22px; padding: 26px 28px; max-width: 540px; width: 90%; box-shadow: var(--shadow); text-align: center; }
 .card h2 { margin: 0 0 8px; font-size: 1.8rem; }
 .card .reaction { font-size: 1.25rem; font-weight: 700; margin: 10px 0; }

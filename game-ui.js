@@ -59,7 +59,7 @@
     S = { money: 20, served: 0, aura: 0, order: null, layout: C.emptyLayout(),
       brush: null, tipDeadline: 0, tipWindowMs: 0, tipTimer: null, lastKey: null,
       patienceDeadline: 0, patienceWindowMs: 0, patienceTimer: null,
-      featureNext: null, difficulty: LS.difficulty, maxStreak: 0, won: false };
+      featureNext: null, difficulty: LS.difficulty, maxStreak: 0, won: false, awaitingStart: false };
   }
 
   // ---- ingredient unlock: grows with orders served AND current difficulty ----
@@ -330,7 +330,7 @@
   }
 
   function onPizzaTap(e) {
-    if (!S) return;
+    if (!S || S.awaitingStart) return; // building is gated until Ready
     var w = wedgeAt(e.clientX, e.clientY);
     if (w < 0) return;
     var slice = S.layout[w];
@@ -434,6 +434,48 @@
     el('tier-pill').textContent = 'Level ' + S.order.tier;
     setScene(S.order.tier);
 
+    // Hold the timers: show the order on a playbill (customer on the shop scene
+    // with the order text) gated by a Ready? button, so a young player reads the
+    // order before any clock runs. The timers start only on Ready (readyToStart).
+    showOrderIntro(cust);
+  }
+  // The order-intro playbill. Built once, reused per order. On Ready it folds up
+  // toward the customer panel (CSS transition) and the timers begin.
+  function showOrderIntro(cust) {
+    S.awaitingStart = true;
+    var ov = el('order-intro');
+    if (!ov) {
+      ov = document.createElement('div'); ov.id = 'order-intro'; ov.className = 'overlay order-intro';
+      ov.innerHTML =
+        '<div class="oi-card">' +
+          '<img class="oi-face" id="oi-face" alt="">' +
+          '<div class="oi-name" id="oi-name"></div>' +
+          '<div class="oi-bubble" id="oi-bubble"></div>' +
+          '<button class="big box" id="oi-ready">Ready? ▶</button>' +
+        '</div>';
+      document.body.appendChild(ov);
+      el('oi-ready').onclick = readyToStart; // child persists across reuse
+    }
+    var t = Math.max(1, Math.min(C.MAX_TIER, Math.round(S.order.tier || 1)));
+    ov.style.backgroundImage = 'linear-gradient(rgba(20,10,0,.4), rgba(20,10,0,.55)), ' +
+      'url(assets/scene/shop-' + t + '.png), url(assets/scene/shop.png)';
+    var face = el('oi-face');
+    face.style.visibility = 'visible';
+    face.onerror = function () { face.style.visibility = 'hidden'; };
+    face.src = 'assets/customers/' + cust.id + '.png';
+    el('oi-name').textContent = cust.name;
+    el('oi-bubble').innerHTML = window.Glossary.linkify(S.order.text);
+    ov.classList.remove('folding');
+    show('order-intro');
+  }
+  function readyToStart() {
+    if (!S || !S.awaitingStart) return;
+    S.awaitingStart = false;
+    var ov = el('order-intro');
+    if (ov) {
+      ov.classList.add('folding'); // shrink + rise toward the customer panel
+      setTimeout(function () { hide('order-intro'); ov.classList.remove('folding'); }, 480);
+    }
     startTipTimer(S.order);
     startPatienceTimer(S.order);
   }
@@ -575,7 +617,7 @@
     S.difficulty = d; LS.difficulty = d;
   }
   function boxIt() {
-    if (!S || !S.order) return;
+    if (!S || !S.order || S.awaitingStart) return; // can't box before Ready
     Snd.box();
     var fast = (Date.now() <= S.tipDeadline);
     stopTipTimer(); stopPatienceTimer();
