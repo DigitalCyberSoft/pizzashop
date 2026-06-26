@@ -217,12 +217,28 @@
 
   // wrap the FIRST occurrence of each term's longest matching phrase. One link per
   // term keeps the bubble readable. Operates on escaped HTML.
-  function linkify(text, ingredients) {
+  function linkify(text, ingredients, recipes) {
     var html = esc(text), used = {}, slots = [];
-    // Wrap each match as a control-char placeholder first, then swap in the real
-    // spans at the end. Placeholders contain no letters, so a shorter phrase
-    // (e.g. "must") can never match inside an already-wrapped longer one
-    // (e.g. "must not"), which would otherwise nest and corrupt the span.
+    var PH = String.fromCharCode(1);
+    // FIRST, protect/highlight multi-word names (longest-first) so a glossary term
+    // can never link a sub-word of one: "meat" must not link inside "Meat Feast",
+    // and "cheese" must not link inside "cheese base". Recipe names render PLAIN
+    // (protected only); ingredient/topping names get the blue food highlight that
+    // tempts a child to skim for the food and miss the spatial/logic instructions.
+    var names = [];
+    (recipes || []).forEach(function (r) { names.push({ t: r, cls: null }); });
+    (ingredients || []).forEach(function (g) { names.push({ t: g, cls: 'gloss-ing' }); });
+    names.sort(function (a, b) { return b.t.length - a.t.length; });
+    names.forEach(function (n) {
+      var re = new RegExp('(^|[^\\w-])(' + rxEsc(n.t) + ')(?![\\w-])', 'ig');
+      html = html.replace(re, function (whole, lead, word) {
+        var tok = PH + slots.length + PH;
+        slots.push(n.cls ? ('<span class="' + n.cls + '">' + word + '</span>') : word);
+        return lead + tok;
+      });
+    });
+    // Then glossary terms (spatial/logic words), first occurrence per term. The
+    // placeholders above contain no letters, so a term can't match inside one.
     PHRASES.forEach(function (ph) {
       if (used[ph.term]) return;
       // Match a whole word that is NOT part of a hyphenated word: \b alone treats
@@ -236,20 +252,6 @@
       var at = m.index + m[1].length, hit = m[2]; // wrap only the term, keep its leading boundary char
       slots.push('<span class="gloss" data-term="' + ph.term + '">' + hit + '</span>');
       html = html.slice(0, at) + token + html.slice(at + hit.length);
-    });
-    // Ingredient highlight pass: colour EVERY ingredient/base name a different
-    // colour from the glossary terms. This deliberately tempts a child to skim for
-    // the food words; doing so they miss the spatial/logic instructions, which is
-    // the point. Reuses the same control-char placeholder slots so an ingredient
-    // can never nest inside an already-wrapped term span.
-    var PH = String.fromCharCode(1);
-    (ingredients || []).forEach(function (ing) {
-      var re = new RegExp('(^|[^\\w-])(' + rxEsc(ing) + ')(?![\\w-])', 'ig');
-      html = html.replace(re, function (whole, lead, word) {
-        var tok = PH + slots.length + PH;
-        slots.push('<span class="gloss-ing">' + word + '</span>');
-        return lead + tok;
-      });
     });
     return html.replace(/(\d+)/g, function (_, i) { return slots[i]; });
   }

@@ -74,17 +74,18 @@
   // End the run's money/served (the level is kept) so the next game starts fresh.
   function clearRun() { LS.money = 20; LS.served = 0; }
 
-  // All ingredient + base words (longest-first), for the order-text highlight pass
-  // in Glossary.linkify. Longest-first so "tomato slice" wins over "tomato".
-  var INGREDIENT_NAMES = null;
+  // Topping display names for the order-text highlight pass in Glossary.linkify.
+  // NOT base words ("cheese base" is a base instruction, not a topping to skim
+  // for) and NOT recipe names (those are passed separately to be protected, so a
+  // glossary term can't link a sub-word like "meat" inside "Meat Feast").
+  var INGREDIENT_NAMES = null, RECIPE_NAMES = null;
   function ingredientNames() {
-    if (!INGREDIENT_NAMES) {
-      var names = Object.keys(C.TOPPING).map(function (id) { return C.TOPPING[id].name; });
-      names = names.concat(['tomato', 'cheese', 'BBQ']); // base words
-      names.sort(function (a, b) { return b.length - a.length; });
-      INGREDIENT_NAMES = names;
-    }
+    if (!INGREDIENT_NAMES) INGREDIENT_NAMES = Object.keys(C.TOPPING).map(function (id) { return C.TOPPING[id].name; });
     return INGREDIENT_NAMES;
+  }
+  function recipeNames() {
+    if (!RECIPE_NAMES) RECIPE_NAMES = Object.keys(C.RECIPE);
+    return RECIPE_NAMES;
   }
 
   // ---- ingredient unlock: grows with orders served AND current difficulty ----
@@ -520,7 +521,7 @@
     setAvatar(cust);
     S.order._cust = cust;
 
-    el('bubble').innerHTML = window.Glossary.linkify(S.order.text, ingredientNames());
+    el('bubble').innerHTML = window.Glossary.linkify(S.order.text, ingredientNames(), recipeNames());
     el('tier-pill').style.display = 'inline-block';
     el('tier-pill').textContent = 'Level ' + S.order.tier;
     setScene(S.order.tier);
@@ -555,7 +556,7 @@
     face.onerror = function () { face.style.visibility = 'hidden'; };
     face.src = 'assets/customers/' + cust.id + '.png';
     el('oi-name').textContent = cust.name;
-    el('oi-bubble').innerHTML = window.Glossary.linkify(S.order.text, ingredientNames());
+    el('oi-bubble').innerHTML = window.Glossary.linkify(S.order.text, ingredientNames(), recipeNames());
     ov.classList.remove('folding');
     show('order-intro');
   }
@@ -1039,7 +1040,7 @@
     if (!o) return;
     S.order = o; S.lastKey = o.key;
     S.layout = C.emptyLayout(); S.layout1 = C.emptyLayout();
-    el('bubble').innerHTML = window.Glossary.linkify(o.text, ingredientNames());
+    el('bubble').innerHTML = window.Glossary.linkify(o.text, ingredientNames(), recipeNames());
     el('tier-pill').style.display = 'inline-block'; el('tier-pill').textContent = 'Level ' + o.tier;
     fillSolvedBoards();
     if (fail) C.REGION.right.forEach(function (i) { S.layout1[i] = C.makeSlice(S.layout1[i].base, ['olive']); });
