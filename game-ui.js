@@ -264,10 +264,13 @@
     bg.style.display = bc.children.length ? 'block' : 'none';
 
     var tc = el('topping-chips'); tc.innerHTML = '';
-    toppingsUnlocked(S.served).forEach(function (id) {
-      var info = C.TOPPING[id];
-      tc.appendChild(chip('topping', id, info.name, iconHtml(id, info.icon), !!info.novelty));
-    });
+    // show the shelf alphabetically by name so it's easy to find an ingredient.
+    toppingsUnlocked(S.served).slice()
+      .sort(function (a, b) { return C.TOPPING[a].name.localeCompare(C.TOPPING[b].name); })
+      .forEach(function (id) {
+        var info = C.TOPPING[id];
+        tc.appendChild(chip('topping', id, info.name, iconHtml(id, info.icon), !!info.novelty));
+      });
     reflectBrush();
   }
   function iconHtml(id, emoji) {

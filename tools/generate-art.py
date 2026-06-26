@@ -63,6 +63,9 @@ CUSTOMERS = [
     ("wizard", "a friendly cartoon wizard with a pizza-slice hat and a starry robe"),
     ("astro", "a cute cartoon ant in a tiny astronaut suit, cheerful"),
     ("dino", "a friendly round cartoon green dinosaur with a big smile"),
+    # not in the game CAST: used as the default avatar placeholder on the start screen.
+    ("kid", "a happy friendly cartoon child with rosy cheeks, bright eyes and a big "
+            "cheerful grin, short tidy hair"),
 ]
 
 # id -> a SINGLE piece of the topping (rendered once, scattered by the game).
