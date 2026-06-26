@@ -586,6 +586,7 @@
     var band = C.reactionBand(acc);
     // celebratory / sympathetic sting, slightly after the coin so they don't muddy.
     setTimeout(refused ? Snd.fail : (acc >= 1 ? Snd.perfect : (band === 'great' ? Snd.success : Snd.meh)), 180);
+    if (!refused && acc >= 1) setTimeout(Snd.cheer, 260); // a perfect pizza gets a cheer
     var line = (S.order.novelty && acc >= 0.8) ? C.pickReaction('incredulity', LS.meme) : C.pickReaction(band, LS.meme);
 
     el('result-title').textContent = refused ? '😤 Order refused!' : (acc >= 1 ? '⭐ Perfect!' : '📦 Order up!');
@@ -670,7 +671,7 @@
   // Beat the game: 5 tipped pizzas at the top level. Sits over the result card;
   // dismissing it carries on (you keep your top level and can keep playing).
   function showVictory() {
-    Snd.legend();
+    Snd.legend(); Snd.cheer();
     el('victory-stats').innerHTML = statBlock(curLevel());
     show('victory-overlay');
   }
@@ -720,6 +721,8 @@
     src.start(t); src.stop(t + o.dur);
   }
   function run(fn) { return function () { if (ensureCtx()) fn(); }; }
+  // like run(), but plays a recorded clip first if one is loaded, else the synth.
+  function clipOr(id, fn) { return function () { if (playClip(id)) return; if (ensureCtx()) fn(); }; }
   // a topping landing climbs in pitch with each placement in a quick run, for a
   // satisfying "combo" feel, then resets after a short pause.
   var placeStep = 0, placeAt = 0;
@@ -732,17 +735,45 @@
     }),
     erase: run(function () { tone({ from: 360, to: 180, dur: 0.1, type: 'sawtooth', vol: 0.12 }); }),
     box: run(function () { noise({ from: 1700, to: 280, dur: 0.22, vol: 0.14 }); tone({ from: 200, to: 110, dur: 0.22, type: 'sine', vol: 0.18, at: 0.04 }); }),
-    coin: run(function () { tone({ freq: 988, dur: 0.1, type: 'square', vol: 0.15 }); tone({ freq: 1319, dur: 0.16, type: 'square', vol: 0.15, at: 0.09 }); }),
-    success: run(function () { [523, 659, 784, 1047].forEach(function (f, i) { tone({ freq: f, dur: 0.16, type: 'triangle', vol: 0.17, at: i * 0.085 }); }); }),
-    perfect: run(function () { [523, 659, 784, 1047, 1319].forEach(function (f, i) { tone({ freq: f, dur: 0.17, type: 'triangle', vol: 0.18, at: i * 0.08 }); }); tone({ freq: 2093, dur: 0.25, type: 'sine', vol: 0.09, at: 0.42 }); }),
+    coin: clipOr('coin', function () { tone({ freq: 988, dur: 0.1, type: 'square', vol: 0.15 }); tone({ freq: 1319, dur: 0.16, type: 'square', vol: 0.15, at: 0.09 }); }),
+    success: clipOr('tada', function () { [523, 659, 784, 1047].forEach(function (f, i) { tone({ freq: f, dur: 0.16, type: 'triangle', vol: 0.17, at: i * 0.085 }); }); }),
+    perfect: clipOr('tada', function () { [523, 659, 784, 1047, 1319].forEach(function (f, i) { tone({ freq: f, dur: 0.17, type: 'triangle', vol: 0.18, at: i * 0.08 }); }); tone({ freq: 2093, dur: 0.25, type: 'sine', vol: 0.09, at: 0.42 }); }),
     meh: run(function () { tone({ freq: 440, dur: 0.12, type: 'triangle', vol: 0.14 }); tone({ freq: 415, dur: 0.16, type: 'triangle', vol: 0.14, at: 0.16 }); }),
-    fail: run(function () { tone({ from: 392, to: 196, dur: 0.2, type: 'sawtooth', vol: 0.15 }); tone({ from: 370, to: 165, dur: 0.26, type: 'sawtooth', vol: 0.13, at: 0.18 }); }),
+    fail: clipOr('aww', function () { tone({ from: 392, to: 196, dur: 0.2, type: 'sawtooth', vol: 0.15 }); tone({ from: 370, to: 165, dur: 0.26, type: 'sawtooth', vol: 0.13, at: 0.18 }); }),
     fanfare: run(function () { [392, 523, 659].forEach(function (f, i) { tone({ freq: f, dur: 0.13, type: 'square', vol: 0.15, at: i * 0.1 }); }); tone({ freq: 784, dur: 0.22, type: 'square', vol: 0.15, at: 0.3 }); }),
-    legend: run(function () { [523, 659, 784, 1047, 784, 1047, 1319].forEach(function (f, i) { tone({ freq: f, dur: 0.2, type: 'triangle', vol: 0.18, at: i * 0.12 }); }); }),
+    legend: clipOr('levelup', function () { [523, 659, 784, 1047, 784, 1047, 1319].forEach(function (f, i) { tone({ freq: f, dur: 0.2, type: 'triangle', vol: 0.18, at: i * 0.12 }); }); }),
     sixseven: run(function () { tone({ freq: 587, dur: 0.18, type: 'square', vol: 0.16 }); tone({ freq: 784, dur: 0.26, type: 'square', vol: 0.16, at: 0.2 }); }),
     // the speed-tip window expiring: a soft, deflating "aww" (not the harsh fail buzz).
-    tipLost: run(function () { tone({ from: 660, to: 330, dur: 0.3, type: 'sine', vol: 0.13 }); tone({ from: 440, to: 210, dur: 0.34, type: 'triangle', vol: 0.1, at: 0.07 }); })
+    tipLost: run(function () { tone({ from: 660, to: 330, dur: 0.3, type: 'sine', vol: 0.13 }); tone({ from: 440, to: 210, dur: 0.34, type: 'triangle', vol: 0.1, at: 0.07 }); }),
+    // synthesized crowd cheer + applause for the biggest wins: a scatter of short
+    // noise "claps" over a bright rising swell. License-free and offline; swapped
+    // for a real recorded clip if assets/sfx/cheer.mp3 exists (see playClip).
+    cheer: function () {
+      if (playClip('cheer')) return;
+      if (!ensureCtx()) return;
+      for (var i = 0; i < 22; i++) noise({ at: Math.random() * 1.15, dur: 0.045, from: 1600 + Math.random() * 2600, vol: 0.06 });
+      tone({ from: 520, to: 880, dur: 1.0, type: 'triangle', vol: 0.07 });
+      tone({ freq: 1320, dur: 0.45, type: 'sine', vol: 0.05, at: 0.55 });
+    }
   };
+  // Recorded clips from assets/sfx/<id>.mp3 (HTMLAudioElement works from file://).
+  // Probed once up front: a clip only "wins" over the synth kit once it has actually
+  // loaded, so a missing clip never plays silent and always falls back to synth.
+  var SFX_IDS = ['cheer', 'tada', 'aww', 'coin', 'levelup'];
+  var clipReady = {}, clipEl = {};
+  function preloadClips() {
+    SFX_IDS.forEach(function (id) {
+      var a = new Audio(); a.preload = 'auto';
+      a.addEventListener('canplaythrough', function () { clipReady[id] = true; });
+      a.src = 'assets/sfx/' + id + '.mp3';
+      clipEl[id] = a;
+    });
+  }
+  function playClip(id) {
+    if (LS.muted || !clipReady[id]) return false; // not loaded -> caller uses synth
+    try { var a = clipEl[id]; a.currentTime = 0; var p = a.play(); if (p && p.catch) p.catch(function () { }); return true; }
+    catch (e) { return false; }
+  }
 
   function kaching(amount) {
     Snd.coin();
@@ -792,6 +823,7 @@
     el('mute-toggle').onclick = function () { LS.muted = !LS.muted; if (!LS.muted) { ensureCtx(); Snd.pick(); } refreshHud(); };
     el('victory-btn').onclick = function () { hide('victory-overlay'); hide('result-overlay'); nextCustomer(); };
     preloadArt();
+    preloadClips();
 
     if (location.hash.indexOf('selftest') !== -1) runSelfTest();
     if (location.hash.indexOf('nointro') !== -1) markSeen(C.UNLOCK_ORDER);

@@ -106,6 +106,24 @@ python3 tools/generate-art.py --only dino,pepperoni,shop
 is gitignored. The key MUST NOT be committed or placed in any game file. Generating
 images costs money; the script prints the count before spending.
 
+## Sound
+
+Most sounds are **synthesized in-browser** by a small WebAudio kit in `game-ui.js`
+(place, box, coin, success/perfect, fail, fanfares, a crowd cheer), so they need no
+files and work offline and from `file://`. A mute toggle in the HUD persists in
+`localStorage`.
+
+Optionally, richer recorded clips can be generated for the big moments:
+
+```
+python3 tools/generate-sfx.py            # writes assets/sfx/<id>.mp3
+```
+
+It reads `ELEVENLABS_API_KEY` from the environment or `./.env` (gitignored) and uses
+ElevenLabs' text-to-sound-effects API. When a clip exists it is played (via an
+`HTMLAudioElement`, which works from `file://`); when absent, the synth kit is used
+instead, so the game sounds complete with or without the clips.
+
 ## Privacy
 
 The game makes **no network requests** and uses **no accounts, servers, cookies, or
