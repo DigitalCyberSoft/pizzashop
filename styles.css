@@ -124,12 +124,18 @@ button.eraser.on { background: var(--ink); color: #fff; }
    a Ready? button. Held up until the player has read the order; on Ready the
    card folds up toward the customer panel and the timers begin. */
 .order-intro { z-index: 58; background-size: cover; background-position: center; }
-.oi-card { background: rgba(255,255,255,.95); border-radius: 26px; padding: 22px 26px 26px; max-width: 460px; width: 88%;
+.oi-card { background: rgba(255,255,255,.95); border-radius: 26px; padding: 24px 30px 28px; max-width: 720px; width: 92%;
   text-align: center; box-shadow: var(--shadow); transform-origin: top center;
   transition: transform .46s cubic-bezier(.4,.0,.2,1), opacity .46s ease; }
 .oi-face { width: 152px; height: 152px; border-radius: 22px; object-fit: cover; box-shadow: 0 6px 18px rgba(0,0,0,.3); }
-.oi-name { font-size: 1.45rem; font-weight: 800; color: #6a4a22; margin: 12px 0 8px; }
-.oi-bubble { font-size: 1.3rem; font-weight: 600; color: #3a2a16; line-height: 1.42; margin-bottom: 20px; }
+.oi-name { font-size: 1.45rem; font-weight: 800; color: #6a4a22; margin: 12px 0 4px; }
+/* same speech bubble as the in-game #bubble (white, ink border, tail), here with
+   the tail pointing UP toward the character above it. */
+.oi-bubble { position: relative; background: #fff; border: 3px solid var(--ink); border-radius: 16px;
+  padding: 14px 18px; font-size: 1.25rem; line-height: 1.42; font-weight: 600; color: #3a2a16;
+  text-align: left; margin: 16px 0 22px; }
+.oi-bubble:after { content: ''; position: absolute; top: -16px; left: 50%; transform: translateX(-50%);
+  border: 8px solid transparent; border-bottom-color: var(--ink); }
 #oi-ready { width: 100%; }
 .order-intro.folding .oi-card { transform: translateY(-44vh) scale(.32); opacity: 0; }
 .card { background: #fff; border-radius: 22px; padding: 26px 28px; max-width: 540px; width: 90%; box-shadow: var(--shadow); text-align: center; }
