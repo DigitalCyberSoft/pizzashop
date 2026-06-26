@@ -83,6 +83,36 @@
     return svg;
   }
 
+  // a row of food emoji, for the category terms (meat / veg / fruit / silly) that
+  // are about which toppings belong together, not about where they sit.
+  function iconRow(emojis) {
+    var d = document.createElement('div'); d.className = 'gloss-icons';
+    emojis.forEach(function (e) { var s = document.createElement('span'); s.textContent = e; d.appendChild(s); });
+    return d;
+  }
+  // three colour swatches for the three bases, each labelled.
+  var BASE_TINT = { tomato: '#cf3a22', cheese: '#f1c40f', bbq: '#9c5a23' };
+  function baseSwatches() {
+    var d = document.createElement('div'); d.className = 'gloss-swatches';
+    ['tomato', 'cheese', 'bbq'].forEach(function (b) {
+      var w = document.createElement('div'); w.className = 'gloss-swatch';
+      var dot = document.createElement('span'); dot.className = 'gloss-dot'; dot.style.background = BASE_TINT[b];
+      var lab = document.createElement('span'); lab.textContent = b;
+      w.appendChild(dot); w.appendChild(lab); d.appendChild(w);
+    });
+    return d;
+  }
+  // a recipe card: the named pizza, its base swatch, and its topping icons.
+  function recipeCard(name, base, icons) {
+    var d = document.createElement('div'); d.className = 'gloss-recipe';
+    var n = document.createElement('div'); n.className = 'gloss-recipe-name'; n.textContent = name;
+    var row = iconRow([].concat(icons));
+    var dot = document.createElement('span'); dot.className = 'gloss-dot'; dot.style.background = BASE_TINT[base];
+    row.insertBefore(dot, row.firstChild);
+    d.appendChild(n); d.appendChild(row);
+    return d;
+  }
+
   // The glossary. `syn` are phrases linkified in text (longest win, first per term).
   var TERMS = [
     { id: 'whole', label: 'Whole', syn: ['the whole pizza', 'whole'], def: 'The whole pizza means every single slice, all the way around.', math: 'all 8 slices = 1 whole (8/8)', demo: function () { return lit(REG.whole); } },
@@ -97,7 +127,18 @@
     { id: 'diagonal', label: 'Diagonal', syn: ['diagonally opposite', 'diagonally', 'diagonal', 'corner to corner'], def: 'Diagonal quarters are corner to corner from each other.', math: 'two quarters straight across = opposite corners', demo: function () { return lit(REG['top-right'].concat(REG['bottom-left'])); } },
     { id: 'intersection', label: 'Intersection', syn: ['intersection', 'overlap', 'where they meet', 'in both', 'meets', 'both'], def: 'The intersection is where two groups overlap — the part that belongs to BOTH. Here blue is one half, green is the other, and the orange slices are in both.', math: 'in A AND in B = the overlap', demo: function () { return venn(REG.top, REG.right); } },
     { id: 'moreThan', label: 'More than', syn: ['more than'], def: 'More than a number means you need a bigger amount than that — at least one extra.', math: 'more than 2 = 3, 4, 5 ... (greater than)', demo: function () { return numberLine(6, 3, 6); } },
-    { id: 'fewerThan', label: 'Fewer than', syn: ['no more than', 'fewer than', 'less than'], def: 'Fewer than a number means you need a smaller amount than that.', math: 'fewer than 5 = 4, 3, 2, 1 (less than)', demo: function () { return numberLine(6, 1, 4); } }
+    { id: 'fewerThan', label: 'Fewer than', syn: ['no more than', 'fewer than', 'less than'], def: 'Fewer than a number means you need a smaller amount than that.', math: 'fewer than 5 = 4, 3, 2, 1 (less than)', demo: function () { return numberLine(6, 1, 4); } },
+    // ---- negation / spatial concepts that orders use but had no card ----
+    { id: 'except', label: 'Except', syn: ['everything except', 'all but', 'except for', 'except', 'without'], def: 'Except means do the whole thing, but leave that one part out.', math: 'all 8 − the bit named = what you cover', demo: function () { return miniPizza((function () { var f = fillSet(REG.whole, ACCENT); REG['top-right'].forEach(function (i) { f[i] = DIM; }); return f; })()); } },
+    { id: 'notTouch', label: 'Not touching', syn: ['must not touch', 'never touch', 'do not touch', "don't touch", 'not touching', 'kept apart', 'apart'], def: 'Not touching means leave a gap so two groups never share an edge. Here the meat (blue) and the veg (green) are kept apart.', math: 'leave at least one empty slice between them', demo: function () { return miniPizza((function () { var f = {}; for (var i = 0; i < N; i++) f[i] = CRUST; [0, 1].forEach(function (i) { f[i] = TINT_A; }); [4, 5].forEach(function (i) { f[i] = TINT_B; }); return f; })()); } },
+    // ---- food categories: which toppings belong together ----
+    { id: 'meat', label: 'Meat', syn: ['meats', 'meat'], def: 'Meat toppings come from animals: pepperoni, ham, bacon, sausage, meatball and chicken.', math: '6 meats in the kitchen', demo: function () { return iconRow(['🔴', '🍖', '🥓', '🌭', '🧆', '🍗']); } },
+    { id: 'vegetable', label: 'Vegetable', syn: ['vegetables', 'veggies', 'vegetable'], def: 'Vegetables are plant toppings: mushroom, pepper, onion, olive, spinach and sweetcorn. Some silly ones, like broccoli, count too.', math: 'a vegetable is a plant you eat', demo: function () { return iconRow(['🍄', '🫑', '🧅', '⚫', '🍃', '🌽']); } },
+    { id: 'fruit', label: 'Fruit', syn: ['fruits', 'fruit'], def: 'Fruit toppings are sweet: pineapple, banana and raisins.', math: 'only 3 fruits on the menu', demo: function () { return iconRow(['🍍', '🍌', '🝤']); } },
+    { id: 'silly', label: 'Silly topping', syn: ['silly toppings', 'silly topping', 'silly'], def: "Silly toppings are funny foods you don't usually see on a pizza, like broccoli, banana, marshmallow and fish heads.", math: 'a topping can be silly AND a vegetable (broccoli!)', demo: function () { return iconRow(['🥦', '🍌', '☁️', '🐟']); } },
+    // ---- bases and named pizzas ----
+    { id: 'base', label: 'Base', syn: ['base', 'sauce'], def: 'The base is the sauce you lay down first, before any toppings. There are three: tomato, cheese and BBQ.', math: 'every slice gets exactly one base', demo: function () { return baseSwatches(); } },
+    { id: 'recipe', label: 'Named pizza', syn: ['named pizza', 'recipe'], def: 'A named pizza is a recipe: the name stands for a fixed set of toppings. A Hawaiian means ham and pineapple on a tomato base.', math: 'one name = one base + its toppings', demo: function () { return recipeCard('Hawaiian', 'tomato', ['🍖', '🍍']); } }
   ];
   var BY_ID = {}; TERMS.forEach(function (t) { BY_ID[t.id] = t; });
 

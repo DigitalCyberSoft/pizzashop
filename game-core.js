@@ -1379,6 +1379,28 @@
     return { tier: 1, text: 'A whole tomato-base pizza, all ' + tn(av[0]) + '.', acceptable: pinnedAcc(L), teach: null, novelty: false, key: 'fallback' };
   }
 
+  // Each template maps to the single idea it teaches, so the result screen can
+  // open with a plain-English explanation of the CONCEPT (see Glossary.CONCEPTS)
+  // instead of a per-slice diff. Templates absent here fall back to term
+  // detection on the order text, so this need not be exhaustive: only list a
+  // template when its hand-authored concept sentence beats the auto-detected one.
+  var CONCEPT_BY_TEMPLATE = {
+    t1_whole: 'whole', t_doubleWhole: 'whole', t_comboWhole: 'whole',
+    t2_halfHalf: 'half', t_doubleHalf: 'half', t_tripleHalf: 'half', t_comboHalves: 'half',
+    t4_quarterRest: 'quarter', t4_twoQuarters: 'quarter', t4_threeQuarters: 'quarter',
+    t8_fourQuarters: 'quarter', t_threeRegion: 'quarter', t_comboQuarter: 'quarter',
+    t9_quarterRecipes: 'quarter', t7_share: 'quarter',
+    t5_oneSlice: 'slice',
+    t5_twoAdjacent: 'nextTo', t5_threeAdjacent: 'threeInRow',
+    t6_oppositeOf: 'opposite',
+    t6_diagonalQuarters: 'diagonal', t7_namedDiagonal: 'diagonal',
+    t6_exceptQuarter: 'except', t7_negationBase: 'except', t7_nestedException: 'except',
+    t7_alternating: 'everyOther', t7_ordinalRun: 'ordinalRun',
+    t_catCountWhole: 'catCount', t_catCountHalves: 'catCount', t_sillyEvery: 'catCount', t_fruitEvery: 'catCount',
+    t_countCompare: 'compare', t7_layerConditional: 'intersection',
+    t_catSeparate: 'notTouch', t_dietaryShare: 'notTouch', t_gapShare: 'notTouch'
+  };
+
   function buildOne(rng, av, unlocked, tier, taught) {
     for (var t = tier; t >= 1; t--) {
       var temps = templatesForTier(t).slice();
@@ -1387,6 +1409,7 @@
         var order = tmpl(rng, av, unlocked, taught);
         if (order) {
           order.tier = t; order.core = order.text;
+          if (order.concept === undefined) order.concept = CONCEPT_BY_TEMPLATE[tmpl.name] || null;
           order.text = compose(rng, order.text, t, collectToppings(order.acceptable[0]));
           if (order.teach === undefined) order.teach = null;
           return order;
