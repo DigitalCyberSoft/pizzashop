@@ -1,0 +1,456 @@
+{
+  "generated_at": "2026-06-26T01:58:39.772Z",
+  "model": "gpt-5.5",
+  "levels": {
+    "1": {
+      "model_used": "gpt-5.5",
+      "variations": [
+        {
+          "order": "Please make me a whole pizza on a tomato base, covered all over in pepperoni.",
+          "layout": "All 8 wedges have a tomato base with pepperoni."
+        },
+        {
+          "order": "My sister would like a whole pizza on a cheese base with mushroom on every slice.",
+          "layout": "All 8 wedges have a cheese base with mushroom."
+        },
+        {
+          "order": "Can I have a whole pizza on a bbq base, covered all over in pineapple?",
+          "layout": "All 8 wedges have a bbq base with pineapple."
+        },
+        {
+          "order": "Dad wants a whole pizza on a tomato base with bacon on every slice.",
+          "layout": "All 8 wedges have a tomato base with bacon."
+        },
+        {
+          "order": "Please build a whole pizza on a cheese base, covered all over in sweetcorn.",
+          "layout": "All 8 wedges have a cheese base with sweetcorn."
+        },
+        {
+          "order": "For my party, I would like a whole pizza on a bbq base with marshmallow on every slice.",
+          "layout": "All 8 wedges have a bbq base with marshmallow."
+        },
+        {
+          "order": "Grandma asks for a whole pizza on a tomato base, covered all over in meatball.",
+          "layout": "All 8 wedges have a tomato base with meatball."
+        },
+        {
+          "order": "I would like a whole pizza on a cheese base with olive on every slice, please.",
+          "layout": "All 8 wedges have a cheese base with olive."
+        },
+        {
+          "order": "Make my teddy a whole pizza on a bbq base, covered all over in banana.",
+          "layout": "All 8 wedges have a bbq base with banana."
+        },
+        {
+          "order": "Please give me a whole pizza on a tomato base with spinach on every slice.",
+          "layout": "All 8 wedges have a tomato base with spinach."
+        }
+      ]
+    },
+    "2": {
+      "model_used": "gpt-5.5",
+      "variations": [
+        {
+          "order": "Please make my pizza with a cheese base all over, then cover the whole pizza in BOTH ham and pineapple together.",
+          "layout": "8 slices: cheese base on every slice; ham and pineapple together on every slice."
+        },
+        {
+          "order": "My little brother wants a tomato base all over, with one half mushroom and the other half sweetcorn.",
+          "layout": "8 slices: tomato base on every slice; 4 adjacent slices have mushroom, and the remaining 4 adjacent slices have sweetcorn."
+        },
+        {
+          "order": "I would like a bbq base all over, then cover the whole pizza in BOTH chicken and pepper together.",
+          "layout": "8 slices: bbq base on every slice; chicken and pepper together on every slice."
+        },
+        {
+          "order": "For my mum, make a cheese base all over, with one half sausage and the other half onion.",
+          "layout": "8 slices: cheese base on every slice; 4 adjacent slices have sausage, and the remaining 4 adjacent slices have onion."
+        },
+        {
+          "order": "Please build a tomato base all over, then cover the whole pizza in BOTH bacon and banana together.",
+          "layout": "8 slices: tomato base on every slice; bacon and banana together on every slice."
+        },
+        {
+          "order": "My grandad asks for a bbq base all over, with one half meatball and the other half spinach.",
+          "layout": "8 slices: bbq base on every slice; 4 adjacent slices have meatball, and the remaining 4 adjacent slices have spinach."
+        },
+        {
+          "order": "I want a cheese base all over, then cover the whole pizza in BOTH pepperoni and olive together.",
+          "layout": "8 slices: cheese base on every slice; pepperoni and olive together on every slice."
+        },
+        {
+          "order": "For my birthday lunch, please make a tomato base all over, with one half broccoli and the other half raisins.",
+          "layout": "8 slices: tomato base on every slice; 4 adjacent slices have broccoli, and the remaining 4 adjacent slices have raisins."
+        },
+        {
+          "order": "Please make a silly pizza with a bbq base all over, then cover the whole pizza in BOTH marshmallow and peas together.",
+          "layout": "8 slices: bbq base on every slice; marshmallow and peas together on every slice."
+        },
+        {
+          "order": "My cousin would like a cheese base all over, with one half green beans and the other half pepperoni.",
+          "layout": "8 slices: cheese base on every slice; 4 adjacent slices have green beans, and the remaining 4 adjacent slices have pepperoni."
+        }
+      ]
+    },
+    "3": {
+      "model_used": "gpt-5.5",
+      "variations": [
+        {
+          "order": "Please make a cheese base all over, with one half bacon AND mushroom on top of each other, and the other half sweetcorn.",
+          "layout": "8 slices: cheese base all over; 4 adjacent slices have bacon and mushroom, and the other 4 adjacent slices have sweetcorn."
+        },
+        {
+          "order": "Grandma asks for a tomato base everywhere, with sausage on just one quarter and peas on the other three quarters.",
+          "layout": "8 slices: tomato base all over; 2 adjacent slices have sausage, and the remaining 6 slices have peas."
+        },
+        {
+          "order": "I would like a bbq base all over, with pineapple on one half and ham on the other half.",
+          "layout": "8 slices: bbq base all over; 4 adjacent slices have pineapple, and the other 4 adjacent slices have ham."
+        },
+        {
+          "order": "My little brother wants a tomato base, with chicken AND onion stacked on one half, and banana on the other half.",
+          "layout": "8 slices: tomato base all over; 4 adjacent slices have chicken and onion, and the other 4 adjacent slices have banana."
+        },
+        {
+          "order": "Can we have a cheese base everywhere, with olive on just one quarter and the other three quarters left as base only?",
+          "layout": "8 slices: cheese base all over; 2 adjacent slices have olive, and the remaining 6 slices have no toppings."
+        },
+        {
+          "order": "For our picnic pizza, please use a bbq base all over, then put marshmallow on one quarter and pepperoni on the other three quarters.",
+          "layout": "8 slices: bbq base all over; 2 adjacent slices have marshmallow, and the remaining 6 slices have pepperoni."
+        },
+        {
+          "order": "Mum would like a tomato base everywhere, with one half meatball AND spinach together, and the other half raisins.",
+          "layout": "8 slices: tomato base all over; 4 adjacent slices have meatball and spinach, and the other 4 adjacent slices have raisins."
+        },
+        {
+          "order": "Please build a bbq base, with broccoli on just one quarter and sausage on the other three quarters.",
+          "layout": "8 slices: bbq base all over; 2 adjacent slices have broccoli, and the remaining 6 slices have sausage."
+        },
+        {
+          "order": "Our table wants a cheese base all over, with pepper AND extra cheese stacked on one half and chicken on the other half.",
+          "layout": "8 slices: cheese base all over; 4 adjacent slices have pepper and extra cheese, and the other 4 adjacent slices have chicken."
+        },
+        {
+          "order": "Could you make a tomato base everywhere, with beetroot on one quarter and green beans on the other three quarters?",
+          "layout": "8 slices: tomato base all over; 2 adjacent slices have beetroot, and the remaining 6 slices have green beans."
+        }
+      ]
+    },
+    "4": {
+      "model_used": "gpt-5.5",
+      "variations": [
+        {
+          "order": "My little sister wants a cheese base everywhere, with ham and sweetcorn on one whole half, mushroom on one quarter of the other half, and peas on the last quarter.",
+          "layout": "Uniform cheese base; one 4-slice half has ham+sweetcorn, and the opposite 4-slice half is split into two 2-slice quarters with mushroom and peas."
+        },
+        {
+          "order": "Please make my picnic pizza on a tomato base, with pepperoni on one half, spinach on one quarter of the other half, and pineapple on the quarter next to it.",
+          "layout": "Uniform tomato base; one 4-slice half has pepperoni, and the other half is two adjacent 2-slice quarters with spinach and pineapple."
+        },
+        {
+          "order": "For my robot party, I would like a bbq base all over, chicken on one quarter, bacon on the quarter straight across from it, and olive on the other two quarters.",
+          "layout": "Uniform bbq base; one 2-slice quarter has chicken, the opposite 2-slice quarter has bacon, and the remaining two quarters have olive."
+        },
+        {
+          "order": "My dad asks for a tomato base everywhere, with sausage and onion on one whole half, broccoli on one quarter of the other half, and banana on the last quarter.",
+          "layout": "Uniform tomato base; one 4-slice half has sausage+onion, and the opposite half is split into broccoli on one 2-slice quarter and banana on the other."
+        },
+        {
+          "order": "Can I have a cheese base pizza with meatball on one quarter, marshmallow on the quarter straight across from it, and pepper on the other two quarters?",
+          "layout": "Uniform cheese base; one 2-slice quarter has meatball, the opposite quarter has marshmallow, and the two remaining quarters have pepper."
+        },
+        {
+          "order": "My grandma wants a bbq base on every slice, with mushroom on one half, ham and pineapple on one quarter of the other half, and onion on the quarter beside it.",
+          "layout": "Uniform bbq base; one 4-slice half has mushroom, and the other half is two adjacent 2-slice quarters with ham+pineapple and onion."
+        },
+        {
+          "order": "Please build my rainy-day pizza with a tomato base, bacon on one quarter, sweetcorn and extra cheese on the quarter straight across from it, and spinach on the other two quarters.",
+          "layout": "Uniform tomato base; one 2-slice quarter has bacon, the opposite quarter has sweetcorn+extra cheese, and the remaining two quarters have spinach."
+        },
+        {
+          "order": "My cousin would like a cheese base everywhere, with sausage on one whole half, beetroot on one quarter of the other half, and chicken and peas on the last quarter.",
+          "layout": "Uniform cheese base; one 4-slice half has sausage, and the opposite half is split into beetroot on one 2-slice quarter and chicken+peas on the other."
+        },
+        {
+          "order": "For my teddy bear, make a bbq base all over, with pepperoni and mushroom on one quarter, raisins on the quarter straight across from it, and green beans on the other two quarters.",
+          "layout": "Uniform bbq base; one 2-slice quarter has pepperoni+mushroom, the opposite quarter has raisins, and the remaining two quarters have green beans."
+        },
+        {
+          "order": "I need a tomato base pizza for my best friend, with chilli on one half, Brussels sprout and bacon on one quarter of the other half, and sweetcorn on the quarter next to it.",
+          "layout": "Uniform tomato base; one 4-slice half has chilli, and the other half is two adjacent 2-slice quarters with Brussels sprout+bacon and sweetcorn."
+        }
+      ]
+    },
+    "5": {
+      "model_used": "gpt-5.5",
+      "variations": [
+        {
+          "order": "My grandad would like a cheese base with three quarters mushroom and just one quarter bacon.",
+          "layout": "All slices use cheese base; one quarter has bacon, and the other three quarters have mushroom."
+        },
+        {
+          "order": "A tomato base, please. Put chicken on one quarter and sweetcorn on the quarter straight across from it. The other two quarters get olive.",
+          "layout": "All slices use tomato base; opposite quarters have chicken and sweetcorn, and the remaining two quarters have olive."
+        },
+        {
+          "order": "For my picnic pizza, I want a BBQ base with three quarters pepperoni and just one quarter pineapple.",
+          "layout": "All slices use BBQ base; one quarter has pineapple, and the other three quarters have pepperoni."
+        },
+        {
+          "order": "Please make a cheese base. Put broccoli on one quarter and sausage on the quarter straight across from it. The other two quarters get onion.",
+          "layout": "All slices use cheese base; opposite quarters have broccoli and sausage, and the remaining two quarters have onion."
+        },
+        {
+          "order": "My little sister wants a tomato base with three quarters marshmallow and just one quarter peas.",
+          "layout": "All slices use tomato base; one quarter has peas, and the other three quarters have marshmallow."
+        },
+        {
+          "order": "A BBQ base for me, please. Put ham on one quarter and spinach on the quarter straight across from it. The other two quarters get mushroom.",
+          "layout": "All slices use BBQ base; opposite quarters have ham and spinach, and the remaining two quarters have mushroom."
+        },
+        {
+          "order": "For a funny party pizza, make a cheese base with three quarters banana and just one quarter chilli.",
+          "layout": "All slices use cheese base; one quarter has chilli, and the other three quarters have banana."
+        },
+        {
+          "order": "My cousin asks for a tomato base. Put meatball on one quarter and green beans on the quarter straight across from it. The other two quarters get raisins.",
+          "layout": "All slices use tomato base; opposite quarters have meatball and green beans, and the remaining two quarters have raisins."
+        },
+        {
+          "order": "I would like a BBQ base with three quarters extra cheese and just one quarter beetroot.",
+          "layout": "All slices use BBQ base; one quarter has beetroot, and the other three quarters have extra cheese."
+        },
+        {
+          "order": "Please build a cheese base pizza. Put Brussels sprout on one quarter and bacon on the quarter straight across from it. The other two quarters get pineapple.",
+          "layout": "All slices use cheese base; opposite quarters have Brussels sprout and bacon, and the remaining two quarters have pineapple."
+        }
+      ]
+    },
+    "6": {
+      "model_used": "gpt-5.5",
+      "variations": [
+        {
+          "order": "Please make my pizza on a tomato base, with just one single slice of ham and all the rest sweetcorn.",
+          "layout": "All 8 slices have tomato base; 1 slice has ham, and the other 7 slices have sweetcorn."
+        },
+        {
+          "order": "My little sister wants a cheese base with two slices of banana right next to each other and all the rest peas.",
+          "layout": "All 8 slices have cheese base; 2 adjacent slices have banana, and the other 6 slices have peas."
+        },
+        {
+          "order": "I would like a bbq base, just one single slice of chicken, and all the rest onion.",
+          "layout": "All 8 slices have bbq base; 1 slice has chicken, and the other 7 slices have onion."
+        },
+        {
+          "order": "For my lunch pizza, use a cheese base, put two slices of marshmallow next to each other, and make all the rest broccoli.",
+          "layout": "All 8 slices have cheese base; 2 adjacent slices have marshmallow, and the other 6 slices have broccoli."
+        },
+        {
+          "order": "Grandma asks for a tomato base with just one single slice of bacon and all the rest spinach.",
+          "layout": "All 8 slices have tomato base; 1 slice has bacon, and the other 7 slices have spinach."
+        },
+        {
+          "order": "Can I have a bbq base with two pepperoni slices right next to each other and all the rest mushroom?",
+          "layout": "All 8 slices have bbq base; 2 adjacent slices have pepperoni, and the other 6 slices have mushroom."
+        },
+        {
+          "order": "My best friend wants a cheese base, just one single slice of meatball, and all the rest pineapple.",
+          "layout": "All 8 slices have cheese base; 1 slice has meatball, and the other 7 slices have pineapple."
+        },
+        {
+          "order": "Please build a tomato base pizza with two slices of beetroot next to each other and all the rest sausage.",
+          "layout": "All 8 slices have tomato base; 2 adjacent slices have beetroot, and the other 6 slices have sausage."
+        },
+        {
+          "order": "For the party, we need a bbq base with just one single slice of raisins and all the rest green beans.",
+          "layout": "All 8 slices have bbq base; 1 slice has raisins, and the other 7 slices have green beans."
+        },
+        {
+          "order": "My cousin would like a cheese base, two slices of extra cheese right next to each other, and all the rest olive.",
+          "layout": "All 8 slices have cheese base; 2 adjacent slices have extra cheese, and the other 6 slices have olive."
+        }
+      ]
+    },
+    "7": {
+      "model_used": "gpt-5.5",
+      "variations": [
+        {
+          "order": "I would like a bbq base with two slices of sausage right next to each other, and chicken on all the rest.",
+          "layout": "All 8 slices have bbq base; 2 adjacent slices have sausage, and the other 6 slices have chicken."
+        },
+        {
+          "order": "Please make mine on a tomato base with three slices in a row of pineapple, and mushroom on every other slice.",
+          "layout": "All 8 slices have tomato base; 3 consecutive slices have pineapple, and the remaining 5 slices have mushroom."
+        },
+        {
+          "order": "My little brother wants a cheese base, two touching slices with raisins, and pepperoni on all the rest.",
+          "layout": "All 8 slices have cheese base; 2 adjacent slices have raisins, and the other 6 slices have pepperoni."
+        },
+        {
+          "order": "For my party pizza, please use a bbq base, put bacon on three slices in a row, and put sweetcorn on the rest.",
+          "layout": "All 8 slices have bbq base; 3 consecutive slices have bacon, and the remaining 5 slices have sweetcorn."
+        },
+        {
+          "order": "Can I have a tomato base with two neighbor slices of spinach, and meatball on all the other slices?",
+          "layout": "All 8 slices have tomato base; 2 adjacent slices have spinach, and the other 6 slices have meatball."
+        },
+        {
+          "order": "Grandma asks for a cheese base with three slices in a row of olive, and ham on all the rest.",
+          "layout": "All 8 slices have cheese base; 3 consecutive slices have olive, and the remaining 5 slices have ham."
+        },
+        {
+          "order": "Please build a bbq base pizza with two slices of marshmallow right beside each other, and onion on every slice that is left.",
+          "layout": "All 8 slices have bbq base; 2 adjacent slices have marshmallow, and the other 6 slices have onion."
+        },
+        {
+          "order": "I want a tomato base with three toppings on one half: mushroom, pepper, and chicken; the other half has no toppings.",
+          "layout": "All 8 slices have tomato base; 4 consecutive slices have mushroom, pepper, and chicken, and the opposite 4 slices have no toppings."
+        },
+        {
+          "order": "My cousin wants a cheese base with banana, bacon, and extra cheese piled on one half, and no toppings on the other half.",
+          "layout": "All 8 slices have cheese base; 4 consecutive slices have banana, bacon, and extra cheese, and the opposite 4 slices have no toppings."
+        },
+        {
+          "order": "Please make a bbq base pizza with onion, sweetcorn, and sausage on one half, and leave the other half with just the base.",
+          "layout": "All 8 slices have bbq base; 4 consecutive slices have onion, sweetcorn, and sausage, and the opposite 4 slices have no toppings."
+        }
+      ]
+    },
+    "8": {
+      "model_used": "gpt-5.5",
+      "variations": [
+        {
+          "order": "Please make my brother a cheese-base pizza with one single slice topped with bacon, and every other slice topped with sweetcorn.",
+          "layout": "Cheese base on all 8 slices; exactly 1 slice has bacon, and the other 7 slices have sweetcorn."
+        },
+        {
+          "order": "For Grandma, I would like a tomato-base pizza where just one slice has pineapple, and all the rest have mushroom.",
+          "layout": "Tomato base on all 8 slices; exactly 1 slice has pineapple, and the other 7 slices have mushroom."
+        },
+        {
+          "order": "Can I have a bbq-base pizza with only one slice topped with chicken, while the other seven slices are topped with peas?",
+          "layout": "BBQ base on all 8 slices; exactly 1 slice has chicken, and the other 7 slices have peas."
+        },
+        {
+          "order": "My little cousin wants a cheese-base pizza with a single slice of marshmallow, and every other slice covered with pepperoni.",
+          "layout": "Cheese base on all 8 slices; exactly 1 slice has marshmallow, and the other 7 slices have pepperoni."
+        },
+        {
+          "order": "Please build a tomato-base pizza for Dad with just one slice topped with spinach, and all the remaining slices topped with sausage.",
+          "layout": "Tomato base on all 8 slices; exactly 1 slice has spinach, and the other 7 slices have sausage."
+        },
+        {
+          "order": "For my picnic pizza, use a bbq base everywhere; put ham, onion, and olive stacked together on one half, and put only broccoli on the other half.",
+          "layout": "BBQ base on all 8 slices; one half of 4 adjacent slices has ham, onion, and olive stacked, and the other 4 adjacent slices have only broccoli."
+        },
+        {
+          "order": "Please make a cheese-base pizza where one half gets mushroom, pepper, and extra cheese all on top of each other, and the other half gets only bacon.",
+          "layout": "Cheese base on all 8 slices; one half of 4 adjacent slices has mushroom, pepper, and extra cheese stacked, and the other 4 adjacent slices have only bacon."
+        },
+        {
+          "order": "My aunt would like a tomato-base pizza with sausage, sweetcorn, and spinach stacked on one half, and just raisins on the other half.",
+          "layout": "Tomato base on all 8 slices; one half of 4 adjacent slices has sausage, sweetcorn, and spinach stacked, and the other 4 adjacent slices have only raisins."
+        },
+        {
+          "order": "Can you make a bbq-base pizza for the party with chicken, pineapple, and chilli together on one half, and only green beans on the other half?",
+          "layout": "BBQ base on all 8 slices; one half of 4 adjacent slices has chicken, pineapple, and chilli stacked, and the other 4 adjacent slices have only green beans."
+        },
+        {
+          "order": "For my silly supper, I want a cheese-base pizza with banana, meatball, and onion stacked on one half, and just Brussels sprout on the other half.",
+          "layout": "Cheese base on all 8 slices; one half of 4 adjacent slices has banana, meatball, and onion stacked, and the other 4 adjacent slices have only Brussels sprout."
+        }
+      ]
+    },
+    "9": {
+      "model_used": "gpt-5.5",
+      "variations": [
+        {
+          "order": "Please make my pizza with a cheese base, put pepperoni on two slices next to each other, and put chicken on the two slices directly opposite them; the rest stays just cheese.",
+          "layout": "All 8 slices have cheese base; one adjacent pair has pepperoni, the opposite adjacent pair has chicken, and the other 4 slices have base only."
+        },
+        {
+          "order": "I want a tomato base with a fruit surprise: every slice gets exactly one fruit, and you may choose banana or pineapple for each slice.",
+          "layout": "All 8 slices have tomato base; each slice has exactly one fruit topping chosen from banana or pineapple."
+        },
+        {
+          "order": "Make it a bbq base with spinach on every slice except for any one quarter, which should stay plain bbq.",
+          "layout": "All 8 slices have bbq base; 6 slices have spinach, and any adjacent pair forming one quarter has base only."
+        },
+        {
+          "order": "For my party pizza, use a cheese base and give every single slice exactly one silly topping of your choice.",
+          "layout": "All 8 slices have cheese base; each slice has exactly one silly topping, chosen from marshmallow, raisins, chilli, or extra cheese."
+        },
+        {
+          "order": "Can I have a tomato base with mushroom on two slices next to each other, broccoli on the two slices straight across from them, and nothing else on the other slices?",
+          "layout": "All 8 slices have tomato base; one adjacent pair has mushroom, the opposite adjacent pair has broccoli, and the other 4 slices have base only."
+        },
+        {
+          "order": "My little brother wants a bbq base with sweetcorn everywhere except any one quarter, and that quarter should be just bbq.",
+          "layout": "All 8 slices have bbq base; 6 slices have sweetcorn, and any adjacent pair forming one quarter has base only."
+        },
+        {
+          "order": "Please build a cheesy fruit pizza: use a cheese base, then put exactly one fruit on each slice, choosing whichever fruit you like for each slice.",
+          "layout": "All 8 slices have cheese base; each slice has exactly one fruit topping chosen from banana or pineapple."
+        },
+        {
+          "order": "I would like a tomato base, with bacon on two slices that touch, meatball on the two slices directly opposite those, and only tomato base on the rest.",
+          "layout": "All 8 slices have tomato base; one adjacent pair has bacon, the opposite adjacent pair has meatball, and the other 4 slices have base only."
+        },
+        {
+          "order": "Make a silly bbq pizza for me: every slice has a bbq base and exactly one silly topping, with your choice on each slice.",
+          "layout": "All 8 slices have bbq base; each slice has exactly one silly topping, chosen from marshmallow, raisins, chilli, or extra cheese."
+        },
+        {
+          "order": "For Grandma, please make a tomato base with onion on all the slices except for any one quarter, which you leave with only tomato base.",
+          "layout": "All 8 slices have tomato base; 6 slices have onion, and any adjacent pair forming one quarter has base only."
+        }
+      ]
+    },
+    "10": {
+      "model_used": "gpt-5.5",
+      "variations": [
+        {
+          "order": "Grandpa would like a tomato base with chicken on every slice except one quarter, which stays just base.",
+          "layout": "Tomato base on all 8 slices; chicken on 6 slices; one pair of neighboring slices is base-only."
+        },
+        {
+          "order": "Please make my picnic pizza with a cheese base and mushroom on every slice except one quarter with no topping.",
+          "layout": "Cheese base on all 8 slices; mushroom on 6 slices; one pair of neighboring slices is base-only."
+        },
+        {
+          "order": "My friend asks for a bbq base, then sausage on every slice except one quarter, which should stay plain bbq.",
+          "layout": "BBQ base on all 8 slices; sausage on 6 slices; one pair of neighboring slices is base-only."
+        },
+        {
+          "order": "For my birthday, I want a tomato base with bacon on every slice except one quarter, and that quarter stays just tomato base.",
+          "layout": "Tomato base on all 8 slices; bacon on 6 slices; one pair of neighboring slices is base-only."
+        },
+        {
+          "order": "The twins want a cheese base with sweetcorn on every slice except one quarter, which has no topping at all.",
+          "layout": "Cheese base on all 8 slices; sweetcorn on 6 slices; one pair of neighboring slices is base-only."
+        },
+        {
+          "order": "Can I have a bbq base, then onion on every slice except one quarter, which stays just base?",
+          "layout": "BBQ base on all 8 slices; onion on 6 slices; one pair of neighboring slices is base-only."
+        },
+        {
+          "order": "I would like a tomato base, and every single slice gets exactly one fruit; you may choose pineapple or banana for each slice.",
+          "layout": "Tomato base on all 8 slices; each slice has exactly one fruit topping chosen by the player."
+        },
+        {
+          "order": "Make a cheese base for my fruit-loving cousin, with exactly one fruit on every slice, chosen however you like.",
+          "layout": "Cheese base on all 8 slices; each slice has exactly one fruit topping chosen by the player."
+        },
+        {
+          "order": "Please build a silly bbq pizza where every slice gets exactly one silly topping of your choice.",
+          "layout": "BBQ base on all 8 slices; each slice has exactly one silly topping chosen by the player."
+        },
+        {
+          "order": "My dragon wants a tomato base with any 3 different silly toppings on every single slice.",
+          "layout": "Tomato base on all 8 slices; the same 3 different silly toppings chosen by the player are on all 8 slices."
+        }
+      ]
+    }
+  }
+}
