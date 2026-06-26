@@ -1743,7 +1743,9 @@
         cands.push({ spec: makeSlice(b, []), label: b === 'cheese' ? 'cheese' : (b === 'bbq' ? 'BBQ' : 'plain tomato'), recipe: null });
       }
     });
-    av.forEach(function (t) { cands.push({ spec: makeSlice('tomato', [t]), label: tn(t), recipe: null }); });
+    // single-topping kinds STATE their base (a child must know what base to lay;
+    // "6 slices of pepperoni" alone is under-specified -> "...on a tomato base").
+    av.forEach(function (t) { cands.push({ spec: makeSlice('tomato', [t]), label: tn(t) + ' on a tomato base', recipe: null }); });
     return cands;
   }
   function composition(rng, total, parts) {
@@ -1773,8 +1775,10 @@
       return k.count + ' slices of ' + k.label;
     });
     if (phrasing === 'count') parts[parts.length - 1] = 'the rest ' + kinds[kinds.length - 1].label;
-    var text = 'For my two pizzas (16 slices in all): ' + listJoin(parts) + '. Build them in any order you like!';
+    // scaffold any recipe the player has not been taught yet (base + toppings).
     var names = untaught(kinds.map(function (k) { return k.recipe; }).filter(Boolean), taught);
+    var text = 'For my two pizzas (16 slices in all): ' + listJoin(parts) + '. Build them in any order you like!' +
+      (names.length ? recipeReminder(names) : '');
     return { pizzas: 2, mode: 'B', pool: { total: 16, phrasing: phrasing, kinds: kinds }, canonical16: canon,
       acceptable: [canon.slice(0, 8)], text: text, concept: 'fraction',
       teach: names.length ? { type: 'recipe', names: names } : null };
