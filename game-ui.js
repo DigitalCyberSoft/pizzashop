@@ -708,19 +708,6 @@
     if (bar && left <= 8000) bar.style.background = 'linear-gradient(90deg,#ff9d3c,#ff6a00)';
   }
   function stopPatienceTimer() { if (S.patienceTimer) { clearInterval(S.patienceTimer); S.patienceTimer = null; } }
-  // Freeze both countdowns (e.g. while a glossary is open) and resume exactly where
-  // they left off, so looking up a word never costs the tip or the customer's
-  // patience. No-ops if no order is running or a timer already finished.
-  function pauseTimers() {
-    if (!S) return;
-    if (S.tipTimer) { S.tipPausedLeft = S.tipDeadline - Date.now(); clearInterval(S.tipTimer); S.tipTimer = null; }
-    if (S.patienceTimer) { S.patPausedLeft = S.patienceDeadline - Date.now(); clearInterval(S.patienceTimer); S.patienceTimer = null; }
-  }
-  function resumeTimers() {
-    if (!S) return;
-    if (S.tipPausedLeft != null) { S.tipDeadline = Date.now() + S.tipPausedLeft; S.tipPausedLeft = null; S.tipTimer = setInterval(tickTip, 100); tickTip(); }
-    if (S.patPausedLeft != null) { S.patienceDeadline = Date.now() + S.patPausedLeft; S.patPausedLeft = null; S.patienceTimer = setInterval(tickPatience, 100); tickPatience(); }
-  }
 
   // ---- box it ----
   // Simple, explicit economy a kid can hold in their head: a pizza costs $3 of
@@ -1025,7 +1012,10 @@
     showResumeLevel();
     el('start-btn').onclick = function () { unlockAudio(); startGame(); };
     document.addEventListener('pointerdown', unlockAudio); // unlock audio on first touch anywhere
-    window.Glossary.init({ pause: pauseTimers, resume: resumeTimers });
+    // No pause/resume hooks: the playbill gives the player time to read the order
+    // BEFORE the timers start, so looking up a word or recipe mid-build no longer
+    // freezes the tip/patience countdown.
+    window.Glossary.init();
     // teach the glossary the recipe table so a clickable recipe name in an order
     // can show what is IN it (game-core knows the ingredients; the glossary does not).
     window.Glossary.registerRecipes(Object.keys(C.RECIPE).map(function (name) {

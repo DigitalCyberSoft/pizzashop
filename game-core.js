@@ -1724,24 +1724,42 @@
     }
     return true;
   }
-  // One whole-pizza "fill" for Mode A: a buildable recipe, or a single topping on
-  // a base, painted over all 8 slices. `named` renders its phrase (scaffolding the
-  // recipe definition the first time it is used).
-  function multiWholeFill(rng, av, unlocked) {
-    var recipes = buildableRecipes(unlocked);
+  // Mode A is the SIMPLE two-whole-pizzas idea (tiers 3-9). Cap the toppings a
+  // single named recipe may demand by tier, and never use a novelty combo here,
+  // so a level-3 order cannot ask a child to recall and hand-build a multi-topping
+  // oddity (e.g. "Gone Bananas") across two boards. Single-topping fills and the
+  // simplest classics still appear; the cap just keeps the combo size sane.
+  function recipeIsNovelty(name) {
+    return RECIPE[name].toppings.some(function (id) { return TOPPING[id] && TOPPING[id].novelty; });
+  }
+  function simpleFillRecipes(unlocked, tier) {
+    var cap = tier <= 4 ? 2 : (tier <= 6 ? 3 : 4);
+    return buildableRecipes(unlocked).filter(function (n) {
+      return RECIPE[n].toppings.length <= cap && !recipeIsNovelty(n);
+    });
+  }
+  // One whole-pizza "fill" for Mode A: a buildable recipe (tier-capped), or a
+  // single topping on a base, painted over all 8 slices. `named` renders its
+  // phrase (scaffolding the recipe definition the first time it is used).
+  function multiWholeFill(rng, av, unlocked, tier) {
+    var recipes = simpleFillRecipes(unlocked, tier);
     if (recipes.length && rng() < 0.6) {
       var name = pick(rng, recipes);
       return { layout: paintRecipe(emptyLayout(), REGION.whole, name), recipe: name,
         named: function (t) { return knownRecipe(name, t) ? 'a ' + name : 'a ' + name + ' (' + recipeDescribe(name) + ')'; } };
     }
-    var top = pick(rng, av), B = pickBase(rng, unlocked);
+    // single-topping fill also avoids novelty in this simple mode, so a low level
+    // can't ask for "a whole pizza covered in banana".
+    var pool = av.filter(function (t) { return !(TOPPING[t] && TOPPING[t].novelty); });
+    if (!pool.length) pool = av;
+    var top = pick(rng, pool), B = pickBase(rng, unlocked);
     return { layout: paint(emptyLayout(), REGION.whole, { base: B, addTopping: top }), recipe: null,
       named: function () { return 'a whole ' + baseWord(B) + ' base covered in ' + tn(top); } };
   }
-  function buildModeA(rng, av, unlocked, taught) {
+  function buildModeA(rng, av, unlocked, tier, taught) {
     if (!av.length) return null;
-    var f1 = multiWholeFill(rng, av, unlocked), f2 = multiWholeFill(rng, av, unlocked), guard = 0;
-    while (sameLayout(f1.layout, f2.layout) && guard++ < 8) f2 = multiWholeFill(rng, av, unlocked);
+    var f1 = multiWholeFill(rng, av, unlocked, tier), f2 = multiWholeFill(rng, av, unlocked, tier), guard = 0;
+    while (sameLayout(f1.layout, f2.layout) && guard++ < 8) f2 = multiWholeFill(rng, av, unlocked, tier);
     if (sameLayout(f1.layout, f2.layout)) return null;
     var boards = [{ acceptable: rotAcc(f1.layout) }, { acceptable: rotAcc(f2.layout) }];
     var names = untaught([f1.recipe, f2.recipe].filter(Boolean), taught);
@@ -1818,7 +1836,7 @@
     if (tier < 3) return null;
     return tier >= 10
       ? buildModeB(rng, av, unlocked, tier, taught)
-      : buildModeA(rng, av, unlocked, taught);
+      : buildModeA(rng, av, unlocked, tier, taught);
   }
   function multiSlices(order) {
     return order.mode === 'B' ? order.canonical16 : order.boards[0].acceptable[0].concat(order.boards[1].acceptable[0]);

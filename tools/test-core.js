@@ -655,6 +655,32 @@ function fillWild(L) {
   ok(!anyMulti, 'no multi orders without multiPizza:true (UI opt-in gate)');
 })();
 
+// ---- Mode A (the SIMPLE two-whole-pizzas mode, tiers 3-9) must stay simple at
+// low levels: no novelty combo (e.g. "Gone Bananas") and no recipe demanding more
+// toppings than the tier cap, sampled against the REALISTIC partial unlock the UI
+// uses (first 4+round(diff) of UNLOCK_ORDER), not the full inventory. ----
+(function () {
+  function unlockedFor(tier) { return Core.UNLOCK_ORDER.slice(0, Math.min(Core.UNLOCK_ORDER.length, 4 + Math.round(tier))); }
+  function cap(tier) { return tier <= 4 ? 2 : (tier <= 6 ? 3 : 4); }
+  var checkedA = 0;
+  for (var tier = 3; tier <= 9; tier++) {
+    var unlocked = unlockedFor(tier), av = Core.availableToppings(unlocked);
+    for (var seed = 1; seed <= 400; seed++) {
+      var o = Core.buildMultiPizza(lcg(seed * 31 + tier), av, unlocked, tier, []);
+      if (!o || o.mode !== 'A') continue;
+      checkedA++;
+      Core.multiSlices(o).forEach(function (s) {
+        var tops = s.toppings || [];
+        ok(tops.length <= cap(tier), 'Mode A tier ' + tier + ' slice within topping cap (' + tops.length + ' <= ' + cap(tier) + ')');
+        tops.forEach(function (t) {
+          ok(!(Core.TOPPING[t] && Core.TOPPING[t].novelty), 'Mode A tier ' + tier + ' uses no novelty topping (' + t + ')');
+        });
+      });
+    }
+  }
+  ok(checkedA > 0, 'Mode A low-tier simplicity test exercised orders (got ' + checkedA + ')');
+})();
+
 // ---- Every order must be BUILDABLE from the inventory unlocked at that level.
 // The game unlocks ingredients gradually (game-ui unlockedFor: the first
 // 4+round(difficulty) of UNLOCK_ORDER), so an order generated at a low level must
