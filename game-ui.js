@@ -111,17 +111,39 @@
   // dough and never gets an image.
   var BASE_IMG = ['tomato', 'cheese', 'bbq'];
   var BASE_IMG_OK = {};
-  function preloadArt() {
-    Object.keys(C.TOPPING).forEach(function (id) {
-      var im = new Image();
-      im.onload = function () { IMG_OK[id] = true; if (S && S.order) renderPizza(); };
-      im.src = 'assets/toppings/' + id + '.png';
-    });
-    BASE_IMG.forEach(function (id) {
-      var im = new Image();
-      im.onload = function () { BASE_IMG_OK[id] = true; if (S && S.order) renderPizza(); };
-      im.src = 'assets/bases/' + id + '.png';
-    });
+  // Loading screen: preload EVERYTHING a level needs (all toppings + bases, every
+  // character, the shopfront, and the saved level's kitchen scene) behind a
+  // progress bar, and only reveal the welcome screen when it is all ready. Each
+  // image is retained in WARM_CACHE (no GC mid-load); onerror also counts so a
+  // missing file can't hang the bar, and a hard timeout is the final backstop.
+  function loadingScreen(done) {
+    var ov = document.createElement('div'); ov.id = 'loading-overlay'; ov.className = 'overlay show';
+    ov.innerHTML = '<div class="loading-card"><div class="loading-emoji">🍕</div>' +
+      '<h2>Heating up the oven…</h2>' +
+      '<div class="loading-track"><div class="loading-fill" id="loading-fill"></div></div></div>';
+    document.body.appendChild(ov);
+    var items = [];
+    Object.keys(C.TOPPING).forEach(function (id) { items.push({ u: 'assets/toppings/' + id + '.png', top: id }); });
+    BASE_IMG.forEach(function (id) { items.push({ u: 'assets/bases/' + id + '.png', base: id }); });
+    C.CAST.forEach(function (c) { items.push({ u: 'assets/customers/' + c.id + '.png' }); });
+    var lvl = Math.max(1, Math.min(C.MAX_TIER, Math.round(LS.difficulty)));
+    items.push({ u: 'assets/customers/kid.png' }, { u: 'assets/scene/shopfront.png' },
+      { u: 'assets/scene/shop.png' }, { u: 'assets/scene/shop-' + lvl + '.png' });
+    var total = items.length, loaded = 0, finished = false;
+    function bump(it) {
+      if (it.top) IMG_OK[it.top] = true; else if (it.base) BASE_IMG_OK[it.base] = true;
+      loaded++;
+      var f = el('loading-fill'); if (f) f.style.width = Math.round(loaded / total * 100) + '%';
+      if (loaded >= total && !finished) finish();
+    }
+    function finish() {
+      finished = true;
+      ov.classList.add('done');
+      setTimeout(function () { if (ov.parentNode) ov.remove(); }, 400);
+      if (done) done();
+    }
+    items.forEach(function (it) { var im = new Image(); im.onload = im.onerror = function () { bump(it); }; im.src = it.u; WARM_CACHE.push(im); });
+    setTimeout(function () { if (!finished) finish(); }, 12000); // never hang on a stuck asset
   }
 
   // Warm the browser cache for every customer face and every shop scene so they
@@ -134,6 +156,7 @@
     C.CAST.forEach(function (c) { urls.push('assets/customers/' + c.id + '.png'); });
     urls.push('assets/customers/kid.png');
     urls.push('assets/scene/shop.png');
+    urls.push('assets/scene/shopfront.png');
     for (var t = 1; t <= C.MAX_TIER; t++) urls.push('assets/scene/shop-' + t + '.png');
     var i = 0;
     function next() {
@@ -180,8 +203,11 @@
     for (i = 0; i < 8; i++) {
       var sl = layout[i];
       if (sl.wildcard) { centreText(svg, i, '❓'); continue; }
-      var total = sl.toppings.length;
-      sl.toppings.forEach(function (t, ti) { scatterTopping(svg, i, t, ti, total); });
+      // catCount specs ("any N <category>") carry no toppings array; guard so the
+      // renderer never throws on a spec slice (the result's "what they wanted"
+      // pizza is a raw acceptable layout that may contain these).
+      var tops = sl.toppings || [];
+      tops.forEach(function (t, ti) { scatterTopping(svg, i, t, ti, tops.length); });
     }
     // crust ring on top. Set presentation attributes directly: the `fill:none`
     // CSS rule is scoped to `#pizza .crust`, so the compare previews (no #pizza id)
@@ -424,7 +450,10 @@
       // base-first is a training wheel for the early levels only. From level 6 on,
       // the player may place a topping on a bare slice — and forgetting the base
       // will simply lose marks at grading time.
-      if (slice.base === 'plain' && Math.round(S.difficulty || 1) <= 5) { flashHint('Put a base on this slice first! 🍅'); return false; }
+      // base-first is a 5-ROUND warmup, not a level gate: after 5 served orders the
+      // player may place a topping on a bare slice (and lose marks if they forget
+      // the base), regardless of which level they are on.
+      if (slice.base === 'plain' && S.served < 5) { flashHint('Put a base on this slice first! 🍅'); return false; }
       var ti = slice.toppings.indexOf(S.brush.id);
       if (ti === -1) { slice.toppings = slice.toppings.concat([S.brush.id]).sort(); Snd.place(); }
       else { slice.toppings.splice(ti, 1); Snd.erase(); } // tap again to remove
@@ -713,6 +742,7 @@
   }
   function boxIt() {
     if (!S || !S.order || S.awaitingStart) return; // can't box before Ready
+    if (el('result-overlay').classList.contains('show')) return; // already graded; ignore repeat clicks
     Snd.box();
     var fast = (Date.now() <= S.tipDeadline);
     stopTipTimer(); stopPatienceTimer();
@@ -825,7 +855,10 @@
   function miniFig(label, layout) {
     var fig = document.createElement('figure');
     var svg = document.createElementNS(SVGNS, 'svg');
-    drawPizza(svg, layout, 'mini' + (miniSeq++), 150);
+    // materialize catCount/wildcard specs to concrete sample toppings so the
+    // "what they wanted" pizza shows a real correct build (canonicalFill leaves
+    // already-concrete player slices untouched).
+    drawPizza(svg, canonicalFill(layout), 'mini' + (miniSeq++), 150);
     fig.appendChild(svg);
     var cap = document.createElement('figcaption'); cap.textContent = label; fig.appendChild(cap);
     return fig;
@@ -1014,9 +1047,9 @@
     el('meme-toggle').onclick = function () { LS.meme = !LS.meme; refreshHud(); };
     el('mute-toggle').onclick = function () { LS.muted = !LS.muted; if (!LS.muted) { unlockAudio(); Snd.pick(); } refreshHud(); };
     el('victory-btn').onclick = function () { hide('victory-overlay'); hide('result-overlay'); nextCustomer(); };
-    preloadArt();
+    loadingScreen();      // gate the welcome behind a progress bar until art is ready
     preloadClips();
-    deferPreloadAll();
+    deferPreloadAll();    // the remaining per-level kitchen scenes warm in the background
 
     if (location.hash.indexOf('selftest') !== -1) runSelfTest();
     if (location.hash.indexOf('glossary') !== -1) window.Glossary.openPage();

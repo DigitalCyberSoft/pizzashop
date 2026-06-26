@@ -1726,7 +1726,7 @@
     }
     var top = pick(rng, av), B = pickBase(rng, unlocked);
     return { layout: paint(emptyLayout(), REGION.whole, { base: B, addTopping: top }), recipe: null,
-      named: function () { return 'an all-' + tn(top) + ' ' + baseWord(B) + '-base pizza'; } };
+      named: function () { return 'a whole ' + baseWord(B) + ' base covered in ' + tn(top); } };
   }
   function buildModeA(rng, av, unlocked, taught) {
     if (!av.length) return null;

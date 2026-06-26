@@ -103,9 +103,12 @@ button.eraser.on { background: var(--ink); color: #fff; }
    stays a side rail. A live fraction strip sits under the boards for Mode B. */
 /* width:100% so the wrap fills the kitchen instead of shrinking to content (the
    flex column centers a shrink-to-fit block, which collapsed the boards tiny). */
-#multi-wrap { display: none; width: 100%; max-width: 860px; }
-#multi-wrap .boards { display: flex; gap: 22px; justify-content: center; align-items: flex-start; }
-#multi-wrap .board { flex: 1 1 0; max-width: 400px; margin: 0; text-align: center; }
+#multi-wrap { display: none; width: 100%; }
+#multi-wrap .boards { display: flex; gap: 2vw; justify-content: center; align-items: flex-start; }
+/* boards scale with the screen: each fills half the available width, capped by
+   viewport HEIGHT (max-width: 54vh) so two stay square and fit the kitchen on any
+   size. Big screen -> big pizzas; small screen -> they shrink. */
+#multi-wrap .board { flex: 1 1 0; max-width: 54vh; margin: 0; text-align: center; }
 #multi-wrap .board svg { width: 100%; height: auto; touch-action: none; }
 #multi-wrap .board figcaption { font-weight: 800; color: #6a4a22; margin-top: 2px; }
 #fraction-strip { margin: 12px auto 0; max-width: 560px; }
@@ -122,6 +125,16 @@ button.eraser.on { background: var(--ink); color: #fff; }
 /* ---- Overlays ---- */
 .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: center; justify-content: center; z-index: 50; }
 .overlay.show { display: flex; }
+
+/* Loading screen: shown over everything until all level art is preloaded. */
+#loading-overlay { z-index: 100; background: #2f1d0c; transition: opacity .4s ease; }
+#loading-overlay.done { opacity: 0; pointer-events: none; }
+.loading-card { background: #fff; border-radius: 24px; padding: 30px 42px; text-align: center; box-shadow: var(--shadow); }
+.loading-card h2 { margin: 14px 0 0; font-size: 1.5rem; }
+.loading-emoji { font-size: 4rem; line-height: 1; display: inline-block; animation: ovenspin 1.5s linear infinite; }
+@keyframes ovenspin { to { transform: rotate(360deg); } }
+.loading-track { width: 280px; max-width: 70vw; height: 18px; margin: 18px auto 0; background: #eaddc4; border-radius: 999px; overflow: hidden; box-shadow: inset 0 0 0 2px #d9c6a0; }
+.loading-fill { height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, #f0a500, #e8542a); transition: width .2s ease; }
 
 /* Order intro "playbill": the customer on the shop scene with the order text and
    a Ready? button. Held up until the player has read the order; on Ready the
