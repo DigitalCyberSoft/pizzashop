@@ -426,6 +426,8 @@
       var s = layout[i];
       if (s.wildcard) { taps += 2; continue; }
       if (s.base !== 'plain') taps += 1;
+      // category-count slices ("any 3 meats") carry a count, not a toppings array.
+      if (s.catCount) { taps += s.count; continue; }
       taps += s.toppings.length;
     }
     return taps;
@@ -478,7 +480,7 @@
     var seen = {}, regions = 0;
     for (var i = 0; i < 8; i++) {
       var s = layout[i];
-      var key = s.wildcard ? 'wild' : (s.base + '|' + s.toppings.join(','));
+      var key = s.wildcard ? 'wild' : (s.catCount ? ('cat:' + s.cat + s.count + '|' + s.base) : (s.base + '|' + s.toppings.join(',')));
       if (!seen[key]) { seen[key] = 1; regions++; }
     }
     return regions;
