@@ -5,12 +5,17 @@ All sound effects in this folder are from Kenney (www.kenney.nl) and are release
 under the Creative Commons Zero (CC0 1.0 Universal) public-domain dedication. No
 attribution is required; this file is provided as a courtesy and a record.
 
-Packs used (all CC0, from https://kenney.nl):
+Kenney packs (all CC0, from https://kenney.nl):
   - Interface Sounds   -> pick, place, erase, box, meh, fail, tipLost
-  - Music Jingles      -> success, perfect, fanfare, legend, cheer, sixseven
+  - Music Jingles      -> success, perfect, fanfare, legend, sixseven
   - Casino Audio       -> coin
 
-The .ogg originals were converted to mono mp3 (iOS Safari cannot play .ogg).
+cheer.mp3 -> a real crowd applause recording, CC0:
+  "applause-2" by sandermotions (Freesound #277021), via Wikimedia Commons
+  https://commons.wikimedia.org/wiki/File:277021_sandermotions_applause-2.wav
+  Trimmed to ~2.6s, faded, loudness-normalized, converted to mono mp3.
+
+The .ogg/.wav originals were converted to mono mp3 (iOS Safari cannot play .ogg).
 Regenerate or re-map in tools/ if you change the selection.
 
 CC0 1.0: https://creativecommons.org/publicdomain/zero/1.0/
