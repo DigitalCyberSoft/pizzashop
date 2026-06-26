@@ -832,7 +832,7 @@
     { who: 'the four of us on the football team', c: 'Two of us just', a: 'our captain likes', b: 'I like' },
     { who: 'my uncle, my auntie, my cousin and me', c: 'My uncle and auntie both', a: 'my cousin wants', b: 'I want' },
     { who: 'me, my robot, my cat and my goldfish', c: 'The robot and the cat both', a: 'my goldfish fancies', b: 'I fancy' },
-    { who: 'the four wizards in my book club', c: 'Two of the wizards just', a: 'the head wizard likes', b: 'I like' }
+    { who: 'me and the three wizards in my book club', c: 'Two of the wizards just', a: 'the head wizard likes', b: 'I like' }
   ];
   function t7_share(rng, av, un) {
     if (av.length < 2) return null;
@@ -2013,6 +2013,7 @@
     grade: grade, layoutScore: layoutScore, sliceScore: sliceScore, describeMistakes: describeMistakes,
     gradePool: gradePool, reduceFraction: reduceFraction, orderBuildable: orderBuildable,
     gradeMulti: gradeMulti, buildMultiPizza: buildMultiPizza, multiSlices: multiSlices,
+    SHARE_FAMILIES: SHARE_FAMILIES,
     CAST: CAST, DIALOGUE: DIALOGUE, reactionBand: reactionBand, pickReaction: pickReaction
   };
 });

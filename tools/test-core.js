@@ -268,6 +268,16 @@ function fillWild(L) {
   ok(firstNovelty > lastReal, 'every novelty ingredient unlocks after every real ingredient (novelty is last)');
   ok(firstNovelty >= 15, 'first novelty unlocks no earlier than ~tier 15 (index ' + firstNovelty + ')');
 
+  // four-person share orders (t7_share): each family names exactly 4 recipients
+  // and the speaker is one of them, so the 2+1+1 clause structure (two share
+  // cheese, one topping A, one topping B) assigns ALL FOUR quarters. The speaker
+  // is always the first-person "b" clause, so "who" MUST contain me/I/us; without
+  // it a quarter goes unassigned (the "four wizards in my book club ... and I"
+  // bug, where only 3 of the 4 wizards were covered).
+  Core.SHARE_FAMILIES.forEach(function (fam) {
+    ok(/\b(me|I|us)\b/.test(fam.who), 'share family names the speaker among the four recipients: "' + fam.who + '"');
+  });
+
   // tier 7 actually generates multi-topping slices AND names combo recipes
   var rng = lcg(555), multi = false, combo = false;
   var comboRe = /Hawaiian|Margherita|Meat Feast|Veggie Supreme|Pepperoni Classic|BBQ Chicken|Popeye|Dragon’s Breath|Cheesy|Gone Bananas|Lunchbox/;
