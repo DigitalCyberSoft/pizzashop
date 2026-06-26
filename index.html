@@ -211,6 +211,7 @@
             <li><b>Quarter</b> = 2 of 8 = 1/4. <i>"Pepperoni on the top-left quarter."</i></li>
             <li><b>Slice</b> = 1 of 8 = 1/8. <i>"Just one slice of pineapple."</i></li>
             <li><b>Sharing</b> turns words into a fraction. <i>"For me, my wife and our two kids"</i> → four quarters.</li>
+            <li><b>Uneven sharing</b> mixes division with "more than". <i>"Split my other half between Sam and Joey, but Sam eats more"</i> → Sam gets 3 slices, Joey 1.</li>
           </ul>
 
           <p class="cat"><b>Position and shape</b> — where things sit, and how slices relate.
@@ -269,6 +270,19 @@
             <li><b>May / optional / should / recommended</b>: your choice — doing it and skipping it are both fine.</li>
             <li><b>Must not / shall not</b>: never do it. <i>"You MUST NOT use any olives."</i> The game accepts the required parts, allows the optional ones either way, and marks the forbidden ones wrong.</li>
           </ul>
+
+          <p class="cat"><b>Under the hood: this is early Boolean logic</b>
+            <span class="why">Why: several of the constructs above are the exact building blocks of Boolean
+            algebra — the binary logic that all computer arithmetic is built from. It is genuine computational
+            thinking, dressed up as pizza, years before a child meets a truth table.</span></p>
+          <ul>
+            <li><b>AND</b>: <i>"both ham AND mushroom on every slice,"</i> or a topping that is <i>"a fruit AND silly"</i> (the intersection of two sets).</li>
+            <li><b>OR</b>: <i>"either ham or pineapple"</i> — at least one of the choices is true.</li>
+            <li><b>NOT</b>: <i>"no meat,"</i> <i>"must not,"</i> <i>"one slice should not have banana."</i></li>
+            <li><b>Exclusive OR (XOR)</b>: <i>"one or the other, but not both."</i></li>
+            <li><b>True / false</b>: <i>"is pepperoni a meat? Yes"</i> — evaluating a condition before acting on it.</li>
+          </ul>
+
           <p>"Vegetarian" is taught as a word (a pizza with <i>no meat</i>) rather than a graded rule:
             the game checks the slices, not the label.</p>
 
