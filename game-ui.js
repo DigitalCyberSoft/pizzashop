@@ -465,8 +465,13 @@
   }
   function startTipTimer(order) {
     var taps = countTaps(order.acceptable[0]);
-    // Scales with the work, but capped at 60s (the tip must feel earned).
-    S.tipWindowMs = Math.min(60000, Math.max(18000, Math.round((8 + taps * 1.9) * 1000)));
+    // Scales with the work, but the FLOOR is a generous 60s because a young
+    // child spends most of the window READING the order, not tapping, and the
+    // tip also gates levelling up (see adjustDifficulty) so it must be reachable.
+    // window = clamp(14s + 2.4s/tap, 60s .. 90s). For a single 8-slice pizza the
+    // computed value is below 60s, so almost every single-pizza order gets the
+    // full 60s; only big multi-pizza (16-slice) orders scale above the floor.
+    S.tipWindowMs = Math.min(90000, Math.max(60000, Math.round((14 + taps * 2.4) * 1000)));
     S.tipDeadline = Date.now() + S.tipWindowMs;
     var wrap = el('tipbar-wrap'); wrap.classList.remove('gone', 'amber');
     if (S.tipTimer) clearInterval(S.tipTimer);
