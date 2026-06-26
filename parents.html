@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Parents &amp; Teachers Guide — 🍕 Pizza Palace</title>
+  <meta name="description" content="A full guide for parents and teachers: what Pizza Palace teaches, broken down by age group (4-6, 6-9, 9-12), with real example orders and screenshots.">
+  <meta name="keywords" content="parents guide, teachers guide, educational game, reading comprehension, what does it teach, ages 4-12, fractions, Boolean logic for kids, learning objectives">
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+  <link rel="canonical" href="https://digitalcybersoft.github.io/pizzashop/parents.html">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#2f6db0">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Pizza Palace">
+  <meta property="og:url" content="https://digitalcybersoft.github.io/pizzashop/parents.html">
+  <meta property="og:title" content="Parents &amp; Teachers Guide — Pizza Palace">
+  <meta property="og:description" content="What Pizza Palace teaches, by age group (4-6, 6-9, 9-12), with real example orders and screenshots.">
+  <meta property="og:image" content="https://digitalcybersoft.github.io/pizzashop/assets/screenshots/age912-rules.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Parents &amp; Teachers Guide — Pizza Palace">
+  <meta name="twitter:description" content="What Pizza Palace teaches, by age group, with real example orders and screenshots.">
+  <meta name="twitter:image" content="https://digitalcybersoft.github.io/pizzashop/assets/screenshots/age912-rules.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #3a2a16; --accent: #e8542a; --accent-dk: #c43c16; --accent2: #2aa877;
+      --cream: #fff3d6; --parent: #2f6db0;
+      --shadow: 0 8px 0 rgba(0,0,0,.10), 0 18px 34px rgba(0,0,0,.16);
+      --shadow-sm: 0 4px 0 rgba(0,0,0,.10), 0 10px 18px rgba(0,0,0,.12);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0; color: var(--ink);
+      font-family: 'Baloo 2', 'Comic Sans MS', 'Trebuchet MS', system-ui, sans-serif;
+      background:
+        radial-gradient(1200px 600px at 80% -10%, #cfe2f5 0%, transparent 60%),
+        radial-gradient(900px 500px at -10% 10%, #ffd98c 0%, transparent 55%),
+        linear-gradient(160deg, #fff3d6 0%, #f3f7fc 60%, #e7eff8 100%);
+      min-height: 100vh;
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 0 18px; }
+    a { color: var(--accent-dk); }
+
+    /* top bar */
+    .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 0; flex-wrap: wrap; }
+    .top .home { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); font-weight: 800; font-size: 1.15rem; }
+    .top .home img { width: 38px; height: 38px; }
+    .top .links a { text-decoration: none; font-weight: 700; margin-left: 14px; }
+    .top .play { background: var(--accent); color: #fff; padding: 9px 20px; border-radius: 13px; box-shadow: var(--shadow-sm); }
+
+    header.hero { text-align: center; padding: 24px 0 8px; }
+    header.hero h1 { font-size: clamp(1.9rem, 5vw, 2.8rem); margin: 0 0 6px; color: var(--parent); }
+    header.hero p { font-size: clamp(1.05rem, 2.5vw, 1.3rem); font-weight: 600; max-width: 720px; margin: 0 auto; }
+
+    .panel { background: #fff; border-radius: 22px; padding: 26px 28px; box-shadow: var(--shadow); margin: 22px 0; }
+    .panel h2 { font-size: clamp(1.4rem, 3.4vw, 1.9rem); margin: 0 0 10px; color: var(--parent); }
+    .panel h3 { font-size: 1.15rem; margin: 18px 0 6px; color: var(--parent); }
+    .panel p { font-size: 1.02rem; line-height: 1.55; margin: 0 0 12px; }
+    .panel ul { margin: 0 0 12px; padding-left: 20px; }
+    .panel li { margin: 6px 0; line-height: 1.5; }
+    .lead { font-size: 1.12rem !important; }
+
+    .toc { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .toc a { background: #eef5fc; border: 2px solid #cfe2f5; border-radius: 999px; padding: 6px 14px; font-weight: 700; font-size: .88rem; text-decoration: none; color: var(--parent); }
+
+    /* age sections */
+    .age { border-left: 10px solid var(--accent); }
+    .age .band { display: inline-block; background: var(--accent); color: #fff; font-weight: 800; border-radius: 999px; padding: 4px 16px; font-size: .92rem; margin-bottom: 6px; }
+    .age.a2 { border-left-color: #e6a400; } .age.a2 .band { background: #e6a400; }
+    .age.a3 { border-left-color: var(--parent); } .age.a3 .band { background: var(--parent); }
+    .skills { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 14px; }
+    .skills span { background: #fff3d6; border: 2px solid #ffd29e; border-radius: 999px; padding: 4px 12px; font-weight: 700; font-size: .82rem; }
+    .examples { background: #faf6ee; border: 2px dashed #e7cfa6; border-radius: 14px; padding: 12px 16px; margin: 0 0 16px; }
+    .examples p { margin: 6px 0; font-size: 1rem; }
+    .examples .q { font-style: italic; }
+    .examples .lab { font-weight: 800; color: var(--accent-dk); font-style: normal; }
+    .shots { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 6px; }
+    @media (max-width: 680px){ .shots { grid-template-columns: 1fr; } }
+    figure.shot { margin: 0; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: var(--shadow-sm); }
+    figure.shot img { display: block; width: 100%; border-bottom: 3px solid #ffe2bb; }
+    figure.shot figcaption { padding: 10px 12px; font-weight: 700; font-size: .9rem; }
+
+    /* concept reference */
+    .cat { margin: 16px 0 4px; font-size: 1.05rem; font-weight: 700; color: var(--parent); }
+    .why { display: block; font-size: .94rem; color: #5a6b7d; font-style: italic; font-weight: 500; margin-top: 2px; }
+    .panel .cat + ul b { color: var(--accent-dk); }
+    .safe { background: #eafff5; border: 2px solid #bfe9d7; border-radius: 14px; padding: 14px 16px; }
+    .safe b { color: var(--accent2); }
+    .note { background: #eef5fc; border: 2px solid #cfe2f5; border-radius: 14px; padding: 14px 16px; }
+
+    footer { text-align: center; margin: 40px 0 56px; font-size: .92rem; font-weight: 600; opacity: .85; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <div class="top">
+      <a class="home" href="index.html"><img src="assets/logo/logo-mark.png" alt=""> Pizza Palace</a>
+      <div class="links">
+        <a href="index.html">Home</a>
+        <a href="game.html#glossary">Glossary</a>
+        <a class="play" href="game.html">▶ Play</a>
+      </div>
+    </div>
+
+    <header class="hero">
+      <h1>👩‍🏫 Parents &amp; Teachers Guide</h1>
+      <p>Pizza Palace is a <b>reading-comprehension game disguised as a cooking game</b>. Every order
+        is a short piece of English a child reads, understands, and acts on. The difficulty lives in
+        the <i>language</i>, not the tapping.</p>
+    </header>
+
+    <section class="panel">
+      <h2>How it works in one minute</h2>
+      <p class="lead">A customer asks for a pizza in words. The child reads the order, lays a base, taps
+        on toppings to build it, and presses <b>Box it!</b>. Get it right and the customer pays; get it
+        wrong and the game shows what the order actually meant, in plain English, then moves on.</p>
+      <ul>
+        <li><b>It adapts by itself.</b> Fast, accurate pizzas raise the level; mistakes or running out of
+          time lower it. The game settles where the child is challenged but not stuck. Nothing to configure.</li>
+        <li><b>Gentle stakes.</b> The shop starts with $20. Each pizza costs $3 to make and a correct one
+          sells for $5 (a $2 profit), plus a $1 tip for being quick and accurate. Reading carefully has a
+          visible payoff, with no harsh sting beyond reopening the shop.</li>
+        <li><b>Tappable words.</b> Hard words in every order are underlined. Tapping one opens a little
+          pizza that shows what it means, so the game teaches its own vocabulary as it goes.</li>
+      </ul>
+      <div class="safe">
+        <b>✅ Safe &amp; private.</b> No accounts, no sign-in, no ads, no chat, no in-app purchases. The game
+        makes <b>no internet connection at all</b> while playing: progress is saved only in this browser, on
+        this device, and <b>nothing is ever sent anywhere</b>. You can switch off the slang ("meme mode") and
+        reset progress for a new player from inside the game.
+      </div>
+      <div class="toc">
+        <a href="#a1">Ages 4–6</a>
+        <a href="#a2">Ages 6–9</a>
+        <a href="#a3">Ages 9–12</a>
+        <a href="#concepts">Every concept</a>
+        <a href="#boolean">Boolean logic</a>
+      </div>
+    </section>
+
+    <!-- ============ AGE 4-6 ============ -->
+    <section class="panel age" id="a1">
+      <span class="band">Ages 4–6 · Levels 1–5</span>
+      <h2>First words and first fractions</h2>
+      <p>The youngest players meet one idea at a time. Orders are a single short sentence, with one or two
+        toppings, and the pizza is split no finer than halves. This is where a child learns that words map
+        to actions and that a round thing can be cut into equal parts.</p>
+      <div class="skills">
+        <span>Reading a whole sentence</span><span>Whole / half</span><span>One topping at a time</span>
+        <span>Following one instruction</span><span>Early fractions (1, 1/2)</span>
+      </div>
+      <div class="examples">
+        <p><span class="lab">Whole:</span> <span class="q">"A whole pizza on a tomato base, covered all over in pineapple."</span></p>
+        <p><span class="lab">Halves:</span> <span class="q">"Tomato base all over, then one half ham and the other half mushroom."</span></p>
+      </div>
+      <div class="shots">
+        <figure class="shot"><img src="assets/screenshots/age46-whole.png" alt="A Level 1 whole-pizza order"><figcaption>Level 1 — a whole pizza, one topping</figcaption></figure>
+        <figure class="shot"><img src="assets/screenshots/age46-half.png" alt="A Level 2 half-and-half order"><figcaption>Level 2 — one half, the other half</figcaption></figure>
+      </div>
+    </section>
+
+    <!-- ============ AGE 6-9 ============ -->
+    <section class="panel age a2" id="a2">
+      <span class="band">Ages 6–9 · Levels 6–12</span>
+      <h2>Quarters, positions and groups</h2>
+      <p>Now the sentences get longer and the pizza divides into quarters and single slices. Orders start
+        using relationships (next to, opposite, every other) and food categories (meat, vegetable, fruit,
+        silly). The child has to hold several facts in mind and decide where things go.</p>
+      <div class="skills">
+        <span>Quarters &amp; single slices</span><span>Opposite / next to / every other</span>
+        <span>Counting (exactly N)</span><span>Food categories</span><span>Two toppings on a slice</span>
+      </div>
+      <div class="examples">
+        <p><span class="lab">Quarters:</span> <span class="q">"A BBQ base, with ham on just one quarter and sausage on the other three quarters."</span></p>
+        <p><span class="lab">Every other:</span> <span class="q">"A cheese base all over, then fish heads on every other slice, all the way around."</span></p>
+        <p><span class="lab">Category, your choice:</span> <span class="q">"A tomato base, and make it SILLY! Every slice gets exactly one silly topping."</span></p>
+      </div>
+      <div class="shots">
+        <figure class="shot"><img src="assets/screenshots/age69-quarter.png" alt="A Level 3 quarter order"><figcaption>Level 3 — one quarter vs the other three</figcaption></figure>
+        <figure class="shot"><img src="assets/screenshots/age69-everyother.png" alt="An every-other-slice order"><figcaption>Level 12 — every other slice</figcaption></figure>
+        <figure class="shot"><img src="assets/screenshots/age69-silly.png" alt="A pick-a-silly-topping order"><figcaption>Level 9 — a category, child's choice</figcaption></figure>
+      </div>
+    </section>
+
+    <!-- ============ AGE 9-12 ============ -->
+    <section class="panel age a3" id="a3">
+      <span class="band">Ages 9–12 · Levels 13–20</span>
+      <h2>Logic, inference and precise instructions</h2>
+      <p>The top levels are where reading becomes reasoning. Orders carry conditions, negations, choices,
+        named recipes, distractor chatter to ignore, and rules with precise force. Several are, underneath
+        the pizza, genuine Boolean logic (see below). The child has to parse, infer, and act exactly.</p>
+      <div class="skills">
+        <span>If / then &amp; true / false</span><span>Either-or, not both</span><span>Deduction by elimination</span>
+        <span>Inference (no meat → a veg)</span><span>Must / may / must not</span><span>Uneven sharing</span>
+      </div>
+      <div class="examples">
+        <p><span class="lab">Rules (must / may / must not):</span> <span class="q">"Order rules! On a tomato base: you SHALL put pepper on one half. You SHOULD add chilli to the other half. And you SHALL NOT use any extra cheese."</span></p>
+        <p><span class="lab">Uneven share:</span> <span class="q">"Give my other half to my two kids: Joey wants Brussels sprout, Ava wants sweetcorn, but Joey eats MORE than Ava, so Joey gets 3 slices and Ava just 1."</span></p>
+        <p><span class="lab">Deduction:</span> <span class="q">"Mystery topping! It is NOT a meat, NOT a vegetable and NOT a fruit. Work out what is left, and put one on every slice."</span></p>
+      </div>
+      <div class="shots">
+        <figure class="shot"><img src="assets/screenshots/age912-rules.png" alt="A must/may/must-not order"><figcaption>Level 15 — must, may, must not</figcaption></figure>
+        <figure class="shot"><img src="assets/screenshots/age912-share.png" alt="An uneven-share order"><figcaption>Level 18 — uneven sharing + "more than"</figcaption></figure>
+        <figure class="shot"><img src="assets/screenshots/age912-elimination.png" alt="A deduction-by-elimination order"><figcaption>Level 17 — deduction by elimination</figcaption></figure>
+      </div>
+    </section>
+
+    <!-- ============ CONCEPT REFERENCE ============ -->
+    <section class="panel" id="concepts">
+      <h2>Every concept, with examples</h2>
+      <p>Each idea below is a real teaching target, and every <b>bold</b> word is tappable inside the game.
+        The same cards live on a single review page at <a href="game.html#glossary">game.html#glossary</a>.</p>
+
+      <p class="cat">Fractions and sharing
+        <span class="why">Why: builds early fraction sense (half, quarter, eighth) and turns a worded situation into a division the child can act out.</span></p>
+      <ul>
+        <li><b>Whole</b> = all 8 slices. <b>Half</b> = 4 of 8 = 1/2. <b>Quarter</b> = 2 of 8 = 1/4. <b>Slice</b> = 1 of 8 = 1/8.</li>
+        <li><b>Sharing</b> turns words into a fraction: <i>"for me, my wife and our two kids"</i> → four quarters.</li>
+        <li><b>Uneven sharing</b> mixes division with "more than": <i>"split my other half, but Sam eats more"</i> → Sam 3 slices, Joey 1.</li>
+      </ul>
+
+      <p class="cat">Position and shape
+        <span class="why">Why: trains spatial vocabulary and orientation-independent thinking — orders use relations, not fixed directions.</span></p>
+      <ul>
+        <li><b>Next to / touching</b>, <b>opposite</b> (straight across), <b>diagonal</b> (corner to corner).</li>
+        <li><b>Every other</b> (skip one each time), <b>three in a row</b> (a line of touching slices).</li>
+      </ul>
+
+      <p class="cat">Number and comparison
+        <span class="why">Why: puts "how many" into words — exact counts, greater-than / less-than, and "at least one".</span></p>
+      <ul>
+        <li><b>Exactly N</b>: <i>"exactly one fruit on every slice."</i></li>
+        <li><b>More than</b> / <b>fewer than</b>: <i>"more than two meats"</i> = 3, 4, 5…; <i>"fewer than five"</i> = 4 or below.</li>
+        <li><b>At least one</b>: <i>"at least one meat"</i> — one is fine, more is fine, never zero.</li>
+      </ul>
+
+      <p class="cat">Sets and categories
+        <span class="why">Why: classification and set membership — grouping things, and the idea one thing can be in two groups at once (the basis of Venn diagrams).</span></p>
+      <ul>
+        <li><b>Meat</b>, <b>vegetable</b>, <b>fruit</b>, <b>silly topping</b>: the four food groups orders draw on.</li>
+        <li><b>Belonging to two groups</b>: broccoli is a vegetable <i>and</i> silly; banana is a fruit <i>and</i> silly.</li>
+        <li><b>Intersection</b>: in <i>both</i> groups at once — spatial (<i>"in both the top half and the right half"</i>) and by category (<i>"a topping that is both a fruit AND silly"</i>).</li>
+        <li><b>Shared property</b>: group by a trait — <i>"one green topping on every slice."</i> <b>Not touching</b>: keep two groups apart with a gap.</li>
+      </ul>
+
+      <p class="cat">Logic and language
+        <span class="why">Why: the heart of comprehension — following a reference back, evaluating a condition, ruling options out, inferring an unstated rule.</span></p>
+      <ul>
+        <li><b>Except / without</b>, and <b>coverage with an exception</b>: <i>"cover it all in banana, but one slice should not have banana."</i></li>
+        <li><b>Riddle</b>: a topping named by a clue. <b>Pronouns</b> (<i>it, the other one</i>): tracking what a word points back to.</li>
+        <li><b>Either / or</b>, <b>not both</b>: choose exactly one. <b>Conditional</b>: check if something is true, then act.</li>
+        <li><b>Deduction by elimination</b>; <b>inference</b> (<i>"can't eat meat"</i> → no meat).</li>
+        <li><b>Named pizza (recipe)</b>; <b>base</b> (the sauce first); <b>red herrings &amp; self-correction</b> (chatter to ignore, orders that change their mind).</li>
+      </ul>
+
+      <p class="cat">Rules and instruction words
+        <span class="why">Why: children are constantly told to do things with words of different force. Knowing must ≠ may ≠ must not is the difference between following instructions exactly and roughly.</span></p>
+      <ul>
+        <li><b>Must / shall / required</b>: you have to. <b>May / optional / should / recommended</b>: your choice.</li>
+        <li><b>Must not / shall not</b>: never. The game accepts the required parts, allows the optional ones either way, and marks the forbidden ones wrong.</li>
+      </ul>
+      <p>"Vegetarian" is taught as a word (a pizza with <i>no meat</i>) rather than a graded rule: the game checks the slices, not the label.</p>
+    </section>
+
+    <!-- ============ BOOLEAN ============ -->
+    <section class="panel" id="boolean">
+      <h2>Under the hood: early Boolean logic</h2>
+      <p>Several of the top-level constructs are the exact building blocks of Boolean algebra — the binary
+        logic all computer arithmetic is built from. It is genuine computational thinking, dressed up as
+        pizza, years before a child meets a truth table.</p>
+      <ul>
+        <li><b>AND</b>: <i>"both ham AND mushroom,"</i> or <i>"a fruit AND silly"</i> (the intersection of two sets).</li>
+        <li><b>OR</b>: <i>"either ham or pineapple"</i> — at least one is true.</li>
+        <li><b>NOT</b>: <i>"no meat,"</i> <i>"must not,"</i> <i>"one slice should not have banana."</i></li>
+        <li><b>Exclusive OR (XOR)</b>: <i>"one or the other, but not both."</i></li>
+        <li><b>True / false</b>: <i>"is pepperoni a meat? Yes"</i> — evaluating a condition before acting.</li>
+      </ul>
+      <div class="note">A nice follow-up conversation: ask which orders are secretly an <b>AND</b>, an <b>OR</b>,
+        or a <b>NOT</b>. The pizza makes the abstract idea concrete.</div>
+    </section>
+
+    <footer>
+      Free and open source · runs offline · <a href="game.html">Open the game</a> ·
+      <a href="index.html">Back to home</a> ·
+      <a href="https://github.com/DigitalCyberSoft/pizzashop">Source on GitHub</a>
+    </footer>
+
+  </div>
+</body>
+</html>
