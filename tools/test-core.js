@@ -564,6 +564,53 @@ function fillWild(L) {
   }
 })();
 
+// ---- Multi-pizza POOL grader: optimal assignment (vs brute force), worked
+// example, perfect build, fraction reduction, and the count-tiling guard ----
+(function () {
+  var BASES = ['tomato', 'cheese', 'bbq'], TOPS = ['pepperoni', 'ham', 'mushroom', 'olive', 'pineapple'];
+  function randSlice(r) { var t = [], k = Math.floor(r() * 3); for (var i = 0; i < k; i++) t.push(TOPS[Math.floor(r() * TOPS.length)]); return Core.makeSlice(BASES[Math.floor(r() * 3)], t); }
+  function bruteMax(player, cols) {
+    var n = player.length, best = -1;
+    Core.permutations(player.map(function (_, i) { return i; })).forEach(function (perm) {
+      var s = 0; for (var i = 0; i < n; i++) s += Core.sliceScore(player[i], cols[perm[i]]); if (s > best) best = s;
+    });
+    return best;
+  }
+  // The Hungarian optimum MUST equal the brute-force optimum on every instance.
+  for (var t = 0; t < 120; t++) {
+    var r = lcg(t * 7 + 1), n = 4 + Math.floor(r() * 3); // 4..6 slices
+    var player = []; for (var i = 0; i < n; i++) player.push(randSlice(r));
+    var nk = 1 + Math.floor(r() * 3), counts = [], rem = n;
+    for (var k = 0; k < nk; k++) { var c = (k === nk - 1) ? rem : 1 + Math.floor(r() * (rem - (nk - 1 - k))); counts.push(c); rem -= c; }
+    var kinds = counts.map(function (cc) { return { spec: randSlice(r), count: cc }; });
+    var cols = []; kinds.forEach(function (kk) { for (var cI = 0; cI < kk.count; cI++) cols.push(kk.spec); });
+    var got = Core.gradePool(player, kinds).accuracy * n, want = bruteMax(player, cols);
+    ok(Math.abs(got - want) < 1e-9, 'pool grader optimal (n=' + n + ')');
+  }
+  // Worked example from the grilling: 3 pepperoni, 9 cheese, 4 Hawaiian built
+  // against a 2/10/4 order scores exactly 15/16.
+  function whole(base, tops, m) { var a = []; for (var i = 0; i < m; i++) a.push(Core.makeSlice(base, tops)); return a; }
+  var haw = Core.expandRecipe('Hawaiian');
+  var kinds16 = [
+    { spec: Core.makeSlice('tomato', ['pepperoni']), count: 2 },
+    { spec: Core.makeSlice('cheese', []), count: 10 },
+    { spec: Core.makeSlice(haw.base, haw.toppings), count: 4 }
+  ];
+  var near = whole('tomato', ['pepperoni'], 3).concat(whole('cheese', [], 9)).concat(whole(haw.base, haw.toppings, 4));
+  eq(Core.gradePool(near, kinds16).accuracy, 0.9375, 'pool: 3/9/4 vs 2/10/4 scores 15/16');
+  var perfect = whole('tomato', ['pepperoni'], 2).concat(whole('cheese', [], 10)).concat(whole(haw.base, haw.toppings, 4));
+  eq(Core.gradePool(perfect, kinds16).accuracy, 1, 'pool: exact counts score 1.0');
+  ok(Core.gradePool(whole('cheese', [], 16), kinds16).accuracy < 1, 'pool: all-one-kind blob fails');
+  // fraction reduction for the teaching reveal
+  eq(JSON.stringify(Core.reduceFraction(10, 16)), '[5,8]', 'reduceFraction 10/16 = 5/8');
+  eq(JSON.stringify(Core.reduceFraction(2, 16)), '[1,8]', 'reduceFraction 2/16 = 1/8');
+  eq(JSON.stringify(Core.reduceFraction(4, 16)), '[1,4]', 'reduceFraction 4/16 = 1/4');
+  // counts must tile the pool exactly; a mismatch is a generator bug, not silent.
+  var threw = false;
+  try { Core.gradePool(whole('tomato', [], 8), kinds16); } catch (e) { threw = true; }
+  ok(threw, 'pool: kind counts not summing to slice total throws');
+})();
+
 console.log((count - failures) + '/' + count + ' assertions passed.');
 if (failures) { console.error(failures + ' FAILURES'); process.exit(1); }
 console.log('OK');

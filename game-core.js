@@ -309,6 +309,74 @@
     return { accuracy: best, closest: bestLayout };
   }
 
+  // ---------------------------------------------------------------------------
+  // Multi-pizza POOL grading (the two-board count/fraction mechanic).
+  //
+  // A pool order is ONE flat list of slices (16 for two pizzas) plus a multiset
+  // of required KINDS: [{ spec, count }] whose counts sum to the slice total.
+  // Arrangement is free, so the score is the BEST one-to-one assignment of the
+  // player's slices to the required kind-slots, maximising summed sliceScore.
+  // accuracy = total / sliceCount, so a clean build of 15/16 correct = 0.9375.
+  //
+  // Solved exactly with the Hungarian (Kuhn-Munkres) algorithm on the square
+  // cost matrix (each kind expanded into `count` identical columns), cost =
+  // 1 - sliceScore so minimising cost maximises score. n<=16 so O(n^3) is cheap.
+  // ---------------------------------------------------------------------------
+  function hungarianMinCost(cost) {
+    var n = cost.length;
+    if (n === 0) return 0;
+    var INF = Infinity;
+    var u = new Array(n + 1).fill(0), v = new Array(n + 1).fill(0);
+    var p = new Array(n + 1).fill(0), way = new Array(n + 1).fill(0);
+    for (var i = 1; i <= n; i++) {
+      p[0] = i;
+      var j0 = 0;
+      var minv = new Array(n + 1).fill(INF);
+      var used = new Array(n + 1).fill(false);
+      do {
+        used[j0] = true;
+        var i0 = p[j0], delta = INF, j1 = 0;
+        for (var j = 1; j <= n; j++) if (!used[j]) {
+          var cur = cost[i0 - 1][j - 1] - u[i0] - v[j];
+          if (cur < minv[j]) { minv[j] = cur; way[j] = j0; }
+          if (minv[j] < delta) { delta = minv[j]; j1 = j; }
+        }
+        for (j = 0; j <= n; j++) {
+          if (used[j]) { u[p[j]] += delta; v[j] -= delta; }
+          else minv[j] -= delta;
+        }
+        j0 = j1;
+      } while (p[j0] !== 0);
+      do { var j1b = way[j0]; p[j0] = p[j1b]; j0 = j1b; } while (j0);
+    }
+    var total = 0;
+    for (var jj = 1; jj <= n; jj++) total += cost[p[jj] - 1][jj - 1];
+    return total;
+  }
+  // poolKinds: [{ spec, count }]; spec is a normal slice spec (fixed slice, or a
+  // recipe already expanded to {base,toppings}). Counts must sum to player.length.
+  function gradePool(player, poolKinds) {
+    var n = player.length;
+    var cols = [];
+    poolKinds.forEach(function (k) { for (var c = 0; c < k.count; c++) cols.push(k.spec); });
+    if (cols.length !== n) {
+      // counts must tile the slice pool exactly; a mismatch is a generator bug.
+      throw new Error('gradePool: kind counts (' + cols.length + ') != slices (' + n + ')');
+    }
+    var cost = [];
+    for (var i = 0; i < n; i++) {
+      var row = [];
+      for (var j = 0; j < n; j++) row.push(1 - sliceScore(player[i], cols[j]));
+      cost.push(row);
+    }
+    var total = n - hungarianMinCost(cost); // each cell = 1 - score
+    return { accuracy: total / n };
+  }
+  // Reduce a slice count over the total to its lowest-terms fraction, for the
+  // teaching reveal: reduceFraction(10, 16) -> [5, 8].
+  function gcd(a, b) { return b ? gcd(b, a % b) : a; }
+  function reduceFraction(num, den) { var g = gcd(num, den) || 1; return [num / g, den / g]; }
+
   // Region-phrased diff of player vs the closest acceptable layout.
   function describeMistakes(player, closest) {
     var msgs = [];
@@ -1729,6 +1797,7 @@
     expandRecipe: expandRecipe, recipeBuildable: recipeBuildable, buildableRecipes: buildableRecipes,
     recipeWords: recipeWords, recipeDescribe: recipeDescribe, RECIPE_ORDER: RECIPE_ORDER, toppingName: toppingName,
     grade: grade, layoutScore: layoutScore, sliceScore: sliceScore, describeMistakes: describeMistakes,
+    gradePool: gradePool, reduceFraction: reduceFraction,
     CAST: CAST, DIALOGUE: DIALOGUE, reactionBand: reactionBand, pickReaction: pickReaction
   };
 });

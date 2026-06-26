@@ -1,0 +1,160 @@
+{
+  "generated_at": "2026-06-26T06:15:16.232558+00:00",
+  "model": "gpt-5.5",
+  "modes": {
+    "A": [
+      {
+        "order": "One whole Margherita and one whole Pepperoni Classic, please!",
+        "kinds": "whole Margherita; whole Pepperoni Classic",
+        "teaches": "matching two independent whole pizzas"
+      },
+      {
+        "order": "Could I have a Meat Feast and a Veggie Supreme for our table?",
+        "kinds": "whole Meat Feast; whole Veggie Supreme",
+        "teaches": "two named recipes on separate pizzas"
+      },
+      {
+        "order": "Please make one BBQ Chicken pizza and one Hawaiian pizza.",
+        "kinds": "whole BBQ Chicken; whole Hawaiian",
+        "teaches": "reading two simple recipe names"
+      },
+      {
+        "order": "I would like a Cheesy Cheese Dream with a Dragon's Breath, thanks!",
+        "kinds": "whole Cheesy Cheese Dream; whole Dragon's Breath",
+        "teaches": "two whole named pizzas"
+      },
+      {
+        "order": "Make me one pizza with cheese base and no toppings, and one whole Pepperoni Classic.",
+        "kinds": "whole cheese base with no toppings; whole Pepperoni Classic",
+        "teaches": "plain whole pizza plus named recipe"
+      },
+      {
+        "order": "One tomato-base pizza with only mushrooms, and one tomato-base pizza with only olives, please.",
+        "kinds": "whole tomato base with mushroom; whole tomato base with olive",
+        "teaches": "simple single-topping whole pizzas"
+      },
+      {
+        "order": "May I get a whole Gone Bananas and a whole Popeye Power-Up?",
+        "kinds": "whole Gone Bananas; whole Popeye Power-Up",
+        "teaches": "two independent silly/named recipes"
+      },
+      {
+        "order": "For me, a Margherita; for my friend, a BBQ Chicken.",
+        "kinds": "whole Margherita; whole BBQ Chicken",
+        "teaches": "assigning one whole order to each board"
+      },
+      {
+        "order": "Please build one Lunchbox Tragedy and one Veggie Supreme.",
+        "kinds": "whole Lunchbox Tragedy; whole Veggie Supreme",
+        "teaches": "two named recipes with different topping groups"
+      },
+      {
+        "order": "I need one whole tomato-base pizza with pepperoni, and one whole bbq-base pizza with chicken.",
+        "kinds": "whole tomato base with pepperoni; whole bbq base with chicken",
+        "teaches": "matching base and topping on two whole pizzas"
+      },
+      {
+        "order": "Could you do a Hawaiian pizza and a Cheesy Cheese Dream pizza?",
+        "kinds": "whole Hawaiian; whole Cheesy Cheese Dream",
+        "teaches": "recognizing two recipe names in one sentence"
+      },
+      {
+        "order": "One pizza should be half Margherita and half Pepperoni Classic; the other should be a whole Meat Feast.",
+        "kinds": "half Margherita and half Pepperoni Classic; whole Meat Feast",
+        "teaches": "simple halves plus one whole pizza"
+      },
+      {
+        "order": "Please make one whole Popeye Power-Up, plus one pizza that is half Hawaiian and half BBQ Chicken.",
+        "kinds": "whole Popeye Power-Up; half Hawaiian and half BBQ Chicken",
+        "teaches": "whole pizza and half-and-half recipe matching"
+      },
+      {
+        "order": "I'll take one whole tomato-base pizza with sweetcorn, and one whole cheese-base pizza with extra cheese.",
+        "kinds": "whole tomato base with sweetcorn; whole cheese base with extra cheese",
+        "teaches": "simple fills using allowed toppings"
+      },
+      {
+        "order": "Today I'd like a Dragon's Breath and a Gone Bananas, both as whole pizzas.",
+        "kinds": "whole Dragon's Breath; whole Gone Bananas",
+        "teaches": "two whole named pizzas with clear board separation"
+      }
+    ],
+    "B": [
+      {
+        "order": "Please make 4 slices of Pepperoni Classic, 8 slices of plain cheese, and 4 slices of Hawaiian.",
+        "kinds": "Pepperoni Classic=4, plain cheese base=8, Hawaiian=4",
+        "teaches": "4/16=1/4 and 8/16=1/2"
+      },
+      {
+        "order": "I want 2 slices of BBQ Chicken, 10 slices of plain tomato, and 4 slices of Veggie Supreme, please.",
+        "kinds": "BBQ Chicken=2, plain tomato base=10, Veggie Supreme=4",
+        "teaches": "2/16=1/8, 10/16=5/8, and 4/16=1/4"
+      },
+      {
+        "order": "Could I have 6 mushroom-on-tomato slices, 6 ham-on-cheese slices, and 4 Margherita slices?",
+        "kinds": "mushroom on tomato base=6, ham on cheese base=6, Margherita=4",
+        "teaches": "6/16=3/8 and 4/16=1/4"
+      },
+      {
+        "order": "My monster is hungry: 1 slice of Dragon's Breath, 7 slices of plain tomato, and 8 slices of Meat Feast.",
+        "kinds": "Dragon's Breath=1, plain tomato base=7, Meat Feast=8",
+        "teaches": "1/16, 7/16, and 8/16=1/2"
+      },
+      {
+        "order": "Make half Veggie Supreme, one quarter Pepperoni Classic, and one quarter plain bbq.",
+        "kinds": "Veggie Supreme=8, Pepperoni Classic=4, plain bbq base=4",
+        "teaches": "1/2=8/16 and 1/4=4/16"
+      },
+      {
+        "order": "I need an eighth Hawaiian, three eighths Cheesy Cheese Dream, and half plain tomato.",
+        "kinds": "Hawaiian=2, Cheesy Cheese Dream=6, plain tomato base=8",
+        "teaches": "1/8=2/16, 3/8=6/16, and 1/2=8/16"
+      },
+      {
+        "order": "For the banana fan, make one sixteenth banana on cheese base, three sixteenths Gone Bananas, four sixteenths plain cheese, and one half BBQ Chicken.",
+        "kinds": "banana on cheese base=1, Gone Bananas=3, plain cheese base=4, BBQ Chicken=8",
+        "teaches": "Converting 1/16, 3/16, 4/16, and 1/2 to slice counts"
+      },
+      {
+        "order": "Give me 3 slices of bacon on tomato, 5 slices of sausage on cheese, and the rest Popeye Power-Up.",
+        "kinds": "bacon on tomato base=3, sausage on cheese base=5, Popeye Power-Up=8",
+        "teaches": "Finding the remaining 8/16 after 3/16 and 5/16"
+      },
+      {
+        "order": "For my fractions feast, make a quarter Meat Feast, an eighth olive on tomato base, three sixteenths spinach on cheese base, and the remaining seven sixteenths Margherita.",
+        "kinds": "Meat Feast=4, olive on tomato base=2, spinach on cheese base=3, Margherita=7",
+        "teaches": "1/4=4/16, 1/8=2/16, 3/16, and 7/16"
+      },
+      {
+        "order": "I'd like 5 slices of pineapple on cheese, 5 slices of ham on tomato, 4 slices of Hawaiian, and 2 slices of plain bbq.",
+        "kinds": "pineapple on cheese base=5, ham on tomato base=5, Hawaiian=4, plain bbq base=2",
+        "teaches": "5/16, 4/16=1/4, and 2/16=1/8"
+      },
+      {
+        "order": "Please build three quarters plain cheese and one quarter Lunchbox Tragedy.",
+        "kinds": "plain cheese base=12, Lunchbox Tragedy=4",
+        "teaches": "3/4=12/16 and 1/4=4/16"
+      },
+      {
+        "order": "Can you do 1 slice fish heads on bbq, 1 slice marshmallow on tomato, 6 slices Dragon's Breath, and 8 slices Veggie Supreme?",
+        "kinds": "fish heads on bbq base=1, marshmallow on tomato base=1, Dragon's Breath=6, Veggie Supreme=8",
+        "teaches": "Two 1/16 parts, 6/16=3/8, and 8/16=1/2"
+      },
+      {
+        "order": "Make five sixteenths Pepperoni Classic, five sixteenths Margherita, and three eighths BBQ Chicken.",
+        "kinds": "Pepperoni Classic=5, Margherita=5, BBQ Chicken=6",
+        "teaches": "5/16 plus 5/16 plus 3/8=6/16"
+      },
+      {
+        "order": "The picnic order is 7 slices of tomato slice on cheese base, 3 slices of sweetcorn on tomato base, 2 slices of peas on cheese base, and 4 slices of Cheesy Cheese Dream.",
+        "kinds": "tomato slice on cheese base=7, sweetcorn on tomato base=3, peas on cheese base=2, Cheesy Cheese Dream=4",
+        "teaches": "7/16, 3/16, 2/16=1/8, and 4/16=1/4"
+      },
+      {
+        "order": "I would like one eighth meatball on tomato base, a quarter plain tomato, five sixteenths BBQ Chicken, and five sixteenths Popeye Power-Up.",
+        "kinds": "meatball on tomato base=2, plain tomato base=4, BBQ Chicken=5, Popeye Power-Up=5",
+        "teaches": "1/8=2/16, 1/4=4/16, and two 5/16 parts"
+      }
+    ]
+  }
+}
