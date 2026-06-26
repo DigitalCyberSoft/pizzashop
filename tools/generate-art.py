@@ -96,6 +96,7 @@ TOPPINGS = [
     ("banana", "one round slice of banana"),
     ("raisins", "one small dark raisin"),
     ("marshmallow", "one white mini marshmallow"),
+    ("fish-heads", "one small silly cartoon fish head, googly eyes"),
 ]
 
 # One scene per level (tier 1..7), escalating in flair, plus a default "shop".

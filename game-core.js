@@ -145,7 +145,8 @@
     beetroot: { name: 'beetroot', icon: '🟣', novelty: true },
     banana: { name: 'banana', icon: '🍌', novelty: true },
     raisins: { name: 'raisins', icon: '🝤', novelty: true },
-    marshmallow: { name: 'marshmallow', icon: '☁️', novelty: true }
+    marshmallow: { name: 'marshmallow', icon: '☁️', novelty: true },
+    'fish-heads': { name: 'fish heads', icon: '🐟', novelty: true }
   };
 
   // Order in which ingredients become available (one at a time). Bases unlock
@@ -158,7 +159,7 @@
     'pepperoni', 'mushroom', 'ham', 'cheese-base', 'banana', 'olive', 'broccoli',
     'pineapple', 'onion', 'sweetcorn', 'green-beans', 'pepper', 'spinach', 'bbq-base', 'peas',
     'bacon', 'sausage', 'meatball', 'chicken', 'tomato-slice', 'chilli',
-    'brussels-sprout', 'extra-cheese', 'beetroot', 'raisins', 'marshmallow'
+    'brussels-sprout', 'extra-cheese', 'beetroot', 'raisins', 'marshmallow', 'fish-heads'
   ];
 
   // Recipes: name -> { base, toppings }. Lives only here; never a tray chip.
@@ -605,7 +606,7 @@
     mushroom: 1, pepper: 1, onion: 1, olive: 1, spinach: 1, sweetcorn: 1, 'tomato-slice': 1,
     broccoli: 1, 'green-beans': 1, 'brussels-sprout': 1, peas: 1, beetroot: 1
   };
-  var SILLY = { broccoli: 1, 'green-beans': 1, 'brussels-sprout': 1, peas: 1, beetroot: 1, banana: 1, raisins: 1, marshmallow: 1 };
+  var SILLY = { broccoli: 1, 'green-beans': 1, 'brussels-sprout': 1, peas: 1, beetroot: 1, banana: 1, raisins: 1, marshmallow: 1, 'fish-heads': 1 };
   // FRUIT overlaps SILLY (banana, raisins) the same way VEG does; pineapple is a
   // normal topping that is also a fruit. Only 3 fruits exist in the palette.
   var FRUIT = { pineapple: 1, banana: 1, raisins: 1 };
