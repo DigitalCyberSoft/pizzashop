@@ -97,6 +97,20 @@ button.eraser.on { background: var(--ink); color: #fff; }
 .chip .ic img { width: 1.4rem; height: 1.4rem; vertical-align: middle; }
 #hint { position: absolute; left: 50%; top: 6px; transform: translateX(-50%); background: #cf3a22; color: #fff; padding: 6px 14px; border-radius: 999px; font-weight: 800; opacity: 0; transition: opacity .15s; pointer-events: none; white-space: nowrap; z-index: 3; }
 #hint.show { opacity: 1; }
+
+/* Two-board (multi-pizza) view: two pizzas side by side, scaled to fit; the tray
+   stays a side rail. A live fraction strip sits under the boards for Mode B. */
+#multi-wrap { display: none; }
+#multi-wrap .boards { display: flex; gap: 14px; justify-content: center; align-items: flex-start; }
+#multi-wrap .board { flex: 1 1 0; max-width: 320px; margin: 0; text-align: center; }
+#multi-wrap .board svg { width: 100%; height: auto; touch-action: none; }
+#multi-wrap .board figcaption { font-weight: 800; color: #6a4a22; margin-top: 2px; }
+#fraction-strip { margin: 12px auto 0; max-width: 560px; }
+.fstrip-bar { display: flex; gap: 2px; border-radius: 8px; overflow: hidden; height: 22px; box-shadow: inset 0 0 0 2px #e6dcc8; }
+.fstrip-bar .fcell { flex: 1 1 0; background: #f3e9d2; transition: background .15s; }
+.fstrip-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; justify-content: center; margin-top: 8px; font-size: .92rem; font-weight: 600; color: #5a431f; }
+.fstrip-legend .fkey i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+.fstrip-legend small { color: #9a7b4f; }
 .money-fly { position: fixed; font-size: 2.3rem; font-weight: 900; color: #1f8a4c; z-index: 80; pointer-events: none; text-shadow: 1px 1px 0 #fff, 0 0 8px rgba(31,138,76,.4); animation: moneyfly 1.15s ease-out forwards; }
 @keyframes moneyfly { 0% { opacity: 0; transform: translateY(12px) scale(.6); } 25% { opacity: 1; } 100% { opacity: 0; transform: translateY(-95px) scale(1.25); } }
 #tray .group { margin-bottom: 12px; }

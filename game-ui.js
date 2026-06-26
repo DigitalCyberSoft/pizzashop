@@ -254,7 +254,61 @@
     tn.textContent = txt; svg.appendChild(tn);
   }
 
-  function renderPizza() { drawPizza(el('pizza'), S.layout, 'main', 470); attachPizzaHandlers(); }
+  function isMulti() { return !!(S && S.order && S.order.pizzas === 2); }
+  function boardLayouts() { return isMulti() ? [S.layout, S.layout1] : [S.layout]; }
+  function renderPizza() {
+    if (isMulti()) { renderBoards(); return; }
+    showSingleView();
+    drawPizza(el('pizza'), S.layout, 'main', 470);
+    attachPizzaHandlers();
+  }
+  // ---- two-board (multi-pizza) view: built once, reused, shown only for multi ----
+  var multiBuilt = false;
+  function buildMultiDom() {
+    if (multiBuilt) return;
+    multiBuilt = true;
+    var wrap = document.createElement('div'); wrap.id = 'multi-wrap';
+    wrap.innerHTML =
+      '<div class="boards">' +
+        '<figure class="board"><svg id="pizzaA"></svg><figcaption>Pizza 1</figcaption></figure>' +
+        '<figure class="board"><svg id="pizzaB"></svg><figcaption>Pizza 2</figcaption></figure>' +
+      '</div>' +
+      '<div id="fraction-strip"></div>';
+    var pw = el('pizza-wrap'); pw.parentNode.insertBefore(wrap, pw.nextSibling);
+    // read S.layout/S.layout1 LIVE at tap time (they are reassigned each order)
+    el('pizzaA').addEventListener('pointerdown', function (e) { onBoardTap(e, S.layout, el('pizzaA')); });
+    el('pizzaB').addEventListener('pointerdown', function (e) { onBoardTap(e, S.layout1, el('pizzaB')); });
+  }
+  function showSingleView() { el('pizza-wrap').style.display = ''; if (multiBuilt) el('multi-wrap').style.display = 'none'; }
+  function showMultiView() { buildMultiDom(); el('pizza-wrap').style.display = 'none'; el('multi-wrap').style.display = 'block'; }
+  function renderBoards() {
+    showMultiView();
+    drawPizza(el('pizzaA'), S.layout, 'bA', 300);
+    drawPizza(el('pizzaB'), S.layout1, 'bB', 300);
+    if (S.order.mode === 'B') renderFractionStrip(); else el('fraction-strip').style.display = 'none';
+  }
+  // Mode B live fraction strip: 16 cells (one per slice) coloured by the kind each
+  // slice currently matches, plus a legend of have/need and the reduced fraction.
+  var KIND_COLORS = ['#cf3a22', '#f1c40f', '#9c5a23', '#2a8f5f', '#7d5fff', '#e67e22'];
+  function classifySlice(slice, kinds) {
+    for (var i = 0; i < kinds.length; i++) if (C.sliceScore(slice, kinds[i].spec) === 1) return i;
+    return -1;
+  }
+  function renderFractionStrip() {
+    var strip = el('fraction-strip'); strip.style.display = 'block';
+    var kinds = S.order.pool.kinds, slices = S.layout.concat(S.layout1);
+    var have = kinds.map(function () { return 0; });
+    var cells = slices.map(function (s) { var k = classifySlice(s, kinds); if (k >= 0) have[k]++; return k; });
+    var bar = '<div class="fstrip-bar">' + cells.map(function (k) {
+      return '<span class="fcell"' + (k >= 0 ? ' style="background:' + KIND_COLORS[k % KIND_COLORS.length] + '"' : '') + '></span>';
+    }).join('') + '</div>';
+    var legend = '<div class="fstrip-legend">' + kinds.map(function (k, i) {
+      var fr = C.reduceFraction(k.count, 16);
+      return '<span class="fkey"><i style="background:' + KIND_COLORS[i % KIND_COLORS.length] + '"></i>' +
+        k.label + ' <b>' + have[i] + '/' + k.count + '</b> <small>(' + fr[0] + '/' + fr[1] + ')</small></span>';
+    }).join('') + '</div>';
+    strip.innerHTML = bar + legend;
+  }
 
   // ---- per-level shop scene: swap the body backdrop to match the order's tier.
   // Robust to a missing per-tier file: preload via Image() and only switch once it
@@ -341,12 +395,10 @@
     });
   }
 
-  function onPizzaTap(e) {
-    if (!S || S.awaitingStart) return; // building is gated until Ready
-    var w = wedgeAt(e.clientX, e.clientY);
-    if (w < 0) return;
-    var slice = S.layout[w];
-    if (!S.brush) { flashHint('Pick a topping or base from the shelf first!'); return; }
+  // Apply the current brush to one slice. Returns true if anything changed (so the
+  // caller re-renders). Shared by the single pizza and each multi-pizza board.
+  function applyBrush(slice) {
+    if (!S.brush) { flashHint('Pick a topping or base from the shelf first!'); return false; }
     if (S.brush.kind === 'eraser') {
       if (slice.toppings.length) slice.toppings = slice.toppings.slice(0, -1);
       else slice.base = 'plain';
@@ -358,12 +410,25 @@
       // base-first is a training wheel for the early levels only. From level 6 on,
       // the player may place a topping on a bare slice — and forgetting the base
       // will simply lose marks at grading time.
-      if (slice.base === 'plain' && Math.round(S.difficulty || 1) <= 5) { flashHint('Put a base on this slice first! 🍅'); return; }
+      if (slice.base === 'plain' && Math.round(S.difficulty || 1) <= 5) { flashHint('Put a base on this slice first! 🍅'); return false; }
       var ti = slice.toppings.indexOf(S.brush.id);
       if (ti === -1) { slice.toppings = slice.toppings.concat([S.brush.id]).sort(); Snd.place(); }
       else { slice.toppings.splice(ti, 1); Snd.erase(); } // tap again to remove
     }
-    renderPizza();
+    return true;
+  }
+  function onPizzaTap(e) {
+    if (!S || S.awaitingStart) return; // building is gated until Ready
+    var w = wedgeAt(e.clientX, e.clientY);
+    if (w < 0) return;
+    if (applyBrush(S.layout[w])) renderPizza();
+  }
+  // Tap on a specific multi-pizza board (its own SVG + layout).
+  function onBoardTap(e, layout, svg) {
+    if (!S || S.awaitingStart) return;
+    var w = wedgeAt(e.clientX, e.clientY, svg);
+    if (w < 0) return;
+    if (applyBrush(layout[w])) renderPizza();
   }
   var hintTimer = null;
   function flashHint(text) {
@@ -422,7 +487,7 @@
     var unlocked = unlockedFor(S.served);
     // If a topping was just introduced, force the next order to use it once.
     var require = (S.featureNext && C.TOPPING[S.featureNext]) ? S.featureNext : null;
-    S.order = C.generateOrder({ ordersServed: S.served, unlocked: unlocked, difficulty: S.difficulty, avoidKey: S.lastKey, require: require, taught: LS.taught });
+    S.order = C.generateOrder({ ordersServed: S.served, unlocked: unlocked, difficulty: S.difficulty, avoidKey: S.lastKey, require: require, taught: LS.taught, multiPizza: true });
     S.featureNext = null; // used once, whether or not it landed
     // Once a recipe has been defined in an order, mark it taught so future orders
     // name it bare (the player must then recall the ingredients themselves).
@@ -433,6 +498,7 @@
     }
     S.lastKey = S.order.key;
     S.layout = C.emptyLayout();
+    S.layout1 = C.emptyLayout(); // second board (used only for multi-pizza orders)
     S.brush = null;
     renderPizza(); reflectBrush();
 
@@ -504,9 +570,11 @@
   function hashStr(s) { var h = 0; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; }
 
   // ---- tip countdown: scaled to how many taps the order needs ----
+  // Slices that represent the work in an order: 16 for a two-board order, 8 else.
+  function orderWorkSlices(order) { return order.pizzas === 2 ? C.multiSlices(order) : order.acceptable[0]; }
   function countTaps(layout) {
     var taps = 0;
-    for (var i = 0; i < 8; i++) {
+    for (var i = 0; i < layout.length; i++) {
       var s = layout[i];
       if (s.wildcard) { taps += 2; continue; }
       if (s.base !== 'plain') taps += 1;
@@ -518,7 +586,7 @@
     return taps;
   }
   function startTipTimer(order) {
-    var taps = countTaps(order.acceptable[0]);
+    var taps = countTaps(orderWorkSlices(order));
     // Scales with the work, but the FLOOR is a generous 60s because a young
     // child spends most of the window READING the order, not tapping, and the
     // tip also gates levelling up (see adjustDifficulty) so it must be reachable.
@@ -568,7 +636,7 @@
   // How many distinct regions the order paints -> more regions = more time.
   function countRegions(layout) {
     var seen = {}, regions = 0;
-    for (var i = 0; i < 8; i++) {
+    for (var i = 0; i < layout.length; i++) {
       var s = layout[i];
       var key = s.wildcard ? 'wild' : (s.catCount ? ('cat:' + s.cat + (s.count != null ? s.count : (s.min + '-' + s.max)) + '|' + s.base) : (s.base + '|' + s.toppings.join(',')));
       if (!seen[key]) { seen[key] = 1; regions++; }
@@ -577,8 +645,8 @@
   }
   function startPatienceTimer(order) {
     buildPatienceBar();
-    var taps = countTaps(order.acceptable[0]);
-    var regions = countRegions(order.acceptable[0]);
+    var taps = countTaps(orderWorkSlices(order));
+    var regions = countRegions(orderWorkSlices(order));
     // generous floor, plus time per tap and a big bonus per extra region.
     S.patienceWindowMs = Math.round((30 + taps * 2.5 + (regions - 1) * 12) * 1000);
     S.patienceDeadline = Date.now() + S.patienceWindowMs;
@@ -633,7 +701,8 @@
     Snd.box();
     var fast = (Date.now() <= S.tipDeadline);
     stopTipTimer(); stopPatienceTimer();
-    var res = C.grade(S.layout, S.order.acceptable), acc = res.accuracy, tier = S.order.tier;
+    var res = isMulti() ? C.gradeMulti(S.order, boardLayouts()) : C.grade(S.layout, S.order.acceptable);
+    var acc = res.accuracy, tier = S.order.tier;
     // Below 0.8 accuracy the customer refuses the pizza: no pay, player still eats
     // the $3 make-cost.
     var refused = acc < 0.8;
@@ -653,7 +722,7 @@
     saveProgress();
     if (reward + tip > 0) kaching(reward + tip);
     if (S.order._cust && S.order._cust.gag === 'sixseven') banner67();
-    showResult(acc, reward, tip, refused, res.closest);
+    showResult(acc, reward, tip, refused, res);
     if (victory) { if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; } showVictory(); }
   }
 
@@ -684,8 +753,8 @@
     autoAdvance(3500);
   }
 
-  function showResult(acc, reward, tip, refused, closest) {
-    var mistakes = C.describeMistakes(S.layout, closest);
+  function showResult(acc, reward, tip, refused, res) {
+    var closest = res.closest;
     var band = C.reactionBand(acc);
     // celebratory / sympathetic sting, slightly after the coin so they don't muddy.
     setTimeout(refused ? Snd.fail : (acc >= 1 ? Snd.perfect : (band === 'great' ? Snd.success : Snd.meh)), 180);
@@ -709,6 +778,13 @@
     var compare = el('result-compare'), ul = el('result-mistakes'), concept = el('result-concept');
     compare.innerHTML = ''; ul.innerHTML = ''; ul.style.display = 'none';
     el('next-btn').textContent = 'Next customer ▶';
+    if (isMulti()) {
+      showMultiFeedback(acc, res, concept, compare);
+      show('result-overlay');
+      if (acc >= 1) autoAdvance(3500);
+      return;
+    }
+    var mistakes = C.describeMistakes(S.layout, closest);
     if (mistakes.length === 0) {
       concept.style.display = 'none'; compare.style.display = 'none';
       show('result-overlay');
@@ -730,13 +806,44 @@
     var t = toppings.length ? toppings.join(' + ') : 'no toppings';
     return baseName.toLowerCase() + ' with ' + t;
   }
+  var miniSeq = 0;
   function miniFig(label, layout) {
     var fig = document.createElement('figure');
     var svg = document.createElementNS(SVGNS, 'svg');
-    drawPizza(svg, layout, label === 'What you made' ? 'made' : 'want', 150);
+    drawPizza(svg, layout, 'mini' + (miniSeq++), 150);
     fig.appendChild(svg);
     var cap = document.createElement('figcaption'); cap.textContent = label; fig.appendChild(cap);
     return fig;
+  }
+  // Multi-pizza result: both built boards, plus the count/fraction reveal (Mode B)
+  // or the two target pizzas (Mode A), and "you got X of 16 right".
+  function exactMatches(layout, spec) {
+    var n = 0; for (var i = 0; i < layout.length; i++) if (C.sliceScore(layout[i], spec[i]) === 1) n++; return n;
+  }
+  function showMultiFeedback(acc, res, concept, compare) {
+    var right, explain;
+    if (S.order.mode === 'B') {
+      var kinds = S.order.pool.kinds, slices = S.layout.concat(S.layout1);
+      var have = kinds.map(function () { return 0; });
+      slices.forEach(function (s) { var k = classifySlice(s, kinds); if (k >= 0) have[k]++; });
+      right = have.reduce(function (a, b) { return a + b; }, 0); // exact-match count, matches the legend
+      explain = 'Across all 16 slices: ' + kinds.map(function (k, i) {
+        var fr = C.reduceFraction(k.count, 16);
+        return '<b>' + k.label + '</b> — you made ' + have[i] + ', needed ' + k.count + ' (' + fr[0] + '/' + fr[1] + ')';
+      }).join('; ') + '.';
+    } else {
+      right = res.closest ? exactMatches(S.layout, res.closest[0]) + exactMatches(S.layout1, res.closest[1]) : Math.round(acc * 16);
+      explain = 'Two whole pizzas, one of each.';
+    }
+    concept.innerHTML = explain + ' <span class="hint-line">You got <b>' + right + ' of 16</b> slices right.</span>';
+    concept.style.display = 'block';
+    compare.style.display = 'flex'; compare.style.flexWrap = 'wrap';
+    compare.appendChild(miniFig('Your Pizza 1', S.layout));
+    compare.appendChild(miniFig('Your Pizza 2', S.layout1));
+    if (S.order.mode === 'A' && res.closest) {
+      compare.appendChild(miniFig('Wanted', res.closest[0]));
+      compare.appendChild(miniFig('Wanted', res.closest[1]));
+    }
   }
 
   function nextCustomer() {
@@ -876,7 +983,7 @@
     el('restart-btn').onclick = function () { hide('over-overlay'); startGame(); };
     el('next-btn').onclick = nextCustomer;
     el('box-btn').onclick = boxIt;
-    el('clear-btn').onclick = function () { if (S) { S.layout = C.emptyLayout(); renderPizza(); } };
+    el('clear-btn').onclick = function () { if (S) { S.layout = C.emptyLayout(); S.layout1 = C.emptyLayout(); renderPizza(); } };
     el('eraser-btn').onclick = function () {
       if (!S) return;
       if (S.brush && S.brush.kind === 'eraser') { S.brush = null; el('eraser-btn').classList.remove('on'); }
@@ -897,9 +1004,34 @@
     if (location.hash.indexOf('demo') !== -1) demoFill();
     if (location.hash.indexOf('victory') !== -1) { markSeen(C.UNLOCK_ORDER); startGame(); showVictory(); }
     else if (location.hash.indexOf('win') !== -1) devWin();
+    else if (location.hash.indexOf('multiboxA') !== -1) devMulti('A', true, false);
+    else if (location.hash.indexOf('multiboxB') !== -1) devMulti('B', true, false);
+    else if (location.hash.indexOf('multifailB') !== -1) devMulti('B', true, true);
+    else if (location.hash.indexOf('multiA') !== -1) devMulti('A', false, false);
+    else if (location.hash.indexOf('multiB') !== -1) devMulti('B', false, false);
     else if (location.hash.indexOf('solvebox') !== -1) devSolve(true);
     else if (location.hash.indexOf('failbox') !== -1) devFail();
     else if (location.hash.indexOf('solve') !== -1) devSolve(false);
+  }
+  // Force a multi-pizza order of a given mode (QA / screenshots). Builds a correct
+  // solution; `fail` botches one board; `box` runs grading.
+  function devMulti(mode, box, fail) {
+    markSeen(C.UNLOCK_ORDER); startGame(); devReady();
+    S.difficulty = mode === 'B' ? 16 : 6;
+    var o = null, guard = 0;
+    while (guard++ < 3000 && !o) {
+      var cand = C.generateOrder({ difficulty: S.difficulty, unlocked: C.UNLOCK_ORDER, taught: [], multiPizza: true });
+      if (cand && cand.pizzas === 2 && cand.mode === mode) o = cand;
+    }
+    if (!o) return;
+    S.order = o; S.lastKey = o.key;
+    S.layout = C.emptyLayout(); S.layout1 = C.emptyLayout();
+    el('bubble').innerHTML = window.Glossary.linkify(o.text);
+    el('tier-pill').style.display = 'inline-block'; el('tier-pill').textContent = 'Level ' + o.tier;
+    fillSolvedBoards();
+    if (fail) C.REGION.right.forEach(function (i) { S.layout1[i] = C.makeSlice(S.layout1[i].base, ['olive']); });
+    renderPizza();
+    if (box) boxIt();
   }
   function demoFill() {
     markSeen(C.UNLOCK_ORDER); startGame();
@@ -941,16 +1073,33 @@
       return s;
     });
   }
+  // Fill both boards with a correct build (multi orders).
+  function fillSolvedBoards() {
+    if (S.order.mode === 'B') {
+      S.layout = canonicalFill(S.order.canonical16.slice(0, 8));
+      S.layout1 = canonicalFill(S.order.canonical16.slice(8, 16));
+    } else {
+      S.layout = canonicalFill(S.order.boards[0].acceptable[0]);
+      S.layout1 = canonicalFill(S.order.boards[1].acceptable[0]);
+    }
+  }
+  function devReady() { S.awaitingStart = false; hide('order-intro'); } // skip the playbill gate
   function devSolve(box) {
-    markSeen(C.UNLOCK_ORDER); startGame();
-    S.layout = canonicalFill(S.order.acceptable[0]);
+    markSeen(C.UNLOCK_ORDER); startGame(); devReady();
+    if (isMulti()) fillSolvedBoards(); else S.layout = canonicalFill(S.order.acceptable[0]);
     renderPizza(); if (box) boxIt();
   }
   function devFail() {
-    markSeen(C.UNLOCK_ORDER); startGame();
-    var L = canonicalFill(S.order.acceptable[0]);
-    C.REGION.right.forEach(function (i) { L[i] = C.makeSlice(L[i].base, ['olive']); }); // botch one half
-    S.layout = L; renderPizza(); boxIt();
+    markSeen(C.UNLOCK_ORDER); startGame(); devReady();
+    if (isMulti()) {
+      fillSolvedBoards();
+      C.REGION.right.forEach(function (i) { S.layout1[i] = C.makeSlice(S.layout1[i].base, ['olive']); }); // botch one board's half
+    } else {
+      var L = canonicalFill(S.order.acceptable[0]);
+      C.REGION.right.forEach(function (i) { L[i] = C.makeSlice(L[i].base, ['olive']); }); // botch one half
+      S.layout = L;
+    }
+    renderPizza(); boxIt();
   }
 
   function runSelfTest() {
