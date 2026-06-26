@@ -676,104 +676,60 @@
     show('victory-overlay');
   }
 
-  // ---- effects: a tiny WebAudio "sound kit" ----
-  // Sounds are SYNTHESIZED, not loaded from files: that keeps the game offline-safe
-  // and lets it run from file:// (where fetch()/decodeAudioData of an audio asset is
-  // CORS-blocked) with zero load latency. Everything routes through ensureCtx(),
-  // which returns null when muted, so the mute toggle silences the whole kit. The
-  // AudioContext is created lazily inside a user gesture (Start / a tap), per the
-  // browser autoplay policy.
-  var actx = null;
-  function ensureCtx() {
-    if (LS.muted) return null;
-    try {
-      if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
-      if (actx.state === 'suspended') actx.resume();
-    } catch (e) { actx = null; }
-    return actx;
-  }
-  // one shaped oscillator note, optionally gliding from -> to in frequency.
-  function tone(o) {
-    if (!actx) return;
-    var t = actx.currentTime + (o.at || 0), dur = o.dur, vol = o.vol == null ? 0.2 : o.vol;
-    var osc = actx.createOscillator(), g = actx.createGain();
-    osc.type = o.type || 'triangle';
-    osc.frequency.setValueAtTime(o.from || o.freq, t);
-    if (o.to) osc.frequency.exponentialRampToValueAtTime(o.to, t + dur);
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    osc.connect(g); g.connect(actx.destination);
-    osc.start(t); osc.stop(t + dur + 0.03);
-  }
-  // a short filtered noise burst (whoosh / thunk).
-  function noise(o) {
-    if (!actx) return;
-    var t = actx.currentTime + (o.at || 0), n = Math.floor(actx.sampleRate * o.dur);
-    var buf = actx.createBuffer(1, n, actx.sampleRate), d = buf.getChannelData(0);
-    for (var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
-    var src = actx.createBufferSource(); src.buffer = buf;
-    var f = actx.createBiquadFilter(); f.type = 'bandpass';
-    f.frequency.setValueAtTime(o.from || 1200, t);
-    if (o.to) f.frequency.exponentialRampToValueAtTime(o.to, t + o.dur);
-    var g = actx.createGain(); g.gain.value = o.vol == null ? 0.12 : o.vol;
-    src.connect(f); f.connect(g); g.connect(actx.destination);
-    src.start(t); src.stop(t + o.dur);
-  }
-  function run(fn) { return function () { if (ensureCtx()) fn(); }; }
-  // like run(), but plays a recorded clip first if one is loaded, else the synth.
-  function clipOr(id, fn) { return function () { if (playClip(id)) return; if (ensureCtx()) fn(); }; }
-  // a topping landing climbs in pitch with each placement in a quick run, for a
-  // satisfying "combo" feel, then resets after a short pause.
-  var placeStep = 0, placeAt = 0;
-  var Snd = {
-    pick: run(function () { tone({ freq: 660, dur: 0.06, type: 'square', vol: 0.11 }); }),
-    place: run(function () {
-      var now = Date.now(); if (now - placeAt > 1100) placeStep = 0; placeAt = now;
-      var f = 523 * Math.pow(1.05946, Math.min(placeStep++, 12)); // semitone climb
-      tone({ from: f, to: f * 1.5, dur: 0.09, type: 'triangle', vol: 0.16 });
-    }),
-    erase: run(function () { tone({ from: 360, to: 180, dur: 0.1, type: 'sawtooth', vol: 0.12 }); }),
-    box: run(function () { noise({ from: 1700, to: 280, dur: 0.22, vol: 0.14 }); tone({ from: 200, to: 110, dur: 0.22, type: 'sine', vol: 0.18, at: 0.04 }); }),
-    coin: clipOr('coin', function () { tone({ freq: 988, dur: 0.1, type: 'square', vol: 0.15 }); tone({ freq: 1319, dur: 0.16, type: 'square', vol: 0.15, at: 0.09 }); }),
-    success: clipOr('tada', function () { [523, 659, 784, 1047].forEach(function (f, i) { tone({ freq: f, dur: 0.16, type: 'triangle', vol: 0.17, at: i * 0.085 }); }); }),
-    perfect: clipOr('tada', function () { [523, 659, 784, 1047, 1319].forEach(function (f, i) { tone({ freq: f, dur: 0.17, type: 'triangle', vol: 0.18, at: i * 0.08 }); }); tone({ freq: 2093, dur: 0.25, type: 'sine', vol: 0.09, at: 0.42 }); }),
-    meh: run(function () { tone({ freq: 440, dur: 0.12, type: 'triangle', vol: 0.14 }); tone({ freq: 415, dur: 0.16, type: 'triangle', vol: 0.14, at: 0.16 }); }),
-    fail: clipOr('aww', function () { tone({ from: 392, to: 196, dur: 0.2, type: 'sawtooth', vol: 0.15 }); tone({ from: 370, to: 165, dur: 0.26, type: 'sawtooth', vol: 0.13, at: 0.18 }); }),
-    fanfare: run(function () { [392, 523, 659].forEach(function (f, i) { tone({ freq: f, dur: 0.13, type: 'square', vol: 0.15, at: i * 0.1 }); }); tone({ freq: 784, dur: 0.22, type: 'square', vol: 0.15, at: 0.3 }); }),
-    legend: clipOr('levelup', function () { [523, 659, 784, 1047, 784, 1047, 1319].forEach(function (f, i) { tone({ freq: f, dur: 0.2, type: 'triangle', vol: 0.18, at: i * 0.12 }); }); }),
-    sixseven: run(function () { tone({ freq: 587, dur: 0.18, type: 'square', vol: 0.16 }); tone({ freq: 784, dur: 0.26, type: 'square', vol: 0.16, at: 0.2 }); }),
-    // the speed-tip window expiring: a soft, deflating "aww" (not the harsh fail buzz).
-    tipLost: run(function () { tone({ from: 660, to: 330, dur: 0.3, type: 'sine', vol: 0.13 }); tone({ from: 440, to: 210, dur: 0.34, type: 'triangle', vol: 0.1, at: 0.07 }); }),
-    // synthesized crowd cheer + applause for the biggest wins: a scatter of short
-    // noise "claps" over a bright rising swell. License-free and offline; swapped
-    // for a real recorded clip if assets/sfx/cheer.mp3 exists (see playClip).
-    cheer: function () {
-      if (playClip('cheer')) return;
-      if (!ensureCtx()) return;
-      for (var i = 0; i < 22; i++) noise({ at: Math.random() * 1.15, dur: 0.045, from: 1600 + Math.random() * 2600, vol: 0.06 });
-      tone({ from: 520, to: 880, dur: 1.0, type: 'triangle', vol: 0.07 });
-      tone({ freq: 1320, dur: 0.45, type: 'sine', vol: 0.05, at: 0.55 });
-    }
+  // ---- effects: recorded CC0 sound kit ----
+  // All sounds are short mp3 samples in assets/sfx/ (Kenney, public domain / CC0;
+  // see assets/sfx/CREDITS.txt). mp3 is used because iOS Safari (the tablet target)
+  // cannot play .ogg. Played via HTMLAudioElement, which works from file:// (unlike
+  // fetch()/decodeAudioData, CORS-blocked locally). cloneNode lets the same sound
+  // overlap on rapid taps. The mute toggle silences everything; a missing file just
+  // plays nothing, so the game stays fully playable without the assets.
+  var SFX_VOL = {
+    pick: 0.45, place: 0.6, erase: 0.5, box: 0.7, coin: 0.85, meh: 0.7,
+    success: 0.8, perfect: 0.9, fail: 0.7, fanfare: 0.8, legend: 0.9,
+    cheer: 0.95, sixseven: 0.85, tipLost: 0.7
   };
-  // Recorded clips from assets/sfx/<id>.mp3 (HTMLAudioElement works from file://).
-  // Probed once up front: a clip only "wins" over the synth kit once it has actually
-  // loaded, so a missing clip never plays silent and always falls back to synth.
-  var SFX_IDS = ['cheer', 'tada', 'aww', 'coin', 'levelup'];
-  var clipReady = {}, clipEl = {};
+  var clipBase = {};
   function preloadClips() {
-    SFX_IDS.forEach(function (id) {
-      var a = new Audio(); a.preload = 'auto';
-      a.addEventListener('canplaythrough', function () { clipReady[id] = true; });
-      a.src = 'assets/sfx/' + id + '.mp3';
-      clipEl[id] = a;
+    Object.keys(SFX_VOL).forEach(function (id) {
+      var a = new Audio('assets/sfx/' + id + '.mp3');
+      a.preload = 'auto'; a.volume = SFX_VOL[id];
+      clipBase[id] = a;
     });
   }
-  function playClip(id) {
-    if (LS.muted || !clipReady[id]) return false; // not loaded -> caller uses synth
-    try { var a = clipEl[id]; a.currentTime = 0; var p = a.play(); if (p && p.catch) p.catch(function () { }); return true; }
-    catch (e) { return false; }
+  // iOS unlocks <audio> only inside a user gesture: prime every clip once on the
+  // first Start/tap so later programmatic plays are allowed.
+  var audioUnlocked = false;
+  function unlockAudio() {
+    if (audioUnlocked) return; audioUnlocked = true;
+    Object.keys(clipBase).forEach(function (id) {
+      var a = clipBase[id];
+      try {
+        a.muted = true; var p = a.play();
+        if (p && p.then) p.then(function () { a.pause(); a.currentTime = 0; a.muted = false; }).catch(function () { a.muted = false; });
+        else { a.pause(); a.muted = false; }
+      } catch (e) { a.muted = false; }
+    });
   }
+  function playSfx(id) {
+    if (LS.muted) return;
+    var base = clipBase[id]; if (!base) return;
+    try {
+      var node = base.cloneNode();      // fresh node so rapid sounds can overlap
+      node.volume = base.volume;
+      var p = node.play(); if (p && p.catch) p.catch(function () { });
+    } catch (e) { /* autoplay blocked until first gesture; ignore */ }
+  }
+  var Snd = {};
+  Object.keys(SFX_VOL).forEach(function (id) { Snd[id] = function () { playSfx(id); }; });
+
+  function kaching(amount) {
+    Snd.coin();
+    var moneyEl = el('money').getBoundingClientRect();
+    var d = document.createElement('div'); d.className = 'money-fly'; d.textContent = '+$' + amount;
+    d.style.left = (moneyEl.left + moneyEl.width / 2) + 'px'; d.style.top = (moneyEl.bottom + 6) + 'px';
+    document.body.appendChild(d); setTimeout(function () { d.remove(); }, 1150);
+  }
+  function banner67() { Snd.sixseven(); var d = document.createElement('div'); d.className = 'banner67'; d.textContent = 'SIX… SEVEN!'; document.body.appendChild(d); setTimeout(function () { d.remove(); }, 1400); }
 
   function kaching(amount) {
     Snd.coin();
@@ -807,7 +763,8 @@
   function init() {
     refreshHud();
     showResumeLevel();
-    el('start-btn').onclick = function () { ensureCtx(); startGame(); };
+    el('start-btn').onclick = function () { unlockAudio(); startGame(); };
+    document.addEventListener('pointerdown', unlockAudio); // unlock audio on first touch anywhere
     el('reset-btn').onclick = resetPlayer;
     el('restart-btn').onclick = function () { hide('over-overlay'); startGame(); };
     el('next-btn').onclick = nextCustomer;
@@ -820,7 +777,7 @@
       reflectBrush();
     };
     el('meme-toggle').onclick = function () { LS.meme = !LS.meme; refreshHud(); };
-    el('mute-toggle').onclick = function () { LS.muted = !LS.muted; if (!LS.muted) { ensureCtx(); Snd.pick(); } refreshHud(); };
+    el('mute-toggle').onclick = function () { LS.muted = !LS.muted; if (!LS.muted) { unlockAudio(); Snd.pick(); } refreshHud(); };
     el('victory-btn').onclick = function () { hide('victory-overlay'); hide('result-overlay'); nextCustomer(); };
     preloadArt();
     preloadClips();

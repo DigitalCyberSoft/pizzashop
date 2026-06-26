@@ -108,21 +108,18 @@ images costs money; the script prints the count before spending.
 
 ## Sound
 
-Most sounds are **synthesized in-browser** by a small WebAudio kit in `game-ui.js`
-(place, box, coin, success/perfect, fail, fanfares, a crowd cheer), so they need no
-files and work offline and from `file://`. A mute toggle in the HUD persists in
-`localStorage`.
+Sound effects are short **recorded mp3 samples** in `assets/sfx/` (one per game
+event: place, box, coin, success/perfect, fail, fanfares, cheer, ...). They are
+from [Kenney](https://kenney.nl) and are **CC0 / public domain** (see
+`assets/sfx/CREDITS.txt`). mp3 is used because iOS Safari (the tablet target)
+cannot play `.ogg`. Playback is via `HTMLAudioElement`, which works from `file://`
+(unlike `fetch()`/`decodeAudioData`, which is CORS-blocked locally); a missing file
+just plays nothing, so the game stays playable without the assets. A mute toggle in
+the HUD persists in `localStorage`. Audio is unlocked on the first tap (iOS policy).
 
-Optionally, richer recorded clips can be generated for the big moments:
-
-```
-python3 tools/generate-sfx.py            # writes assets/sfx/<id>.mp3
-```
-
-It reads `ELEVENLABS_API_KEY` from the environment or `./.env` (gitignored) and uses
-ElevenLabs' text-to-sound-effects API. When a clip exists it is played (via an
-`HTMLAudioElement`, which works from `file://`); when absent, the synth kit is used
-instead, so the game sounds complete with or without the clips.
+`tools/generate-sfx.py` is an optional alternative that generates clips with
+ElevenLabs' text-to-sound-effects API (reads `ELEVENLABS_API_KEY` from `./.env`);
+it writes to the same `assets/sfx/<id>.mp3` paths, replacing the Kenney samples.
 
 ## Privacy
 
