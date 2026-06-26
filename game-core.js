@@ -134,7 +134,7 @@
     spinach: { name: 'spinach', icon: '🍃' },
     sweetcorn: { name: 'sweetcorn', icon: '🌽' },
     pineapple: { name: 'pineapple', icon: '🍍' },
-    'tomato-slice': { name: 'tomato', icon: '🍅' },
+    'tomato-slice': { name: 'tomato slice', icon: '🍅' }, // "slice" disambiguates from the tomato BASE
     chilli: { name: 'chilli', icon: '🌶️' },
     'extra-cheese': { name: 'extra cheese', icon: '🧀' },
     // novelty: foods a kid finds absurd on a pizza.
@@ -1383,9 +1383,19 @@
   //   forbidden  (MUST NOT / SHALL NOT)           -> topping absent in EVERY reading
   //   optional   (MAY / OPTIONAL / SHOULD /        -> player's choice: both the with-
   //               RECOMMENDED / SHOULD NOT)            and without- layouts are accepted
+  // a topping clashes with a base when their words would read as the same thing
+  // (a "tomato base" must not also talk about a "tomato"/"tomato slice" topping,
+  // a "cheese base" not about an "extra cheese" topping). Keeps rule orders clear.
+  function baseClash(base) {
+    return base === 'tomato' ? ['tomato-slice'] : (base === 'cheese' ? ['extra-cheese'] : []);
+  }
   function t_normative(rng, av, un) {
     if (av.length < 3) return null;
-    var t = pickN(rng, av, 3), A = t[0], C = t[1], D = t[2], B = pickBase(rng, un);
+    var B = pickBase(rng, un);
+    var clash = baseClash(B);
+    var pool = av.filter(function (id) { return clash.indexOf(id) === -1; });
+    if (pool.length < 3) pool = av; // not enough variety to be picky; fall back
+    var t = pickN(rng, pool, 3), A = t[0], C = t[1], D = t[2];
     var mand = pick(rng, ['MUST', 'SHALL', 'REQUIRED']);
     var opt = pick(rng, ['MAY', 'OPTIONAL', 'SHOULD', 'RECOMMENDED', 'SHOULD NOT']);
     var proh = pick(rng, ['MUST NOT', 'SHALL NOT']);
