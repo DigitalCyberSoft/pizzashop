@@ -564,8 +564,7 @@
   function showLeftResult() {
     Snd.fail();
     el('result-title').textContent = '😠 They got bored and left!';
-    var line = LS.meme ? 'Took too long, chef. I’m OUT. L pizza shop.' : 'Sorry, I waited too long. I have to go!';
-    el('result-reaction').textContent = '“' + line + '”';
+    el('result-reaction').textContent = '“' + C.pickReaction('left', LS.meme) + '”';
     el('result-money').innerHTML = '−$3 of dough wasted ⇒ <span class="minus">−$3</span> (no pizza sold)';
     var compare = el('result-compare'), ul = el('result-mistakes');
     compare.innerHTML = ''; ul.innerHTML = '';

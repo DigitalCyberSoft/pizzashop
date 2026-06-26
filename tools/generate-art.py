@@ -5,7 +5,10 @@ Generate all game art with OpenAI's image API (gpt-image-1):
   * customer portraits   -> assets/customers/<id>.png   (opaque)
   * topping "full pizza"  -> assets/toppings/<id>.png    (transparent; scattered
                              pieces filling a circle, clipped per-wedge by the game)
-  * shop interior scene   -> assets/scene/shop.png       (opaque background)
+  * shop interior scenes  -> assets/scene/shop-<n>.png   (opaque, one per level)
+  * base sauce textures   -> assets/bases/<id>.png       (seamless, square)
+  * brand logos           -> assets/logo/logo.png,       (transparent wordmark +
+                             assets/logo/logo-mark.png     text-free crowned mark)
 
 Run:   python3 tools/generate-art.py                 # generate anything missing
        python3 tools/generate-art.py --force         # regenerate everything
@@ -120,6 +123,19 @@ SCENE = [
     ("shop-20", "a grand cartoon rainbow wizard-tower pizza kitchen with sparkles, stars and floating books" + _COUNTER),
 ]
 
+# Brand logos (transparent). `logo` is the full wordmark badge for the landing
+# page / start screen; `logo-mark` is the text-free crowned-slice emblem reused
+# for the HUD icon and favicon. Text rendering from the model is imperfect, so the
+# mark (no text) is the reliable one; the wordmark is decorative.
+LOGO = [
+    ("logo", "a fun mascot logo for a children's game called \"PIZZA PALACE\": a "
+             "cheerful smiling pizza-slice character wearing a little gold crown, "
+             "above a bright banner ribbon reading \"PIZZA PALACE\" in chunky "
+             "playful letters"),
+    ("logo-mark", "a cheerful smiling pizza-slice character mascot wearing a little "
+                  "gold crown, a simple round emblem, no text"),
+]
+
 # Base textures: a SQUARE, seamless, top-down picture of just the sauce/cheese
 # spread (no crust ring), tiled by the game and clipped per wedge.
 BASES = [
@@ -136,6 +152,7 @@ OUT = {
     "toppings": os.path.join(ROOT, "assets", "toppings"),
     "scene": os.path.join(ROOT, "assets", "scene"),
     "bases": os.path.join(ROOT, "assets", "bases"),
+    "logo": os.path.join(ROOT, "assets", "logo"),
 }
 
 
@@ -167,12 +184,17 @@ def prompt_for(group, desc):
         return (CARTOON + desc + ". Fills the WHOLE square frame edge to edge, NO "
                 "crust, NO border, NO plate, NO circle, NO text — just the flat "
                 "sauce/cheese texture.")
+    if group == "logo":
+        return (CARTOON + desc + ". Bold playful game logo, thick outlines, vibrant "
+                "colors, centered, filling most of the frame. Fully transparent "
+                "background, NO plate, NO box, NO drop-shadow rectangle, NO border "
+                "— just the logo floating on transparency.")
     return (CARTOON + desc + ". Wide background illustration, no people, no text.")
 
 
 def request(group, prompt, key):
     body = {"model": MODEL, "prompt": prompt, "n": 1}
-    if group == "toppings":
+    if group == "toppings" or group == "logo":
         body.update({"size": "1024x1024", "background": "transparent", "output_format": "png"})
     elif group == "scene":
         body.update({"size": "1536x1024"})
@@ -194,7 +216,7 @@ def request(group, prompt, key):
     raise RuntimeError("unexpected response shape")
 
 
-GROUPS = {"customers": CUSTOMERS, "toppings": TOPPINGS, "scene": SCENE, "bases": BASES}
+GROUPS = {"customers": CUSTOMERS, "toppings": TOPPINGS, "scene": SCENE, "bases": BASES, "logo": LOGO}
 
 
 def main():
@@ -208,7 +230,7 @@ def main():
     if not key:
         sys.exit("No OPENAI_API_KEY (set it in the environment or ./.env).")
     only = set(filter(None, args.only.split(",")))
-    groups = [args.group] if args.group else ["customers", "toppings", "scene", "bases"]
+    groups = [args.group] if args.group else ["customers", "toppings", "scene", "bases", "logo"]
 
     todo = []
     for g in groups:

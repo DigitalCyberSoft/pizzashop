@@ -28,7 +28,8 @@ body {
   padding: 8px 16px; background: var(--accent); color: #fff;
   box-shadow: 0 4px 0 rgba(0,0,0,.15); position: relative; z-index: 5;
 }
-#hud .logo { font-weight: 800; font-size: 1.4rem; letter-spacing: .5px; }
+#hud .logo { font-weight: 800; font-size: 1.4rem; letter-spacing: .5px; display: flex; align-items: center; gap: 8px; }
+#hud .logo .logo-mark { height: 36px; width: 36px; vertical-align: middle; }
 #hud .stat { background: rgba(255,255,255,.18); border-radius: 999px; padding: 4px 12px; font-weight: 700; }
 #hud .stat b { font-variant-numeric: tabular-nums; }
 #hud .stat.cash { background: #1f8a4c; box-shadow: 0 0 0 2px rgba(255,255,255,.5) inset; }

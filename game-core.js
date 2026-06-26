@@ -1265,6 +1265,17 @@
       plain: ['That’s all wrong! Read it again!', 'No no no, that’s not my order!', 'You didn’t listen at all!',
         'I can’t eat this, it’s completely wrong.']
     },
+    left: {
+      meme: ['Took too long, chef. I’m OUT. L pizza shop.',
+        'Bro this is taking DECADES. I’m ghosting.', 'Zero rizz, zero speed. I’m gone.',
+        'My stomach left without me. Bye!', 'This wait is NOT bussin. Cancelled.',
+        'Aura draining... I gotta dip. L.', 'I aged a whole year waiting. Peace out.',
+        'Slow service is a war crime. Reported. Leaving.'],
+      plain: ['Sorry, I waited too long. I have to go!', 'I’m all out of time, maybe next visit!',
+        'Too slow for me today, bye!', 'My tummy gave up waiting. See you!',
+        'I have to dash, that took ages!', 'No pizza is worth this wait. Goodbye!',
+        'I’ll come back when you’re quicker!']
+    },
     incredulity: {
       meme: ['BROCCOLI? On a PIZZA?! ...Yes. Do it. I’m built different.',
         'Green beans?! Who hurt you? Put ’em on. ALL of them.',
