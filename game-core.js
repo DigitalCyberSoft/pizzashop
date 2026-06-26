@@ -1491,7 +1491,17 @@
     var A = pick(rng, av), B = pickBase(rng, un);
     var L = paint(emptyLayout(), REGION.whole, { base: B, addTopping: A });
     L[0] = makeSlice(B, []); // exactly one slice has NO A on it
-    return { text: 'Cover the whole ' + baseWord(B) + ' base in ' + tn(A) + '. But ONE single slice - any one you pick - should NOT have ' + tn(A) + ' on it. Leave that one slice with just the base.', acceptable: rotAcc(L), teach: null, concept: 'except' };
+    // Reason-clause variant: give a MOTIVE for the bare slice. The child must still
+    // read past it to the actual rule ("should NOT have"); the reason is flavour.
+    var reasons = [
+      'I do not like ' + tn(A) + ' on every single bite!',
+      'My little brother HATES ' + tn(A) + '.',
+      'I want one plain slice to cool down on.',
+      'Grandma cannot stand ' + tn(A) + '.',
+      'Save one for my dog - ' + tn(A) + ' is not for puppies!'
+    ];
+    var reason = rng() < 0.6 ? ' ' + pick(rng, reasons) : '';
+    return { text: 'Cover the whole ' + baseWord(B) + ' base in ' + tn(A) + '.' + reason + ' But ONE single slice - any one you pick - should NOT have ' + tn(A) + ' on it. Leave that one slice with just the base.', acceptable: rotAcc(L), teach: null, concept: 'except' };
   }
 
   // Uneven share: one half is the speaker's; the OTHER half is split between two
