@@ -1754,11 +1754,6 @@
     av.forEach(function (t) { cands.push({ spec: makeSlice('tomato', [t]), label: tn(t) + ' on a tomato base', recipe: null }); });
     return cands;
   }
-  function composition(rng, total, parts) {
-    var a = []; for (var i = 0; i < parts; i++) a.push(1);
-    for (var k = 0; k < total - parts; k++) a[Math.floor(rng() * parts)]++;
-    return a;
-  }
   function fractionWord(n, d) {
     if (d === 2) return 'half';
     if (d === 4) return n === 1 ? 'a quarter' : (n === 3 ? 'three quarters' : n + '/4');
@@ -1767,13 +1762,29 @@
   }
   function listJoin(a) { return a.length === 1 ? a[0] : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]; }
   function cloneSpec(s) { return makeSlice(s.base, (s.toppings || []).slice()); }
+  // Curated count combinations (even counts summing to 16) chosen to teach a
+  // VARIETY of clean fractions: halves and quarters, balanced 3-4 way mixes, and
+  // crucially several that go OVER a full pizza (one kind > 8 of the 16 slices,
+  // e.g. 10/16 = 5/8) so LARGE fractions are taught, not just "a little of each".
+  var MODEB_COMBOS = [
+    [8, 8], [4, 4, 4, 4], [8, 4, 4],          // two halves / four quarters / half + two quarters
+    [10, 6], [12, 4], [14, 2],                // one kind MORE than a whole pizza
+    [2, 4, 10], [2, 2, 12],                   // a large fraction inside a 3-way mix
+    [6, 6, 4], [2, 6, 8], [4, 6, 6],          // assorted 3-way mixes
+    [2, 2, 4, 8], [2, 4, 4, 6]                // 4-way mixes
+  ];
+  function pickModeBCombo(rng, maxKinds) {
+    var ok = MODEB_COMBOS.filter(function (c) { return c.length <= maxKinds; });
+    var combo = pick(rng, ok).slice();
+    for (var z = combo.length - 1; z > 0; z--) { var k = Math.floor(rng() * (z + 1)); var t = combo[z]; combo[z] = combo[k]; combo[k] = t; }
+    return combo; // shuffled so the big kind (and "the rest") isn't always the same slot
+  }
   function buildModeB(rng, av, unlocked, tier, taught) {
     var cands = poolKindCandidates(av, unlocked);
     if (cands.length < 2) return null;
-    var nk = (cands.length >= 3 && rng() < 0.6) ? 3 : 2;
-    var picks = pickN(rng, cands, nk);
-    var counts = composition(rng, 8, nk).map(function (u) { return u * 2; }); // even parts of 16
-    var kinds = picks.map(function (k, i) { return { spec: k.spec, label: k.label, count: counts[i], recipe: k.recipe }; });
+    var combo = pickModeBCombo(rng, cands.length);
+    var picks = pickN(rng, cands, combo.length);
+    var kinds = picks.map(function (k, i) { return { spec: k.spec, label: k.label, count: combo[i], recipe: k.recipe }; });
     var canon = []; kinds.forEach(function (k) { for (var c = 0; c < k.count; c++) canon.push(cloneSpec(k.spec)); });
     var phrasing = tier >= 15 ? 'fraction' : 'count';
     var parts = kinds.map(function (k) {
@@ -1783,7 +1794,7 @@
     if (phrasing === 'count') parts[parts.length - 1] = 'the rest ' + kinds[kinds.length - 1].label;
     // scaffold any recipe the player has not been taught yet (base + toppings).
     var names = untaught(kinds.map(function (k) { return k.recipe; }).filter(Boolean), taught);
-    var text = 'For my two pizzas (16 slices in all): ' + listJoin(parts) + '. Build them in any order you like!' +
+    var text = 'For my two pizzas: ' + listJoin(parts) + '. Build them in any order you like!' +
       (names.length ? recipeReminder(names) : '');
     return { pizzas: 2, mode: 'B', pool: { total: 16, phrasing: phrasing, kinds: kinds }, canonical16: canon,
       acceptable: [canon.slice(0, 8)], text: text, concept: 'fraction',

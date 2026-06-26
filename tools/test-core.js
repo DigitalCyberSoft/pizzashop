@@ -615,7 +615,7 @@ function fillWild(L) {
 // whole-pizza orders graded per board, board-order free. Mode B = one 16-slice
 // count/fraction pool graded by gradePool. Opt-in via multiPizza:true. ----
 (function () {
-  var modeA = 0, modeB = 0;
+  var modeA = 0, modeB = 0, sawLargeFraction = false;
   for (var diff = 3; diff <= Core.MAX_TIER; diff++) {
     for (var seed = 1; seed <= 120; seed++) {
       var o = Core.generateOrder({ difficulty: diff, unlocked: Core.UNLOCK_ORDER, rng: lcg(seed * 29 + diff), multiPizza: true });
@@ -631,6 +631,7 @@ function fillWild(L) {
         modeB++;
         var sum = o.pool.kinds.reduce(function (a, k) { return a + k.count; }, 0);
         eq(sum, 16, 'Mode B kind counts sum to 16');
+        if (o.pool.kinds.some(function (k) { return k.count > 8; })) sawLargeFraction = true;
         eq(o.canonical16.length, 16, 'Mode B canonical pool is 16 slices');
         var P0 = o.canonical16.slice(0, 8), P1 = o.canonical16.slice(8, 16);
         ok(Math.abs(Core.gradeMulti(o, [P0, P1]).accuracy - 1) < 1e-9, 'Mode B canonical pool scores 1.0');
@@ -644,6 +645,7 @@ function fillWild(L) {
   }
   ok(modeA > 0, 'Mode A orders are reachable (got ' + modeA + ')');
   ok(modeB > 0, 'Mode B orders are reachable (got ' + modeB + ')');
+  ok(sawLargeFraction, 'Mode B teaches large fractions (a kind > 8 of the 16 slices is reachable)');
   // multi orders never appear when not opted in
   var anyMulti = false;
   for (var s = 1; s <= 400; s++) {
