@@ -269,11 +269,6 @@
         "concept": "recipe on a single quarter"
       },
       {
-        "order": "On every pair of opposite slices, place white meats except for the last slice which should be left empty.",
-        "layout": "Pairs of opposite slices have white meats (chicken, fish) except one slice left empty.",
-        "concept": "nested exception"
-      },
-      {
         "order": "Imagine this pizza is for a family of four. Dad and Mom get halves each with any three vegetables, but save one slice plain for Grandpa.",
         "layout": "Two opposite quarters with any three veggies; one slice empty; others free.",
         "concept": "implied share"
@@ -294,11 +289,6 @@
         "concept": "conditional that states a fact then acts"
       },
       {
-        "order": "Four consecutive slices each featuring all different bases, and stop the chain by leaving one slice plain before continuing.",
-        "layout": "Four consecutive slices with different bases; followed by empty slice.",
-        "concept": "cover-all-with-one-slice-exception"
-      },
-      {
         "order": "In one half, put meats and cheeses except for ham; leave one in the opposite half plain for balance.",
         "layout": "One half full of meats and cheeses sans ham; opposite half has one slice plain.",
         "concept": "nested exception"
@@ -307,11 +297,6 @@
         "order": "Split this between three friends: any veggies for the first pair, any fruits for the next, and surprise the last pair.",
         "layout": "First pair of wedges have any veggies; second pair have any fruits; last pair surprised.",
         "concept": "implied share"
-      },
-      {
-        "order": "Build a Meat Feast with jalape\u00f1os on one diagonal.",
-        "layout": "A diagonal with Meat Feast and jalape\u00f1os; others free.",
-        "concept": "named diagonal"
       }
     ],
     "17": [
@@ -354,11 +339,6 @@
         "order": "Go for Lunchbox Tragedy, but keep banana away from two opposite wedges filled with raisins and marshmallows. Every other slice is like that, isn't it?",
         "layout": "Every other piece has raisins and marshmallow, opposite two cannot have banana as part of Lunchbox Tragedy.",
         "concept": "Ordinary with distractor"
-      },
-      {
-        "order": "I delight in surprises! Use four bases, decorate one topping by elimination which isn't fruit, veggie, or meat, and go wild on any two slices!",
-        "layout": "A topping that fits not any main category atop multiple bases, two wildcard slices in-between the rest.",
-        "concept": "Deduction by elimination"
       },
       {
         "order": "Pizza goes cheesy dream on a quarter, but keep at least a slice of it separate. Plus, two separate wedges might surprise me with a topping not in my meats or veggies list!",
@@ -411,11 +391,6 @@
         "order": "Mix up three meat toppings per wedge on cheese base! Two opposite wedges may have veg instead.",
         "layout": "Cheese base, three meats per wedge but two opposite may have vegetables instead.",
         "concept": "Multi-Option and Topping Choice"
-      },
-      {
-        "order": "On the woods half, marshmallow may rest on spinach, or kiwi on a non-adjacent slice, if over extra cheese.",
-        "layout": "Half any base with spinach or kiwi under specific conditions.",
-        "concept": "Conditional Layering and Multifactorial"
       }
     ],
     "19": [
@@ -428,11 +403,6 @@
         "order": "Create a pizza with every quarter having its own unique character: Margherita, BBQ Chicken, Dragon's Breath, and one slice of Lunchbox Tragedy as the wild card, plus make sure vegetables never connect to meats.",
         "layout": "Two Margherita slices, two BBQ Chicken slices, two Dragon's Breath slices, and slot in one slice of Lunchbox Tragedy to keep vegetables apart from meats.",
         "concept": "four different quarter recipes; buffer slices for dietary rule"
-      },
-      {
-        "order": "Split the pizza into two halves: one with only non-touching veggies and the other with only one meat type per slice. However, ensure there's a mystery meat slice randomly sneaking into the veggie half!",
-        "layout": "One half with four slices of non-touching veggies and one randomly added meat slice; other half with each slice having just one type of meat.",
-        "concept": "uneven share; conditionals with recipe variation"
       },
       {
         "order": "This pizza should be surprising! Fill three slices with any combination of three fruits, leaving the rest for meats. Handle with care: meat should never neighbor veggies; leave one cheese slice as a cushion buffer.",
@@ -448,11 +418,6 @@
         "order": "Make the pizza with every other slice a Hawaiian, while the rest shows any assortment of silly toppings, making sure meats aren't neighbors to vegetables or plain.",
         "layout": "Four Hawaiian slices; every other filler slice of silly toppings ensuring a buffer between meats and veggies.",
         "concept": "pattern with recipes and dietary rule buffer"
-      },
-      {
-        "order": "I'm feeling nostalgic: switch between two Cheesy Cheese Dream slices and two Mystery Meat feast slices. Fill in with veggies and sweets that avoid any direct meat contact.",
-        "layout": "Two alternating Cheesy Cheese Dreams, two mystery meats in opposite wedges, introduced with buffered veggies and silly.",
-        "concept": "alternating with dietary exception; recipe pattern"
       },
       {
         "order": "Let's design an intricate canopy: populate three slices with every fruit you have, the following with BBQ Chicken on two squares, and a Popeye Power-Up topping off the last.",
@@ -522,5 +487,7 @@
         "concept": "role pattern with neighbor-based exceptions"
       }
     ]
-  }
+  },
+  "scrubbed_at": "2026-06-26T05:30:20.146214+00:00",
+  "scrub_note": "Removed 7 orders referencing ingredients/bases/recipes the engine cannot build (kiwi, jalapenos, white meats, 4 distinct bases, mystery-meat recipe)."
 }
