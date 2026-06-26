@@ -65,11 +65,12 @@ body {
 #tipbar-wrap.gone { opacity: .35; }
 #tip-label { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 800; font-size: .85rem; color: #5a3b00; }
 #pizza-wrap { position: relative; }
-#pizza { filter: drop-shadow(0 8px 0 rgba(0,0,0,.12)); touch-action: none; }
-#pizza path.wedge { stroke: var(--crust-dark); stroke-width: 2; cursor: pointer; }
-#pizza path.wedge.hover { stroke: var(--accent); stroke-width: 5; }
-#pizza .crust { fill: none; stroke: var(--crust); stroke-width: 14; }
-#pizza text.top { font-size: 26px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+#pizza, #multi-wrap .board svg { filter: drop-shadow(0 8px 0 rgba(0,0,0,.12)); touch-action: none; }
+/* slice markers / crust / labels apply to the two-board pizzas too, not just #pizza */
+#pizza path.wedge, #multi-wrap path.wedge { stroke: var(--crust-dark); stroke-width: 2; cursor: pointer; }
+#pizza path.wedge.hover, #multi-wrap path.wedge.hover { stroke: var(--accent); stroke-width: 5; }
+#pizza .crust, #multi-wrap .crust { fill: none; stroke: var(--crust); stroke-width: 14; }
+#pizza text.top, #multi-wrap text.top { font-size: 26px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .kitchen-buttons { display: flex; gap: 10px; }
 button.big { border: none; border-radius: 14px; padding: 12px 22px; font-size: 1.1rem; font-weight: 800; cursor: pointer; box-shadow: var(--shadow); }
 button.box { background: var(--accent2); color: #fff; }
@@ -100,9 +101,11 @@ button.eraser.on { background: var(--ink); color: #fff; }
 
 /* Two-board (multi-pizza) view: two pizzas side by side, scaled to fit; the tray
    stays a side rail. A live fraction strip sits under the boards for Mode B. */
-#multi-wrap { display: none; }
-#multi-wrap .boards { display: flex; gap: 14px; justify-content: center; align-items: flex-start; }
-#multi-wrap .board { flex: 1 1 0; max-width: 320px; margin: 0; text-align: center; }
+/* width:100% so the wrap fills the kitchen instead of shrinking to content (the
+   flex column centers a shrink-to-fit block, which collapsed the boards tiny). */
+#multi-wrap { display: none; width: 100%; max-width: 860px; }
+#multi-wrap .boards { display: flex; gap: 22px; justify-content: center; align-items: flex-start; }
+#multi-wrap .board { flex: 1 1 0; max-width: 400px; margin: 0; text-align: center; }
 #multi-wrap .board svg { width: 100%; height: auto; touch-action: none; }
 #multi-wrap .board figcaption { font-weight: 800; color: #6a4a22; margin-top: 2px; }
 #fraction-strip { margin: 12px auto 0; max-width: 560px; }
@@ -168,6 +171,10 @@ button.eraser.on { background: var(--ink); color: #fff; }
 /* ingredient/food words: a different colour from the (red, clickable) glossary
    terms — a blue highlighter. Tempts skimming for the food, missing the where/how. */
 .gloss-ing { color: #15639e; background: #dcebfa; border-radius: 4px; padding: 0 3px; font-weight: 800; }
+/* recipe names: clickable (tap to see ingredients), a third colour (green) so they
+   read as their own thing, distinct from red glossary terms and blue ingredients. */
+.recipe-link { color: #1f8a4c; border-bottom: 2px dotted #1f8a4c; font-weight: 800; cursor: pointer; }
+.recipe-link:hover { background: #e0f3e7; border-radius: 4px; }
 .card .concept { font-size: 1.05rem; font-weight: 600; line-height: 1.5; margin: 6px 0 10px; }
 .card .concept .hint-line { display: block; margin-top: 6px; color: #2a8f5f; font-weight: 800; }
 #gloss-modal-overlay, #gloss-page-overlay { z-index: 60; } /* above the result card */

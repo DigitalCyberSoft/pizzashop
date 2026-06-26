@@ -226,14 +226,18 @@
     // (protected only); ingredient/topping names get the blue food highlight that
     // tempts a child to skim for the food and miss the spatial/logic instructions.
     var names = [];
-    (recipes || []).forEach(function (r) { names.push({ t: r, cls: null }); });
-    (ingredients || []).forEach(function (g) { names.push({ t: g, cls: 'gloss-ing' }); });
+    (recipes || []).forEach(function (r) { names.push({ t: r, kind: 'recipe' }); });
+    (ingredients || []).forEach(function (g) { names.push({ t: g, kind: 'ing' }); });
     names.sort(function (a, b) { return b.t.length - a.t.length; });
     names.forEach(function (n) {
       var re = new RegExp('(^|[^\\w-])(' + rxEsc(n.t) + ')(?![\\w-])', 'ig');
       html = html.replace(re, function (whole, lead, word) {
         var tok = PH + slots.length + PH;
-        slots.push(n.cls ? ('<span class="' + n.cls + '">' + word + '</span>') : word);
+        // recipe names are CLICKABLE (tap to see the ingredients); ingredient names
+        // just get the blue food highlight.
+        slots.push(n.kind === 'recipe'
+          ? ('<span class="recipe-link" data-recipe="' + n.t + '">' + word + '</span>')
+          : ('<span class="gloss-ing">' + word + '</span>'));
         return lead + tok;
       });
     });
@@ -308,6 +312,26 @@
   }
   function closeModal() { if (modalEl) modalEl.classList.remove('show'); hooks.resume(); }
 
+  // Recipes: the host (game-ui, which knows the RECIPE table) registers each
+  // recipe's base + toppings + description so a clickable recipe name in an order
+  // can pop up what is actually IN it (the scaffold-then-fade fades the inline
+  // definition, so this is how a child looks it up later).
+  var RECIPE_INFO = {};
+  function registerRecipes(list) { (list || []).forEach(function (r) { RECIPE_INFO[r.name] = r; }); }
+  function openRecipe(name) {
+    var r = RECIPE_INFO[name]; if (!r) return;
+    ensureModal();
+    modalEl.innerHTML = '';
+    var c = card('gloss-card');
+    var demo = document.createElement('div'); demo.className = 'gloss-demo';
+    demo.appendChild(recipeCard(name, r.base, r.toppings)); // name + base dot + topping icons
+    var def = document.createElement('p'); def.className = 'gloss-def';
+    def.textContent = "It's " + r.desc + '. Build it from those ingredients!';
+    var b = document.createElement('button'); b.className = 'big box'; b.textContent = 'Got it!'; b.onclick = closeModal;
+    c.appendChild(demo); c.appendChild(def); c.appendChild(b);
+    modalEl.appendChild(c); modalEl.classList.add('show'); hooks.pause();
+  }
+
   // The glossary page is a one-concept-per-page flip book (Back / Next), not a
   // long scroll, so a young child meets one idea at a time.
   // Cards per page adapt to the screen: 4 (a 2x2 grid) when there is room, else
@@ -364,9 +388,11 @@
     // one delegated handler: any .gloss span opens its term.
     document.addEventListener('click', function (e) {
       var g = e.target.closest && e.target.closest('.gloss');
-      if (g && g.dataset.term) { e.preventDefault(); openTerm(g.dataset.term); }
+      if (g && g.dataset.term) { e.preventDefault(); openTerm(g.dataset.term); return; }
+      var rl = e.target.closest && e.target.closest('.recipe-link');
+      if (rl && rl.dataset.recipe) { e.preventDefault(); openRecipe(rl.dataset.recipe); }
     });
   }
 
-  window.Glossary = { linkify: linkify, conceptExplanation: conceptExplanation, openTerm: openTerm, openPage: openPage, init: init, TERMS: TERMS };
+  window.Glossary = { linkify: linkify, conceptExplanation: conceptExplanation, openTerm: openTerm, openRecipe: openRecipe, registerRecipes: registerRecipes, openPage: openPage, init: init, TERMS: TERMS };
 })();

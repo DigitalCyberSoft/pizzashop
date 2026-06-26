@@ -548,9 +548,10 @@
       document.body.appendChild(ov);
       el('oi-ready').onclick = readyToStart; // child persists across reuse
     }
-    var t = Math.max(1, Math.min(C.MAX_TIER, Math.round(S.order.tier || 1)));
-    ov.style.backgroundImage = 'linear-gradient(rgba(20,10,0,.4), rgba(20,10,0,.55)), ' +
-      'url(assets/scene/shop-' + t + '.png), url(assets/scene/shop.png)';
+    // the playbill shows the SHOPFRONT (the shop facing the customer as they walk
+    // up), not the per-tier kitchen scene; fall back to the default shop interior.
+    ov.style.backgroundImage = 'linear-gradient(rgba(20,10,0,.32), rgba(20,10,0,.5)), ' +
+      'url(assets/scene/shopfront.png), url(assets/scene/shop.png)';
     var face = el('oi-face');
     face.style.visibility = 'visible';
     face.onerror = function () { face.style.visibility = 'hidden'; };
@@ -991,6 +992,12 @@
     el('start-btn').onclick = function () { unlockAudio(); startGame(); };
     document.addEventListener('pointerdown', unlockAudio); // unlock audio on first touch anywhere
     window.Glossary.init({ pause: pauseTimers, resume: resumeTimers });
+    // teach the glossary the recipe table so a clickable recipe name in an order
+    // can show what is IN it (game-core knows the ingredients; the glossary does not).
+    window.Glossary.registerRecipes(Object.keys(C.RECIPE).map(function (name) {
+      var r = C.RECIPE[name];
+      return { name: name, base: r.base, toppings: r.toppings, desc: C.recipeDescribe(name) };
+    }));
     el('gloss-btn').onclick = function () { window.Glossary.openPage(); };
     el('welcome-gloss-btn').onclick = function () { window.Glossary.openPage(); };
     el('reset-btn').onclick = resetPlayer;

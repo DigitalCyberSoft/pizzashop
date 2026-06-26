@@ -1616,7 +1616,13 @@
     { id: 'sixseven', name: 'Six-Seven Sam', prompt: 'an excited cartoon kid holding up six and seven fingers, big grin, bright flat colors, kid-friendly, plain background', gag: 'sixseven' },
     { id: 'wizard', name: 'Pizza Wizard', prompt: 'a friendly cartoon wizard with a pizza-slice hat and starry robe, bright flat colors, kid-friendly, plain background' },
     { id: 'astro', name: 'Astro Ant', prompt: 'a cute cartoon ant in a tiny astronaut suit, cheerful, bright flat colors, kid-friendly mascot, plain background' },
-    { id: 'dino', name: 'Chompy the Dino', prompt: 'a friendly round cartoon green dinosaur with a big smile, bright flat colors, kid-friendly mascot, plain background' }
+    { id: 'dino', name: 'Chompy the Dino', prompt: 'a friendly round cartoon green dinosaur with a big smile, bright flat colors, kid-friendly mascot, plain background' },
+    { id: 'knight', name: 'Sir Pizzalot', prompt: 'a friendly cartoon knight in shiny armor holding a pizza-slice shield, big smile, bright flat colors, kid-friendly, plain background' },
+    { id: 'mermaid', name: 'Marina the Mermaid', prompt: 'a cheerful cartoon mermaid with a seashell crown and a wavy blue-green tail, bright flat colors, kid-friendly, plain background' },
+    { id: 'robot', name: 'Pizzabot 3000', prompt: 'a cute boxy cartoon robot with an antenna and a happy smiley screen face, bright flat colors, kid-friendly, plain background' },
+    { id: 'vampire', name: 'Count Crustula', prompt: 'a goofy friendly cartoon vampire kid with a little cape and tiny fangs, not scary, smiling, bright flat colors, kid-friendly, plain background' },
+    { id: 'cowgirl', name: 'Cowgirl Kit', prompt: 'a cheerful cartoon cowgirl with a big hat and a red bandana, freckles, bright flat colors, kid-friendly, plain background' },
+    { id: 'family', name: 'The Pizza Family', prompt: 'a cheerful cartoon family of four standing close together, all smiling and waving, bright flat colors, kid-friendly, plain background' }
   ];
 
   var DIALOGUE = {
@@ -1784,9 +1790,14 @@
       teach: names.length ? { type: 'recipe', names: names } : null };
   }
   function buildMultiPizza(rng, av, unlocked, tier, taught) {
+    // Mode A (two simple whole pizzas) is a LOW-level idea: two whole pizzas is
+    // easier than one half, so it belongs around levels 3-9 only. From level 10 the
+    // two-board order is always Mode B (the 16-slice count/fraction pool), which is
+    // genuinely harder than a single pizza.
     if (tier < 3) return null;
-    var useB = tier >= 10 && rng() < 0.5;
-    return useB ? buildModeB(rng, av, unlocked, tier, taught) : buildModeA(rng, av, unlocked, taught);
+    return tier >= 10
+      ? buildModeB(rng, av, unlocked, tier, taught)
+      : buildModeA(rng, av, unlocked, taught);
   }
   function multiSlices(order) {
     return order.mode === 'B' ? order.canonical16 : order.boards[0].acceptable[0].concat(order.boards[1].acceptable[0]);
