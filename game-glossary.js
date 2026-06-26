@@ -122,13 +122,22 @@
     d.appendChild(smallPizza(TINT_B));
     return d;
   }
-  // must (orange) / may (blue, your choice) / must-not (left bare) on one pizza.
-  function rulesDemo() {
-    var f = {};
-    [0, 1, 2, 3].forEach(function (i) { f[i] = ACCENT; }); // MUST
-    [4, 5, 6].forEach(function (i) { f[i] = TINT_A; });    // MAY
-    f[7] = DIM;                                            // MUST NOT (left off)
+  // MAY: some slices on, some off, to say "your choice".
+  function mayDemo() {
+    var f = {}; for (var i = 0; i < N; i++) f[i] = (i % 2 === 0) ? ACCENT : DIM;
     return miniPizza(f);
+  }
+  // MUST NOT: a topped pizza with a red no-entry sign over it.
+  function forbiddenDemo() {
+    var svg = lit(REG.whole);
+    var c = document.createElementNS(SVGNS, 'circle');
+    c.setAttribute('cx', CX); c.setAttribute('cy', CY); c.setAttribute('r', 34);
+    c.setAttribute('fill', 'none'); c.setAttribute('stroke', '#d11'); c.setAttribute('stroke-width', '7');
+    var l = document.createElementNS(SVGNS, 'line');
+    l.setAttribute('x1', 26); l.setAttribute('y1', 26); l.setAttribute('x2', 74); l.setAttribute('y2', 74);
+    l.setAttribute('stroke', '#d11'); l.setAttribute('stroke-width', '7');
+    svg.appendChild(c); svg.appendChild(l);
+    return svg;
   }
 
   // a recipe card: the named pizza, its base swatch, and its topping icons.
@@ -171,7 +180,9 @@
     // ---- choice, counting and rule-strength words ----
     { id: 'eitherOr', label: 'Either / or', syn: ['either or', 'either'], def: 'Either this OR that means pick just ONE of the choices, never both. You decide which one.', math: 'A or B = choose one (not both)', demo: function () { return pairDemo(); } },
     { id: 'atLeast', label: 'At least one', syn: ['at least one', 'at least'], def: 'At least one means one or more: one is fine, two is fine, lots is fine, but never zero.', math: 'at least 1 = 1, 2, 3 ... (1 or more)', demo: function () { return numberLine(6, 1, 6); } },
-    { id: 'rules', label: 'Must, may, must not', syn: ['must not', 'shall not', 'must', 'shall', 'required', 'recommended', 'optional', 'may'], def: 'These words say how strong a rule is. MUST (or shall, required) means you have to. MAY (or optional, should) means it is your choice. MUST NOT (or shall not) means never.', math: 'MUST = always · MAY = your choice · MUST NOT = never', demo: function () { return rulesDemo(); } }
+    { id: 'must', label: 'Must', syn: ['must', 'shall', 'required'], def: 'Must (also shall, or required) means you HAVE to do it. There is no choice: it has to be there.', math: 'MUST = always, you have to', demo: function () { return lit(REG.whole); } },
+    { id: 'may', label: 'May', syn: ['may', 'optional', 'recommended', 'should'], def: 'May (also optional, should, recommended) means it is your CHOICE: doing it and skipping it are both allowed.', math: 'MAY = your choice (yes or no)', demo: function () { return mayDemo(); } },
+    { id: 'mustNot', label: 'Must not', syn: ['must not', 'shall not', 'should not'], def: 'Must not (also shall not) means NEVER do it. Should not is gentler: better not to, but it is allowed.', math: 'MUST NOT = never do it', demo: function () { return forbiddenDemo(); } }
   ];
   var BY_ID = {}; TERMS.forEach(function (t) { BY_ID[t.id] = t; });
 
@@ -206,16 +217,22 @@
   // wrap the FIRST occurrence of each term's longest matching phrase. One link per
   // term keeps the bubble readable. Operates on escaped HTML.
   function linkify(text) {
-    var html = esc(text), used = {};
+    var html = esc(text), used = {}, slots = [];
+    // Wrap each match as a control-char placeholder first, then swap in the real
+    // spans at the end. Placeholders contain no letters, so a shorter phrase
+    // (e.g. "must") can never match inside an already-wrapped longer one
+    // (e.g. "must not"), which would otherwise nest and corrupt the span.
     PHRASES.forEach(function (ph) {
       if (used[ph.term]) return;
       var re = new RegExp('\\b(' + rxEsc(ph.p) + ')\\b', 'i');
       var m = re.exec(html);
       if (!m) return;
       used[ph.term] = 1;
-      html = html.slice(0, m.index) + '<span class="gloss" data-term="' + ph.term + '">' + m[0] + '</span>' + html.slice(m.index + m[0].length);
+      var token = '' + slots.length + '';
+      slots.push('<span class="gloss" data-term="' + ph.term + '">' + m[0] + '</span>');
+      html = html.slice(0, m.index) + token + html.slice(m.index + m[0].length);
     });
-    return html;
+    return html.replace(/(\d+)/g, function (_, i) { return slots[i]; });
   }
   function detectTerms(text) {
     var html = ' ' + String(text || '') + ' ', out = [], seen = {};
