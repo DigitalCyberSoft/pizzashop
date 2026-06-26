@@ -51,16 +51,28 @@
     get taught() { try { return JSON.parse(localStorage.getItem('pizzashop.taught') || '[]'); } catch (e) { return []; } },
     set taught(v) { localStorage.setItem('pizzashop.taught', JSON.stringify(v)); },
     get difficulty() { var v = parseFloat(localStorage.getItem('pizzashop.difficulty')); return (isFinite(v) && v >= 1) ? v : 1; },
-    set difficulty(v) { localStorage.setItem('pizzashop.difficulty', v); }
+    set difficulty(v) { localStorage.setItem('pizzashop.difficulty', v); },
+    // The live run (money + orders served) is persisted too, so closing or
+    // reloading mid-run resumes exactly where the child left off, not just at the
+    // saved level. Cleared (back to a fresh $20 run) only on game-over or reset.
+    get money() { var v = parseFloat(localStorage.getItem('pizzashop.money')); return (isFinite(v) && v >= 0) ? v : 20; },
+    set money(v) { localStorage.setItem('pizzashop.money', v); },
+    get served() { return +(localStorage.getItem('pizzashop.served') || 0); },
+    set served(v) { localStorage.setItem('pizzashop.served', v); }
   };
 
   var S = null;
   function newRun() {
-    S = { money: 20, served: 0, aura: 0, order: null, layout: C.emptyLayout(),
+    S = { money: LS.money, served: LS.served, aura: 0, order: null, layout: C.emptyLayout(),
       brush: null, tipDeadline: 0, tipWindowMs: 0, tipTimer: null, lastKey: null,
       patienceDeadline: 0, patienceWindowMs: 0, patienceTimer: null,
       featureNext: null, difficulty: LS.difficulty, maxStreak: 0, won: false, awaitingStart: false };
   }
+  // Persist the whole run. Called at every order outcome so progress is never
+  // more than one order stale. (Difficulty is also written in adjustDifficulty.)
+  function saveProgress() { if (!S) return; LS.money = S.money; LS.served = S.served; LS.difficulty = S.difficulty; }
+  // End the run's money/served (the level is kept) so the next game starts fresh.
+  function clearRun() { LS.money = 20; LS.served = 0; }
 
   // ---- ingredient unlock: grows with orders served AND current difficulty ----
   function unlockedFor(served) {
@@ -638,6 +650,7 @@
     var victory = (S.maxStreak >= 5 && !S.won);
     if (victory) S.won = true;
     refreshHud();
+    saveProgress();
     if (reward + tip > 0) kaching(reward + tip);
     if (S.order._cust && S.order._cust.gag === 'sixseven') banner67();
     showResult(acc, reward, tip, refused, res.closest);
@@ -654,6 +667,7 @@
     if (S.money > LS.high) LS.high = S.money;
     adjustDifficulty(0, false);
     refreshHud();
+    saveProgress();
     showLeftResult();
   }
   function showLeftResult() {
@@ -730,6 +744,7 @@
     hide('result-overlay');
     S.served += 1; refreshHud();
     if (S.money < 3) { gameOver(); return; }
+    saveProgress();
     nextOrder();
   }
   // A friendly title for how far the player climbed (drives the game-over screen).
@@ -750,6 +765,7 @@
   }
   function gameOver() {
     stopTipTimer(); stopPatienceTimer();
+    clearRun(); // the run is over: next game starts at a fresh $20 (level is kept)
     var lvl = curLevel();
     el('over-rank').textContent = 'You made it to ' + chefRank(lvl) + '!';
     el('over-stats').innerHTML = statBlock(lvl);
@@ -843,6 +859,7 @@
     LS.difficulty = 1;
     LS.seen = [];
     LS.taught = [];
+    clearRun(); // fresh money + orders-served for the new player
     if (S) S.difficulty = 1;
     showResumeLevel();
   }
