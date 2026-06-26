@@ -1501,7 +1501,7 @@
       'Save one for my dog - ' + tn(A) + ' is not for puppies!'
     ];
     var reason = rng() < 0.6 ? ' ' + pick(rng, reasons) : '';
-    return { text: 'Cover the whole ' + baseWord(B) + ' base in ' + tn(A) + '.' + reason + ' But ONE single slice - any one you pick - should NOT have ' + tn(A) + ' on it. Leave that one slice with just the base.', acceptable: rotAcc(L), teach: null, concept: 'except' };
+    return { text: 'Cover the whole ' + baseWord(B) + ' base in ' + tn(A) + '.' + reason + ' Put it on every slice EXCEPT one - any one you pick - which should NOT have ' + tn(A) + ' on it. Leave that one slice with just the base.', acceptable: rotAcc(L), teach: null, concept: 'except' };
   }
 
   // Uneven share: one half is the speaker's; the OTHER half is split between two
