@@ -165,6 +165,9 @@ button.eraser.on { background: var(--ink); color: #fff; }
 /* ---- Glossary: tappable maths/reading words + demos ---- */
 .gloss { border-bottom: 2px dotted var(--accent); color: var(--accent); font-weight: 800; cursor: pointer; }
 .gloss:hover { background: #ffe9df; border-radius: 4px; }
+/* ingredient/food words: a different colour from the (red, clickable) glossary
+   terms — a blue highlighter. Tempts skimming for the food, missing the where/how. */
+.gloss-ing { color: #15639e; background: #dcebfa; border-radius: 4px; padding: 0 3px; font-weight: 800; }
 .card .concept { font-size: 1.05rem; font-weight: 600; line-height: 1.5; margin: 6px 0 10px; }
 .card .concept .hint-line { display: block; margin-top: 6px; color: #2a8f5f; font-weight: 800; }
 #gloss-modal-overlay, #gloss-page-overlay { z-index: 60; } /* above the result card */

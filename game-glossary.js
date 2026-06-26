@@ -160,6 +160,7 @@
     { id: 'opposite', label: 'Opposite', syn: ['directly across', 'straight across', 'across from', 'opposite', 'across'], def: 'Opposite slices are straight across the pizza from each other, as far apart as they can be.', math: 'slice + 4 = the one opposite (1 and 5, 2 and 6...)', demo: function () { return lit([0, 4]); } },
     { id: 'nextTo', label: 'Next to', syn: ['next to each other', 'right next to', 'next to', 'side by side', 'touching', 'touch'], def: 'Slices next to each other share an edge, sitting side by side.', math: 'neighbours: slice and the one beside it', demo: function () { return lit([0, 1]); } },
     { id: 'everyOther', label: 'Every other', syn: ['every other slice', 'every other', 'alternating'], def: 'Every other means skip one each time, all the way around.', math: 'take slice 1, skip 2, take 3... (the odd ones)', demo: function () { return lit([0, 2, 4, 6]); } },
+    { id: 'checkerboard', label: 'Checkerboard', syn: ['checkerboard'], def: 'A checkerboard alternates two different kinds all the way around, like the squares on a chess board: every other slice is one kind, and each slice between them is the other.', math: 'A, B, A, B... two kinds taking turns around the ring', demo: function () { return miniPizza((function () { var f = {}; for (var i = 0; i < N; i++) f[i] = (i % 2 === 0) ? TINT_A : TINT_B; return f; })()); } },
     { id: 'theRest', label: 'The rest', syn: ['everything else', 'all the others', 'the rest'], def: 'The rest means all the slices left over after the ones already named.', math: '8 total − the ones used = the rest', demo: function () { return miniPizza((function () { var f = fillSet([0, 1, 2], DIM); [3, 4, 5, 6, 7].forEach(function (i) { f[i] = ACCENT; }); return f; })()); } },
     { id: 'threeInRow', label: 'Three in a row', syn: ['three slices in a row', 'three in a row', 'in a row'], def: 'Three in a row are three slices touching in a line, one after another.', math: '3 slices side by side by side', demo: function () { return lit([0, 1, 2]); } },
     { id: 'diagonal', label: 'Diagonal', syn: ['diagonally opposite', 'diagonally', 'diagonal', 'corner to corner'], def: 'Diagonal quarters are corner to corner from each other.', math: 'two quarters straight across = opposite corners', demo: function () { return lit(REG['top-right'].concat(REG['bottom-left'])); } },
@@ -216,7 +217,7 @@
 
   // wrap the FIRST occurrence of each term's longest matching phrase. One link per
   // term keeps the bubble readable. Operates on escaped HTML.
-  function linkify(text) {
+  function linkify(text, ingredients) {
     var html = esc(text), used = {}, slots = [];
     // Wrap each match as a control-char placeholder first, then swap in the real
     // spans at the end. Placeholders contain no letters, so a shorter phrase
@@ -224,13 +225,31 @@
     // (e.g. "must not"), which would otherwise nest and corrupt the span.
     PHRASES.forEach(function (ph) {
       if (used[ph.term]) return;
-      var re = new RegExp('\\b(' + rxEsc(ph.p) + ')\\b', 'i');
+      // Match a whole word that is NOT part of a hyphenated word: \b alone treats
+      // a hyphen as a boundary, so \bhalf\b wrongly matches inside "half-birthday".
+      // Capture the leading boundary char (m[1]) so no lookbehind is needed.
+      var re = new RegExp('(^|[^\\w-])(' + rxEsc(ph.p) + ')(?![\\w-])', 'i');
       var m = re.exec(html);
       if (!m) return;
       used[ph.term] = 1;
       var token = '' + slots.length + '';
-      slots.push('<span class="gloss" data-term="' + ph.term + '">' + m[0] + '</span>');
-      html = html.slice(0, m.index) + token + html.slice(m.index + m[0].length);
+      var at = m.index + m[1].length, hit = m[2]; // wrap only the term, keep its leading boundary char
+      slots.push('<span class="gloss" data-term="' + ph.term + '">' + hit + '</span>');
+      html = html.slice(0, at) + token + html.slice(at + hit.length);
+    });
+    // Ingredient highlight pass: colour EVERY ingredient/base name a different
+    // colour from the glossary terms. This deliberately tempts a child to skim for
+    // the food words; doing so they miss the spatial/logic instructions, which is
+    // the point. Reuses the same control-char placeholder slots so an ingredient
+    // can never nest inside an already-wrapped term span.
+    var PH = String.fromCharCode(1);
+    (ingredients || []).forEach(function (ing) {
+      var re = new RegExp('(^|[^\\w-])(' + rxEsc(ing) + ')(?![\\w-])', 'ig');
+      html = html.replace(re, function (whole, lead, word) {
+        var tok = PH + slots.length + PH;
+        slots.push('<span class="gloss-ing">' + word + '</span>');
+        return lead + tok;
+      });
     });
     return html.replace(/(\d+)/g, function (_, i) { return slots[i]; });
   }
@@ -238,7 +257,7 @@
     var html = ' ' + String(text || '') + ' ', out = [], seen = {};
     PHRASES.forEach(function (ph) {
       if (seen[ph.term]) return;
-      if (new RegExp('\\b' + rxEsc(ph.p) + '\\b', 'i').test(html)) { seen[ph.term] = 1; out.push(ph.term); }
+      if (new RegExp('(^|[^\\w-])' + rxEsc(ph.p) + '(?![\\w-])', 'i').test(html)) { seen[ph.term] = 1; out.push(ph.term); }
     });
     return out;
   }
