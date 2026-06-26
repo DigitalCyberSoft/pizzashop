@@ -43,6 +43,8 @@
     set high(v) { localStorage.setItem('pizzashop.highscore', v); },
     get meme() { return localStorage.getItem('pizzashop.meme') !== 'off'; },
     set meme(v) { localStorage.setItem('pizzashop.meme', v ? 'on' : 'off'); },
+    get muted() { return localStorage.getItem('pizzashop.muted') === 'on'; },
+    set muted(v) { localStorage.setItem('pizzashop.muted', v ? 'on' : 'off'); },
     get seen() { try { return JSON.parse(localStorage.getItem('pizzashop.seen') || '[]'); } catch (e) { return []; } },
     set seen(v) { localStorage.setItem('pizzashop.seen', JSON.stringify(v)); },
     // recipes the player has already had defined for them (scaffold-then-fade)
@@ -284,6 +286,7 @@
     return d;
   }
   function selectBrush(kind, id) {
+    Snd.pick();
     if (S.brush && S.brush.kind === kind && S.brush.id === id) S.brush = null; // toggle off
     else S.brush = { kind: kind, id: id };
     el('eraser-btn').classList.remove('on');
@@ -305,16 +308,18 @@
     if (S.brush.kind === 'eraser') {
       if (slice.toppings.length) slice.toppings = slice.toppings.slice(0, -1);
       else slice.base = 'plain';
+      Snd.erase();
     } else if (S.brush.kind === 'base') {
       slice.base = S.brush.id;
+      Snd.place();
     } else { // topping
       // base-first is a training wheel for the early levels only. From level 6 on,
       // the player may place a topping on a bare slice — and forgetting the base
       // will simply lose marks at grading time.
       if (slice.base === 'plain' && Math.round(S.difficulty || 1) <= 5) { flashHint('Put a base on this slice first! 🍅'); return; }
       var ti = slice.toppings.indexOf(S.brush.id);
-      if (ti === -1) slice.toppings = slice.toppings.concat([S.brush.id]).sort();
-      else slice.toppings.splice(ti, 1); // tap again to remove
+      if (ti === -1) { slice.toppings = slice.toppings.concat([S.brush.id]).sort(); Snd.place(); }
+      else { slice.toppings.splice(ti, 1); Snd.erase(); } // tap again to remove
     }
     renderPizza();
   }
@@ -337,6 +342,7 @@
     el('aura').textContent = S ? S.aura : 0;
     el('highscore').textContent = LS.high;
     el('meme-toggle').textContent = 'Meme mode: ' + (LS.meme ? 'ON' : 'OFF');
+    el('mute-toggle').textContent = LS.muted ? '🔇 Sound off' : '🔊 Sound on';
   }
 
   function pendingIntros() {
@@ -362,6 +368,7 @@
   function showIntros(ids, done) {
     if (!ids.length) { done(); return; }
     var id = ids[0], data = introCardData(id);
+    Snd.fanfare();
     el('intro-emoji').textContent = data.emoji;
     el('intro-title').textContent = data.title;
     el('intro-text').textContent = data.text;
@@ -516,6 +523,7 @@
   }
   function boxIt() {
     if (!S || !S.order) return;
+    Snd.box();
     var fast = (Date.now() <= S.tipDeadline);
     stopTipTimer(); stopPatienceTimer();
     var res = C.grade(S.layout, S.order.acceptable), acc = res.accuracy, tier = S.order.tier;
@@ -554,6 +562,7 @@
     showLeftResult();
   }
   function showLeftResult() {
+    Snd.fail();
     el('result-title').textContent = '😠 They got bored and left!';
     var line = LS.meme ? 'Took too long, chef. I’m OUT. L pizza shop.' : 'Sorry, I waited too long. I have to go!';
     el('result-reaction').textContent = '“' + line + '”';
@@ -569,6 +578,8 @@
   function showResult(acc, reward, tip, refused, closest) {
     var mistakes = C.describeMistakes(S.layout, closest);
     var band = C.reactionBand(acc);
+    // celebratory / sympathetic sting, slightly after the coin so they don't muddy.
+    setTimeout(refused ? Snd.fail : (acc >= 1 ? Snd.perfect : (band === 'great' ? Snd.success : Snd.meh)), 180);
     var line = (S.order.novelty && acc >= 0.8) ? C.pickReaction('incredulity', LS.meme) : C.pickReaction(band, LS.meme);
 
     el('result-title').textContent = refused ? '😤 Order refused!' : (acc >= 1 ? '⭐ Perfect!' : '📦 Order up!');
@@ -653,31 +664,86 @@
   // Beat the game: 5 tipped pizzas at the top level. Sits over the result card;
   // dismissing it carries on (you keep your top level and can keep playing).
   function showVictory() {
+    Snd.legend();
     el('victory-stats').innerHTML = statBlock(curLevel());
     show('victory-overlay');
   }
 
-  // ---- effects ----
+  // ---- effects: a tiny WebAudio "sound kit" ----
+  // Sounds are SYNTHESIZED, not loaded from files: that keeps the game offline-safe
+  // and lets it run from file:// (where fetch()/decodeAudioData of an audio asset is
+  // CORS-blocked) with zero load latency. Everything routes through ensureCtx(),
+  // which returns null when muted, so the mute toggle silences the whole kit. The
+  // AudioContext is created lazily inside a user gesture (Start / a tap), per the
+  // browser autoplay policy.
   var actx = null;
-  function audioReady() { try { if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === 'suspended') actx.resume(); } catch (e) { actx = null; } }
-  function beep(freq, start, dur) {
-    if (!actx) return;
-    var o = actx.createOscillator(), g = actx.createGain();
-    o.type = 'triangle'; o.frequency.value = freq;
-    g.gain.setValueAtTime(0.001, actx.currentTime + start);
-    g.gain.exponentialRampToValueAtTime(0.25, actx.currentTime + start + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + start + dur);
-    o.connect(g); g.connect(actx.destination);
-    o.start(actx.currentTime + start); o.stop(actx.currentTime + start + dur + 0.02);
+  function ensureCtx() {
+    if (LS.muted) return null;
+    try {
+      if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+      if (actx.state === 'suspended') actx.resume();
+    } catch (e) { actx = null; }
+    return actx;
   }
+  // one shaped oscillator note, optionally gliding from -> to in frequency.
+  function tone(o) {
+    if (!actx) return;
+    var t = actx.currentTime + (o.at || 0), dur = o.dur, vol = o.vol == null ? 0.2 : o.vol;
+    var osc = actx.createOscillator(), g = actx.createGain();
+    osc.type = o.type || 'triangle';
+    osc.frequency.setValueAtTime(o.from || o.freq, t);
+    if (o.to) osc.frequency.exponentialRampToValueAtTime(o.to, t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(g); g.connect(actx.destination);
+    osc.start(t); osc.stop(t + dur + 0.03);
+  }
+  // a short filtered noise burst (whoosh / thunk).
+  function noise(o) {
+    if (!actx) return;
+    var t = actx.currentTime + (o.at || 0), n = Math.floor(actx.sampleRate * o.dur);
+    var buf = actx.createBuffer(1, n, actx.sampleRate), d = buf.getChannelData(0);
+    for (var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+    var src = actx.createBufferSource(); src.buffer = buf;
+    var f = actx.createBiquadFilter(); f.type = 'bandpass';
+    f.frequency.setValueAtTime(o.from || 1200, t);
+    if (o.to) f.frequency.exponentialRampToValueAtTime(o.to, t + o.dur);
+    var g = actx.createGain(); g.gain.value = o.vol == null ? 0.12 : o.vol;
+    src.connect(f); f.connect(g); g.connect(actx.destination);
+    src.start(t); src.stop(t + o.dur);
+  }
+  function run(fn) { return function () { if (ensureCtx()) fn(); }; }
+  // a topping landing climbs in pitch with each placement in a quick run, for a
+  // satisfying "combo" feel, then resets after a short pause.
+  var placeStep = 0, placeAt = 0;
+  var Snd = {
+    pick: run(function () { tone({ freq: 660, dur: 0.06, type: 'square', vol: 0.11 }); }),
+    place: run(function () {
+      var now = Date.now(); if (now - placeAt > 1100) placeStep = 0; placeAt = now;
+      var f = 523 * Math.pow(1.05946, Math.min(placeStep++, 12)); // semitone climb
+      tone({ from: f, to: f * 1.5, dur: 0.09, type: 'triangle', vol: 0.16 });
+    }),
+    erase: run(function () { tone({ from: 360, to: 180, dur: 0.1, type: 'sawtooth', vol: 0.12 }); }),
+    box: run(function () { noise({ from: 1700, to: 280, dur: 0.22, vol: 0.14 }); tone({ from: 200, to: 110, dur: 0.22, type: 'sine', vol: 0.18, at: 0.04 }); }),
+    coin: run(function () { tone({ freq: 988, dur: 0.1, type: 'square', vol: 0.15 }); tone({ freq: 1319, dur: 0.16, type: 'square', vol: 0.15, at: 0.09 }); }),
+    success: run(function () { [523, 659, 784, 1047].forEach(function (f, i) { tone({ freq: f, dur: 0.16, type: 'triangle', vol: 0.17, at: i * 0.085 }); }); }),
+    perfect: run(function () { [523, 659, 784, 1047, 1319].forEach(function (f, i) { tone({ freq: f, dur: 0.17, type: 'triangle', vol: 0.18, at: i * 0.08 }); }); tone({ freq: 2093, dur: 0.25, type: 'sine', vol: 0.09, at: 0.42 }); }),
+    meh: run(function () { tone({ freq: 440, dur: 0.12, type: 'triangle', vol: 0.14 }); tone({ freq: 415, dur: 0.16, type: 'triangle', vol: 0.14, at: 0.16 }); }),
+    fail: run(function () { tone({ from: 392, to: 196, dur: 0.2, type: 'sawtooth', vol: 0.15 }); tone({ from: 370, to: 165, dur: 0.26, type: 'sawtooth', vol: 0.13, at: 0.18 }); }),
+    fanfare: run(function () { [392, 523, 659].forEach(function (f, i) { tone({ freq: f, dur: 0.13, type: 'square', vol: 0.15, at: i * 0.1 }); }); tone({ freq: 784, dur: 0.22, type: 'square', vol: 0.15, at: 0.3 }); }),
+    legend: run(function () { [523, 659, 784, 1047, 784, 1047, 1319].forEach(function (f, i) { tone({ freq: f, dur: 0.2, type: 'triangle', vol: 0.18, at: i * 0.12 }); }); }),
+    sixseven: run(function () { tone({ freq: 587, dur: 0.18, type: 'square', vol: 0.16 }); tone({ freq: 784, dur: 0.26, type: 'square', vol: 0.16, at: 0.2 }); })
+  };
+
   function kaching(amount) {
-    audioReady(); beep(988, 0, 0.12); beep(1319, 0.10, 0.18); // ka-ching
+    Snd.coin();
     var moneyEl = el('money').getBoundingClientRect();
     var d = document.createElement('div'); d.className = 'money-fly'; d.textContent = '+$' + amount;
     d.style.left = (moneyEl.left + moneyEl.width / 2) + 'px'; d.style.top = (moneyEl.bottom + 6) + 'px';
     document.body.appendChild(d); setTimeout(function () { d.remove(); }, 1150);
   }
-  function banner67() { var d = document.createElement('div'); d.className = 'banner67'; d.textContent = 'SIX… SEVEN!'; document.body.appendChild(d); setTimeout(function () { d.remove(); }, 1400); }
+  function banner67() { Snd.sixseven(); var d = document.createElement('div'); d.className = 'banner67'; d.textContent = 'SIX… SEVEN!'; document.body.appendChild(d); setTimeout(function () { d.remove(); }, 1400); }
 
   // =========================================================================
   // wiring
@@ -702,7 +768,7 @@
   function init() {
     refreshHud();
     showResumeLevel();
-    el('start-btn').onclick = function () { audioReady(); startGame(); };
+    el('start-btn').onclick = function () { ensureCtx(); startGame(); };
     el('reset-btn').onclick = resetPlayer;
     el('restart-btn').onclick = function () { hide('over-overlay'); startGame(); };
     el('next-btn').onclick = nextCustomer;
@@ -715,6 +781,7 @@
       reflectBrush();
     };
     el('meme-toggle').onclick = function () { LS.meme = !LS.meme; refreshHud(); };
+    el('mute-toggle').onclick = function () { LS.muted = !LS.muted; if (!LS.muted) { ensureCtx(); Snd.pick(); } refreshHud(); };
     el('victory-btn').onclick = function () { hide('victory-overlay'); hide('result-overlay'); nextCustomer(); };
     preloadArt();
 
