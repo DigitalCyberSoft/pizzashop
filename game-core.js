@@ -1690,6 +1690,120 @@
     return order.acceptable.map(function (L) { return JSON.stringify(L); }).sort().join('|');
   }
 
+  // ===========================================================================
+  // MULTI-PIZZA orders (the two-board mechanic). Two flavours share one screen:
+  //   Mode A: two INDEPENDENT whole-pizza orders, graded per board (board order
+  //           free). The gentle intro -- "one cheese pizza and one Hawaiian".
+  //   Mode B: ONE 16-slice POOL with a count per kind (summing to 16), graded by
+  //           gradePool over all 16 player slices. Teaches fractions over 16;
+  //           higher tiers phrase the counts AS fractions.
+  // Produced directly (not via templatesForTier/compose). They carry pizzas:2 and
+  // a `mode`; gradeMulti dispatches. order.acceptable is set to a representative
+  // 8-slice layout so single-pizza helpers (layoutKey, novelty) keep working.
+  // ===========================================================================
+  function sameLayout(a, b) {
+    for (var i = 0; i < a.length; i++) {
+      if (a[i].base !== b[i].base) return false;
+      if ((a[i].toppings || []).slice().sort().join(',') !== (b[i].toppings || []).slice().sort().join(',')) return false;
+    }
+    return true;
+  }
+  // One whole-pizza "fill" for Mode A: a buildable recipe, or a single topping on
+  // a base, painted over all 8 slices. `named` renders its phrase (scaffolding the
+  // recipe definition the first time it is used).
+  function multiWholeFill(rng, av, unlocked) {
+    var recipes = buildableRecipes(unlocked);
+    if (recipes.length && rng() < 0.6) {
+      var name = pick(rng, recipes);
+      return { layout: paintRecipe(emptyLayout(), REGION.whole, name), recipe: name,
+        named: function (t) { return knownRecipe(name, t) ? 'a ' + name : 'a ' + name + ' (' + recipeDescribe(name) + ')'; } };
+    }
+    var top = pick(rng, av), B = pickBase(rng, unlocked);
+    return { layout: paint(emptyLayout(), REGION.whole, { base: B, addTopping: top }), recipe: null,
+      named: function () { return 'an all-' + tn(top) + ' ' + baseWord(B) + '-base pizza'; } };
+  }
+  function buildModeA(rng, av, unlocked, taught) {
+    if (!av.length) return null;
+    var f1 = multiWholeFill(rng, av, unlocked), f2 = multiWholeFill(rng, av, unlocked), guard = 0;
+    while (sameLayout(f1.layout, f2.layout) && guard++ < 8) f2 = multiWholeFill(rng, av, unlocked);
+    if (sameLayout(f1.layout, f2.layout)) return null;
+    var boards = [{ acceptable: rotAcc(f1.layout) }, { acceptable: rotAcc(f2.layout) }];
+    var names = untaught([f1.recipe, f2.recipe].filter(Boolean), taught);
+    var text = 'Two pizzas, please! Make one ' + f1.named(taught) + ', and the other ' + f2.named(taught) + '.';
+    return { pizzas: 2, mode: 'A', boards: boards, acceptable: boards[0].acceptable,
+      text: text, concept: 'whole', teach: names.length ? { type: 'recipe', names: names } : null };
+  }
+  // Mode B kinds: a recipe, a plain base, or a single topping on tomato; each has
+  // a child-readable label and a distinct spec.
+  function poolKindCandidates(av, unlocked) {
+    var cands = [];
+    buildableRecipes(unlocked).forEach(function (n) { cands.push({ spec: expandRecipe(n), label: n, recipe: n }); });
+    ['cheese', 'bbq', 'tomato'].forEach(function (b) {
+      if (b === 'tomato' || unlocked.indexOf(b + '-base') !== -1) {
+        cands.push({ spec: makeSlice(b, []), label: b === 'cheese' ? 'cheese' : (b === 'bbq' ? 'BBQ' : 'plain tomato'), recipe: null });
+      }
+    });
+    av.forEach(function (t) { cands.push({ spec: makeSlice('tomato', [t]), label: tn(t), recipe: null }); });
+    return cands;
+  }
+  function composition(rng, total, parts) {
+    var a = []; for (var i = 0; i < parts; i++) a.push(1);
+    for (var k = 0; k < total - parts; k++) a[Math.floor(rng() * parts)]++;
+    return a;
+  }
+  function fractionWord(n, d) {
+    if (d === 2) return 'half';
+    if (d === 4) return n === 1 ? 'a quarter' : (n === 3 ? 'three quarters' : n + '/4');
+    if (d === 8) { var w = { 1: 'an eighth', 3: 'three eighths', 5: 'five eighths', 7: 'seven eighths' }; return w[n] || (n + '/8'); }
+    return n + '/' + d;
+  }
+  function listJoin(a) { return a.length === 1 ? a[0] : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]; }
+  function cloneSpec(s) { return makeSlice(s.base, (s.toppings || []).slice()); }
+  function buildModeB(rng, av, unlocked, tier, taught) {
+    var cands = poolKindCandidates(av, unlocked);
+    if (cands.length < 2) return null;
+    var nk = (cands.length >= 3 && rng() < 0.6) ? 3 : 2;
+    var picks = pickN(rng, cands, nk);
+    var counts = composition(rng, 8, nk).map(function (u) { return u * 2; }); // even parts of 16
+    var kinds = picks.map(function (k, i) { return { spec: k.spec, label: k.label, count: counts[i], recipe: k.recipe }; });
+    var canon = []; kinds.forEach(function (k) { for (var c = 0; c < k.count; c++) canon.push(cloneSpec(k.spec)); });
+    var phrasing = tier >= 15 ? 'fraction' : 'count';
+    var parts = kinds.map(function (k) {
+      if (phrasing === 'fraction') { var f = reduceFraction(k.count, 16); return fractionWord(f[0], f[1]) + ' ' + k.label; }
+      return k.count + ' slices of ' + k.label;
+    });
+    if (phrasing === 'count') parts[parts.length - 1] = 'the rest ' + kinds[kinds.length - 1].label;
+    var text = 'For my two pizzas (16 slices in all): ' + listJoin(parts) + '. Build them in any order you like!';
+    var names = untaught(kinds.map(function (k) { return k.recipe; }).filter(Boolean), taught);
+    return { pizzas: 2, mode: 'B', pool: { total: 16, phrasing: phrasing, kinds: kinds }, canonical16: canon,
+      acceptable: [canon.slice(0, 8)], text: text, concept: 'fraction',
+      teach: names.length ? { type: 'recipe', names: names } : null };
+  }
+  function buildMultiPizza(rng, av, unlocked, tier, taught) {
+    if (tier < 3) return null;
+    var useB = tier >= 10 && rng() < 0.5;
+    return useB ? buildModeB(rng, av, unlocked, tier, taught) : buildModeA(rng, av, unlocked, taught);
+  }
+  function multiSlices(order) {
+    return order.mode === 'B' ? order.canonical16 : order.boards[0].acceptable[0].concat(order.boards[1].acceptable[0]);
+  }
+  function multiUsesNovelty(order) {
+    return multiSlices(order).some(function (s) {
+      return !s.wildcard && !s.catCount && (s.toppings || []).some(function (id) { return TOPPING[id] && TOPPING[id].novelty; });
+    });
+  }
+  // Grade a built multi-pizza order. player = [board0(8 slices), board1(8 slices)].
+  function gradeMulti(order, player) {
+    if (order.mode === 'B') return gradePool(player[0].concat(player[1]), order.pool.kinds);
+    var r0 = order.boards[0].acceptable, r1 = order.boards[1].acceptable;
+    var g00 = grade(player[0], r0), g11 = grade(player[1], r1);
+    var g01 = grade(player[0], r1), g10 = grade(player[1], r0);
+    var straight = (g00.accuracy + g11.accuracy) / 2, swapped = (g01.accuracy + g10.accuracy) / 2;
+    return straight >= swapped
+      ? { accuracy: straight, closest: [g00.closest, g11.closest] }
+      : { accuracy: swapped, closest: [g01.closest, g10.closest] };
+  }
+
   function generateOrder(opts) {
     opts = opts || {};
     var rng = opts.rng || defaultRng;
@@ -1704,6 +1818,21 @@
     var avoid = opts.avoidKey || null;
     var require = opts.require || null; // feature a just-unlocked ingredient
     var taught = opts.taught || []; // recipe names the player has already seen defined
+
+    // Multi-pizza (two-board) orders: opt-in via opts.multiPizza so the engine
+    // never emits a shape the UI can't render. Skipped when an ingredient must be
+    // featured (require), since multi orders don't honour that. ~1 in 3 at eligible
+    // tiers (Mode A from 3, Mode B from 10).
+    if (opts.multiPizza && !require && rng() < 0.34) {
+      var mp = buildMultiPizza(rng, av, unlocked, tier, taught);
+      if (mp) {
+        mp.tier = tier; mp.core = mp.text;
+        mp.novelty = multiUsesNovelty(mp);
+        mp.key = 'multi:' + mp.mode + ':' + mp.text;
+        if (mp.teach === undefined) mp.teach = null;
+        return mp;
+      }
+    }
 
     // Build an order; prefer one that (a) features the required ingredient and
     // (b) isn't a reworded duplicate of the previous pizza. Try several times.
@@ -1823,6 +1952,7 @@
     recipeWords: recipeWords, recipeDescribe: recipeDescribe, RECIPE_ORDER: RECIPE_ORDER, toppingName: toppingName,
     grade: grade, layoutScore: layoutScore, sliceScore: sliceScore, describeMistakes: describeMistakes,
     gradePool: gradePool, reduceFraction: reduceFraction, orderBuildable: orderBuildable,
+    gradeMulti: gradeMulti, buildMultiPizza: buildMultiPizza, multiSlices: multiSlices,
     CAST: CAST, DIALOGUE: DIALOGUE, reactionBand: reactionBand, pickReaction: pickReaction
   };
 });

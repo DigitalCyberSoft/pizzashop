@@ -611,6 +611,48 @@ function fillWild(L) {
   ok(threw, 'pool: kind counts not summing to slice total throws');
 })();
 
+// ---- Multi-pizza (two-board) generation + grading. Mode A = two independent
+// whole-pizza orders graded per board, board-order free. Mode B = one 16-slice
+// count/fraction pool graded by gradePool. Opt-in via multiPizza:true. ----
+(function () {
+  var modeA = 0, modeB = 0;
+  for (var diff = 3; diff <= Core.MAX_TIER; diff++) {
+    for (var seed = 1; seed <= 120; seed++) {
+      var o = Core.generateOrder({ difficulty: diff, unlocked: Core.UNLOCK_ORDER, rng: lcg(seed * 29 + diff), multiPizza: true });
+      if (!o || o.pizzas !== 2) continue;
+      ok(!!o.text && o.text.length > 0, 'multi order has text');
+      if (o.mode === 'A') {
+        modeA++;
+        var b0 = o.boards[0].acceptable[0], b1 = o.boards[1].acceptable[0];
+        eq(Core.gradeMulti(o, [b0, b1]).accuracy, 1, 'Mode A canonical build scores 1.0');
+        eq(Core.gradeMulti(o, [b1, b0]).accuracy, 1, 'Mode A is board-order free (swapped still 1.0)');
+        ok(Core.gradeMulti(o, [Core.emptyLayout(), Core.emptyLayout()]).accuracy < 1, 'Mode A blank fails');
+      } else if (o.mode === 'B') {
+        modeB++;
+        var sum = o.pool.kinds.reduce(function (a, k) { return a + k.count; }, 0);
+        eq(sum, 16, 'Mode B kind counts sum to 16');
+        eq(o.canonical16.length, 16, 'Mode B canonical pool is 16 slices');
+        var P0 = o.canonical16.slice(0, 8), P1 = o.canonical16.slice(8, 16);
+        ok(Math.abs(Core.gradeMulti(o, [P0, P1]).accuracy - 1) < 1e-9, 'Mode B canonical pool scores 1.0');
+        ok(Core.gradeMulti(o, [Core.emptyLayout(), Core.emptyLayout()]).accuracy < 1, 'Mode B blank fails');
+        // every kind spec must be buildable from the unlocked palette
+        o.pool.kinds.forEach(function (k) {
+          (k.spec.toppings || []).forEach(function (t) { ok(Core.TOPPING[t], 'Mode B kind uses a real topping: ' + t); });
+        });
+      }
+    }
+  }
+  ok(modeA > 0, 'Mode A orders are reachable (got ' + modeA + ')');
+  ok(modeB > 0, 'Mode B orders are reachable (got ' + modeB + ')');
+  // multi orders never appear when not opted in
+  var anyMulti = false;
+  for (var s = 1; s <= 400; s++) {
+    var o2 = Core.generateOrder({ difficulty: 15, unlocked: Core.UNLOCK_ORDER, rng: lcg(s * 7) });
+    if (o2 && o2.pizzas === 2) anyMulti = true;
+  }
+  ok(!anyMulti, 'no multi orders without multiPizza:true (UI opt-in gate)');
+})();
+
 // ---- Every order must be BUILDABLE from the inventory unlocked at that level.
 // The game unlocks ingredients gradually (game-ui unlockedFor: the first
 // 4+round(difficulty) of UNLOCK_ORDER), so an order generated at a low level must
