@@ -429,8 +429,9 @@
       var s = layout[i];
       if (s.wildcard) { taps += 2; continue; }
       if (s.base !== 'plain') taps += 1;
-      // category-count slices ("any 3 meats") carry a count, not a toppings array.
-      if (s.catCount) { taps += s.count; continue; }
+      // category-count slices ("any 3 meats") carry a count (or a min/max range),
+      // not a toppings array. Use the lower bound as the work estimate.
+      if (s.catCount) { taps += (s.count != null ? s.count : (s.min != null ? s.min : 1)); continue; }
       taps += s.toppings.length;
     }
     return taps;
@@ -483,7 +484,7 @@
     var seen = {}, regions = 0;
     for (var i = 0; i < 8; i++) {
       var s = layout[i];
-      var key = s.wildcard ? 'wild' : (s.catCount ? ('cat:' + s.cat + s.count + '|' + s.base) : (s.base + '|' + s.toppings.join(',')));
+      var key = s.wildcard ? 'wild' : (s.catCount ? ('cat:' + s.cat + (s.count != null ? s.count : (s.min + '-' + s.max)) + '|' + s.base) : (s.base + '|' + s.toppings.join(',')));
       if (!seen[key]) { seen[key] = 1; regions++; }
     }
     return regions;

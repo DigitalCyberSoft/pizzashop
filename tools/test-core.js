@@ -22,9 +22,15 @@ function lcg(seed) {
 // surpriseAgainst set, never bare), so a correct build scores exactly 1.0.
 function fillWild(L) {
   var choices = ['olive', 'banana', 'mushroom', 'ham', 'onion', 'pepper'];
-  var meats = ['pepperoni', 'ham', 'bacon', 'sausage'], veg = ['mushroom', 'olive', 'onion', 'pepper'], silly = ['banana', 'peas', 'broccoli'], fruit = ['pineapple', 'banana', 'raisins'];
+  var meats = ['pepperoni', 'ham', 'bacon', 'sausage'], veg = ['mushroom', 'olive', 'onion', 'pepper'],
+    silly = ['banana', 'peas', 'broccoli', 'beetroot', 'marshmallow'], fruit = ['pineapple', 'banana', 'raisins'];
+  var anyList = meats.concat(veg);
   return Core.cloneLayout(L).map(function (s) {
-    if (s.catCount) { var src = s.cat === 'meat' ? meats : (s.cat === 'veg' ? veg : (s.cat === 'fruit' ? fruit : silly)); return Core.makeSlice(s.base, src.slice(0, s.count)); }
+    if (s.catCount) {
+      var src = s.cat === 'meat' ? meats : (s.cat === 'veg' ? veg : (s.cat === 'fruit' ? fruit : (s.cat === 'any' ? anyList : silly)));
+      var k = s.count != null ? s.count : (s.min != null ? s.min : 1); // fill the lower bound -> always in range
+      return Core.makeSlice(s.base, src.slice(0, k));
+    }
     if (!s.wildcard) return s;
     var against = s.surpriseAgainst || [];
     var t = choices.filter(function (c) { return against.indexOf(c) === -1; })[0] || 'olive';
@@ -318,6 +324,32 @@ function fillWild(L) {
     var wrongCat = spec.map(function (s) { return s.catCount ? Core.makeSlice(s.base, s.cat === 'meat' ? ['mushroom', 'olive', 'onion'] : ['pepperoni', 'ham', 'bacon']) : s; });
     ok(Core.grade(wrongCat, o.acceptable).accuracy < 1, 'three of the wrong category fails');
   }
+})();
+
+// ---- Count-range catCount: "more than two" / "fewer than five" ----
+(function () {
+  function layout(make) { var L = []; for (var i = 0; i < 8; i++) L.push(make()); return L; }
+  // more than two meats -> min 3, max 6
+  var more = layout(function () { return { catCount: true, base: 'tomato', cat: 'meat', min: 3, max: 6, phrase: 'more than two meats' }; });
+  var fill3 = more.map(function () { return Core.makeSlice('tomato', ['pepperoni', 'ham', 'bacon']); });
+  eq(Core.grade(fill3, [more]).accuracy, 1, 'more than two meats: three meats scores 1.0');
+  var fill2 = more.map(function () { return Core.makeSlice('tomato', ['pepperoni', 'ham']); });
+  ok(Core.grade(fill2, [more]).accuracy < 1, 'more than two meats: only two fails the count');
+  var fillVeg = more.map(function () { return Core.makeSlice('tomato', ['mushroom', 'olive', 'onion']); });
+  ok(Core.grade(fillVeg, [more]).accuracy < 1, 'more than two meats: three veg fails (wrong category)');
+
+  // fewer than five toppings (any category) -> min 1, max 4
+  var less = layout(function () { return { catCount: true, base: 'cheese', cat: 'any', min: 1, max: 4, phrase: 'fewer than five toppings (at least one)' }; });
+  eq(Core.grade(less.map(function () { return Core.makeSlice('cheese', ['pepperoni']); }), [less]).accuracy, 1, 'fewer than five: one topping scores 1.0');
+  eq(Core.grade(less.map(function () { return Core.makeSlice('cheese', ['pepperoni', 'ham', 'mushroom', 'olive']); }), [less]).accuracy, 1, 'fewer than five: four toppings scores 1.0');
+  ok(Core.grade(less.map(function () { return Core.makeSlice('cheese', ['pepperoni', 'ham', 'mushroom', 'olive', 'onion']); }), [less]).accuracy < 1, 'fewer than five: five toppings fails');
+  ok(Core.grade(less.map(function () { return Core.makeSlice('cheese', []); }), [less]).accuracy < 1, 'fewer than five: zero toppings fails (at least one)');
+
+  // reachable from generation, and satisfiable via fillWild
+  var rng = lcg(4242), gen = null;
+  for (var i = 0; i < 1500 && !gen; i++) { var x = Core.generateOrder({ difficulty: 11, unlocked: Core.UNLOCK_ORDER, rng: rng }); if (/MORE THAN|FEWER THAN/.test(x.text)) gen = x; }
+  ok(gen, 'count-compare order reachable from generation');
+  if (gen) eq(Core.grade(fillWild(gen.acceptable[0]), gen.acceptable).accuracy, 1, 'generated count-compare order is satisfiable');
 })();
 
 // ---- Rotation + reflection invariance: any turn/flip of a correct build passes ----

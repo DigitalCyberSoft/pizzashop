@@ -82,7 +82,7 @@
       if (s.surpriseAgainst) w.surpriseAgainst = s.surpriseAgainst.slice();
       return w;
     }
-    if (s.catCount) return { catCount: true, base: s.base, cat: s.cat, count: s.count };
+    if (s.catCount) return { catCount: true, base: s.base, cat: s.cat, count: s.count, min: s.min, max: s.max, phrase: s.phrase };
     return { base: s.base, toppings: s.toppings.slice() };
   }
   function emptyLayout() { var L = []; for (var i = 0; i < N; i++) L.push(makeSlice('plain', [])); return L; }
@@ -276,13 +276,17 @@
       }
       return 1;
     }
-    // Category-count: a fixed base plus EXACTLY `count` distinct toppings, all
-    // from a category ("any 3 different meats"). The player picks which.
+    // Category-count: a fixed base plus a number of distinct toppings, all from a
+    // category. Either EXACTLY `count` ("any 3 different meats") or a range via
+    // min/max ("more than two meats" = min 3; "fewer than five" = max 4). The
+    // player picks which toppings.
     if (spec.catCount) {
       var bOk = playerSlice.base === spec.base ? 1 : 0;
       var test = catTest(spec.cat);
       var tops = playerSlice.toppings;
-      var tOk = (tops.length === spec.count && tops.every(test)) ? 1 : 0;
+      var lo = spec.min != null ? spec.min : spec.count;
+      var hi = spec.max != null ? spec.max : spec.count;
+      var tOk = (tops.length >= lo && tops.length <= hi && tops.every(test)) ? 1 : 0;
       return 0.4 * bOk + 0.6 * tOk;
     }
     var baseOk = playerSlice.base === spec.base ? 1 : 0;
@@ -327,7 +331,7 @@
           msgs.push({
             slice: i, where: SLICE_NAME[i],
             wantBase: BASES[spec.base].name, gotBase: BASES[p.base].name,
-            wantToppings: ['any ' + spec.count + ' different ' + catWord(spec.cat)],
+            wantToppings: [spec.phrase ? spec.phrase : ('any ' + spec.count + ' different ' + catWord(spec.cat))],
             gotToppings: p.toppings.map(toppingName)
           });
         }
@@ -573,9 +577,9 @@
       7: [t5_twoAdjacent, t5_threeAdjacent, t_tripleHalf],
       8: [t5_oneSlice, t6_oppositeOf, t_doubleHalf],
       9: [t6_oppositeOf, t_catSeparate, t7_negationBase, t_sillyEvery, t_fruitEvery],
-      10: [t6_exceptQuarter, t_catSeparate, t7_negationBase, t_catCountWhole, t_fruitEvery],
-      11: [t6_diagonalQuarters, t6_exceptQuarter, t7_selfCorrect, t_catCountWhole],
-      12: [t7_alternating, t7_twoBases, t7_selfCorrect, t6_diagonalQuarters],
+      10: [t6_exceptQuarter, t_catSeparate, t7_negationBase, t_catCountWhole, t_fruitEvery, t_countCompare],
+      11: [t6_diagonalQuarters, t6_exceptQuarter, t7_selfCorrect, t_catCountWhole, t_countCompare],
+      12: [t7_alternating, t7_twoBases, t7_selfCorrect, t6_diagonalQuarters, t_countCompare],
       13: [t7_ordinalRun, t7_alternating, t7_wildcard, t_twoBaseConditional],
       14: [t_comboWhole, t_comboHalves, t_doubleHalf, t_catCountHalves, t_twoBaseConditional],
       15: [t_comboHalves, t_comboQuarter, t_tripleHalf, t_threeBases, t_recipeRemove],
@@ -1179,12 +1183,14 @@
   // player chooses which toppings; the grader only checks count + category.
   function catTest(cat) {
     return cat === 'meat' ? isMeat : (cat === 'veg' ? isVeg : (cat === 'silly' ? isSilly :
-      (cat === 'fruit' ? isFruit : function () { return false; })));
+      (cat === 'fruit' ? isFruit : (cat === 'any' ? function () { return true; } : function () { return false; }))));
   }
   // plural noun for a category, used in order text and the mistakes report.
   function catWord(cat) {
-    return cat === 'meat' ? 'meats' : (cat === 'veg' ? 'vegetables' : (cat === 'silly' ? 'silly toppings' : 'fruits'));
+    return cat === 'meat' ? 'meats' : (cat === 'veg' ? 'vegetables' : (cat === 'silly' ? 'silly toppings' : (cat === 'fruit' ? 'fruits' : 'toppings')));
   }
+  var NUMWORD = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'];
+  function numWord(n) { return NUMWORD[n] != null ? NUMWORD[n] : ('' + n); }
   function t_catCountWhole(rng, av, un) {
     // only offer a category that actually has >= 3 unlocked (so a "silly pizza"
     // can't be asked for when no silly ingredients exist).
@@ -1194,6 +1200,33 @@
     var B = pickBase(rng, un);
     var L = []; for (var i = 0; i < 8; i++) L.push({ catCount: true, base: B, cat: cat, count: 3 });
     return { text: 'A ' + baseWord(B) + ' base. Then put any 3 different ' + catWord(cat).toUpperCase() + ' on every single slice. You choose which 3!', acceptable: [L], teach: null };
+  }
+  // Count comparisons: "MORE THAN two meats" / "FEWER THAN five toppings" on every
+  // slice. Uses the catCount range (min/max). The player picks which toppings.
+  function t_countCompare(rng, av, un) {
+    var cats = ['any', 'meat', 'veg', 'fruit', 'silly'].filter(function (c) {
+      return (c === 'any' ? av.length : av.filter(catTest(c)).length) >= 3;
+    });
+    var opts = [];
+    cats.forEach(function (c) {
+      var avail = c === 'any' ? av.length : av.filter(catTest(c)).length;
+      [2, 3].forEach(function (n) { if (avail >= n + 1) opts.push({ c: c, kind: 'more', n: n, min: n + 1, max: avail }); });
+      [4, 5].forEach(function (m) { if (m - 1 >= 1 && avail >= 1) opts.push({ c: c, kind: 'less', m: m, min: 1, max: Math.min(m - 1, avail) }); });
+    });
+    if (!opts.length) return null;
+    var o = pick(rng, opts);
+    var B = pickBase(rng, un);
+    var word = catWord(o.c).toUpperCase();
+    var phrase, text;
+    if (o.kind === 'more') {
+      phrase = 'more than ' + numWord(o.n) + ' ' + catWord(o.c);
+      text = 'A ' + baseWord(B) + ' base. On every single slice, put MORE THAN ' + numWord(o.n).toUpperCase() + ' different ' + word + '. You pick which ones!';
+    } else {
+      phrase = 'fewer than ' + numWord(o.m) + ' ' + catWord(o.c) + ' (at least one)';
+      text = 'A ' + baseWord(B) + ' base. On every single slice, put FEWER THAN ' + numWord(o.m).toUpperCase() + ' different ' + word + ', but at least one! You pick which ones!';
+    }
+    var L = []; for (var i = 0; i < 8; i++) L.push({ catCount: true, base: B, cat: o.c, min: o.min, max: o.max, phrase: phrase });
+    return { text: text, acceptable: [L], teach: null };
   }
   // The "silly pizza": every slice gets exactly one silly topping (kid's choice).
   function t_sillyEvery(rng, av, un) {
