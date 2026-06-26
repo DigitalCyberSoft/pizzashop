@@ -529,7 +529,10 @@
     var unlocked = unlockedFor(S.served);
     // If a topping was just introduced, force the next order to use it once.
     var require = (S.featureNext && C.TOPPING[S.featureNext]) ? S.featureNext : null;
-    S.order = C.generateOrder({ ordersServed: S.served, unlocked: unlocked, difficulty: S.difficulty, avoidKey: S.lastKey, require: require, taught: LS.taught, multiPizza: true });
+    // Only offer a two-pizza order when the player can afford to make it (N×$3);
+    // otherwise they could be forced into a $6 build with $4 in the till.
+    var canAffordMulti = S.money >= MAKE_COST * 2;
+    S.order = C.generateOrder({ ordersServed: S.served, unlocked: unlocked, difficulty: S.difficulty, avoidKey: S.lastKey, require: require, taught: LS.taught, multiPizza: canAffordMulti });
     S.featureNext = null; // used once, whether or not it landed
     // Once a recipe has been defined in an order, mark it taught so future orders
     // name it bare (the player must then recall the ingredients themselves).
@@ -714,7 +717,10 @@
   // ---- box it ----
   // Simple, explicit economy a kid can hold in their head: a pizza costs $3 of
   // dough to make and a correct one sells for $5 (a $2 profit), plus a $1 speed tip.
+  // A multi-pizza order is N pizzas, so it costs N×$3 of dough, sells for N×$5, and
+  // a fast+accurate build tips N×$1 (two pizzas -> $6 to make, $10 sold, $2 tip).
   var MAKE_COST = 3, SALE_PRICE = 5;
+  function pizzaCount(order) { return (order && order.pizzas) || 1; }
   // Adaptive difficulty IS the level. It is driven only by performance, never by
   // how many pizzas have been served:
   //   - finish fast AND accurately (you earn the speed tip) -> level UP
@@ -741,9 +747,11 @@
     // Below 0.8 accuracy the customer refuses the pizza: no pay, player still eats
     // the $3 make-cost.
     var refused = acc < 0.8;
-    var reward = refused ? 0 : SALE_PRICE;
-    var tip = (!refused && fast) ? 1 : 0; // refused already requires acc>=0.8
-    S.money += -MAKE_COST + reward + tip;
+    var n = pizzaCount(S.order); // 2 for a two-board order, 1 otherwise
+    var makeCost = MAKE_COST * n;
+    var reward = refused ? 0 : SALE_PRICE * n;
+    var tip = (!refused && fast) ? n : 0; // refused already requires acc>=0.8; $1 per pizza
+    S.money += -makeCost + reward + tip;
     // Refused pizzas (acc < 0.8) cost aura; accepted ones earn it.
     S.aura += acc >= 1 ? 1000 : (acc >= 0.8 ? 250 : -500);
     if (S.money > LS.high) LS.high = S.money;
@@ -757,16 +765,16 @@
     saveProgress();
     if (reward + tip > 0) kaching(reward + tip);
     if (S.order._cust && S.order._cust.gag === 'sixseven') banner67();
-    showResult(acc, reward, tip, refused, res);
+    showResult(acc, reward, tip, refused, res, makeCost);
     if (victory) { if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; } showVictory(); }
   }
 
   // Patience ran out: the customer gives up and leaves. No pizza is graded; the
-  // player still loses the $3 of dough they spent.
+  // player still loses the dough they spent (N×$3 for a multi-pizza order).
   function customerLeaves() {
     if (!S || !S.order) return;
     stopTipTimer();
-    S.money += -3;
+    S.money += -MAKE_COST * pizzaCount(S.order);
     S.aura += -500;
     if (S.money > LS.high) LS.high = S.money;
     adjustDifficulty(0, false);
@@ -778,7 +786,8 @@
     Snd.fail();
     el('result-title').textContent = '😠 They got bored and left!';
     el('result-reaction').textContent = '“' + C.pickReaction('left', LS.meme) + '”';
-    el('result-money').innerHTML = '−$3 of dough wasted ⇒ <span class="minus">−$3</span> (no pizza sold)';
+    var lost = MAKE_COST * pizzaCount(S.order);
+    el('result-money').innerHTML = '−$' + lost + ' of dough wasted ⇒ <span class="minus">−$' + lost + '</span> (no pizza sold)';
     var compare = el('result-compare'), ul = el('result-mistakes');
     compare.innerHTML = ''; ul.innerHTML = '';
     compare.style.display = 'none'; ul.style.display = 'none';
@@ -788,7 +797,7 @@
     autoAdvance(3500);
   }
 
-  function showResult(acc, reward, tip, refused, res) {
+  function showResult(acc, reward, tip, refused, res, makeCost) {
     var closest = res.closest;
     var band = C.reactionBand(acc);
     // celebratory / sympathetic sting, slightly after the coin so they don't muddy.
@@ -799,11 +808,11 @@
     el('result-title').textContent = refused ? '😤 Order refused!' : (acc >= 1 ? '⭐ Perfect!' : '📦 Order up!');
     el('result-reaction').textContent = '“' + line + '”';
 
-    var parts = ['−$3 to make'];
+    var parts = ['−$' + makeCost + ' to make'];
     if (reward) parts.push('+$' + reward + ' paid');
-    if (tip) parts.push('+$1 speedy tip');
+    if (tip) parts.push('+$' + tip + ' speedy tip');
     if (refused) parts.push('paid nothing');
-    var net = reward + tip - 3;
+    var net = reward + tip - makeCost;
     el('result-money').innerHTML = parts.join(' · ') + ' ⇒ <span class="' + (net >= 0 ? 'plus' : 'minus') + '">' +
       (net >= 0 ? '+' : '−') + '$' + Math.abs(net) + '</span> (' + Math.round(acc * 100) + '% correct)';
 
@@ -888,7 +897,7 @@
     if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
     hide('result-overlay');
     S.served += 1; refreshHud();
-    if (S.money < 3) { gameOver(); return; }
+    if (S.money < MAKE_COST) { gameOver(); return; }
     saveProgress();
     nextOrder();
   }

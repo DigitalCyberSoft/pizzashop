@@ -150,6 +150,22 @@
     d.appendChild(n); d.appendChild(row);
     return d;
   }
+  // base layers: a topping ON TOP, the base ON THE BOTTOM, stacked.
+  function layerDemo() {
+    var d = document.createElement('div'); d.style.cssText = 'display:flex;flex-direction:column;gap:5px;align-items:center';
+    var top = document.createElement('div'); top.style.cssText = 'display:flex;align-items:center;gap:6px';
+    var ti = document.createElement('img'); ti.className = 'gloss-topping'; ti.alt = 'pepperoni'; ti.src = 'assets/toppings/pepperoni.png';
+    ti.onerror = function () { var s = document.createElement('span'); s.textContent = '🍕'; ti.replaceWith(s); };
+    var tl = document.createElement('span'); tl.textContent = 'pepperoni on top';
+    top.appendChild(ti); top.appendChild(tl);
+    var arrow = document.createElement('div'); arrow.textContent = '⬇ stacked on top of ⬇'; arrow.style.cssText = 'font-size:11px;opacity:.7';
+    var bot = document.createElement('div'); bot.style.cssText = 'display:flex;align-items:center;gap:6px';
+    var dot = document.createElement('span'); dot.className = 'gloss-dot'; dot.style.background = BASE_TINT.cheese;
+    var bl = document.createElement('span'); bl.textContent = 'cheese base on the bottom';
+    bot.appendChild(dot); bot.appendChild(bl);
+    d.appendChild(top); d.appendChild(arrow); d.appendChild(bot);
+    return d;
+  }
 
   // The glossary. `syn` are phrases linkified in text (longest win, first per term).
   var TERMS = [
@@ -178,6 +194,7 @@
     { id: 'silly', label: 'Silly topping', syn: ['silly toppings', 'silly topping', 'silly'], def: "Silly toppings are funny foods you don't usually see on a pizza, like broccoli, banana, marshmallow and fish heads.", math: 'a topping can be silly AND a vegetable (broccoli!)', demo: function () { return iconRow(['broccoli', 'banana', 'marshmallow', 'fish-heads']); } },
     // ---- bases and named pizzas ----
     { id: 'base', label: 'Base', syn: ['base', 'sauce'], def: 'The base is the sauce you lay down first, before any toppings. There are three: tomato, cheese and BBQ.', math: 'every slice gets exactly one base', demo: function () { return baseSwatches(); } },
+    { id: 'layers', label: 'On the bottom / on top', syn: ['on the bottom', 'on top of the', 'underneath', 'smother'], def: 'A pizza is built in LAYERS. The base goes on the BOTTOM first, right on the dough; then the toppings stack ON TOP of it. So "cheese on the bottom", "smother the BBQ" and "tomato underneath" all mean lay that base down first, and "pepperoni on top of the cheese" means the cheese base goes down, then pepperoni over it.', math: 'bottom = base first, then toppings on top', demo: function () { return layerDemo(); } },
     { id: 'recipe', label: 'Named pizza', syn: ['named pizza', 'recipe'], def: 'A named pizza is a recipe: the name stands for a fixed set of toppings. A Hawaiian means ham and pineapple on a tomato base.', math: 'one name = one base + its toppings', demo: function () { return recipeCard('Hawaiian', 'tomato', ['ham', 'pineapple']); } },
     // ---- choice, counting and rule-strength words ----
     { id: 'eitherOr', label: 'Either / or', syn: ['either or', 'either'], def: 'Either this OR that means pick just ONE of the choices, never both. You decide which one.', math: 'A or B = choose one (not both)', demo: function () { return pairDemo(); } },
