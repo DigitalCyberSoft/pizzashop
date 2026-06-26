@@ -144,8 +144,8 @@
     peas: { name: 'peas', icon: '🟢', novelty: true },
     beetroot: { name: 'beetroot', icon: '🟣', novelty: true },
     banana: { name: 'banana', icon: '🍌', novelty: true },
-    raisins: { name: 'raisins', icon: '🝤', novelty: true },
-    marshmallow: { name: 'marshmallow', icon: '☁️', novelty: true },
+    raisins: { name: 'raisins', icon: '🍇', novelty: true }, // dried grapes; no raisin emoji exists
+    marshmallow: { name: 'marshmallow', icon: '⚪', novelty: true }, // white blob; no marshmallow emoji exists
     'fish-heads': { name: 'fish heads', icon: '🐟', novelty: true }
   };
 
