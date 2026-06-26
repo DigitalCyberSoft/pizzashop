@@ -646,11 +646,11 @@
       1: [t1_whole],
       2: [t2_halfHalf, t_doubleWhole, t1_whole],
       3: [t4_quarterRest, t2_halfHalf, t_doubleHalf, t_theOther],
-      4: [t_threeRegion, t4_twoQuarters, t_doubleHalf, t_theOther],
-      5: [t4_twoQuarters, t4_threeQuarters, t_doubleHalf],
-      6: [t5_oneSlice, t5_twoAdjacent, t_tripleHalf, t_pronoun],
-      7: [t5_twoAdjacent, t5_threeAdjacent, t_tripleHalf, t_riddle],
-      8: [t5_oneSlice, t6_oppositeOf, t_doubleHalf, t_pronoun, t_riddle],
+      4: [t_threeRegion, t4_twoQuarters, t_doubleHalf, t_theOther, t_fakeHalf],
+      5: [t4_twoQuarters, t4_threeQuarters, t_doubleHalf, t_fakeHalf],
+      6: [t5_oneSlice, t5_twoAdjacent, t_tripleHalf, t_pronoun, t_fakeHalf],
+      7: [t5_twoAdjacent, t5_threeAdjacent, t_tripleHalf, t_riddle, t_fakeHalf],
+      8: [t5_oneSlice, t6_oppositeOf, t_doubleHalf, t_pronoun, t_riddle, t_fakeHalf],
       9: [t6_oppositeOf, t_catSeparate, t7_negationBase, t_sillyEvery, t_fruitEvery, t_atLeastOne],
       10: [t6_exceptQuarter, t_catSeparate, t7_negationBase, t_catCountWhole, t_fruitEvery, t_countCompare],
       11: [t6_diagonalQuarters, t6_exceptQuarter, t7_selfCorrect, t_catCountWhole, t_countCompare, t_sharedProperty, t_countCompareHalves],
@@ -732,6 +732,24 @@
     paint(L, REGION.right, { addTopping: ab[0] });
     paint(L, REGION.left, { addTopping: ab[1] });
     return { text: baseWord(B) + ' base all over, then one half ' + tn(ab[0]) + ' and the other half ' + tn(ab[1]) + '.', acceptable: rotAcc(L), teach: null };
+  }
+  // "Fake halves": a half written as an EQUIVALENT FRACTION (4/8, 2/4) or as "two
+  // quarters", so the child learns 4/8 = 2/4 = two quarters = one half. The layout
+  // is a plain half-half graded normally (rotAcc); only the WORDS change. The first
+  // region is the fake form, the second is "the other half" so the equivalence is
+  // anchored. A "(same as one half!)" hint appears ~half the time: teaches when
+  // present, makes the child decode it unaided when absent.
+  var FAKE_HALF = ['4/8 of the pizza', '2/4 of the pizza', '4 out of 8 slices', 'two quarters of the pizza'];
+  function t_fakeHalf(rng, av, un) {
+    if (av.length < 2) return null;
+    var B = pickBase(rng, un), ab = pickN(rng, av, 2);
+    var L = paint(emptyLayout(), REGION.whole, { base: B });
+    paint(L, REGION.right, { addTopping: ab[0] });
+    paint(L, REGION.left, { addTopping: ab[1] });
+    var f = pick(rng, FAKE_HALF), hint = rng() < 0.5 ? ' (that is the same as one half!)' : '';
+    var text = baseWord(B) + ' base all over, with ' + tn(ab[0]) + ' on ' + f + hint +
+      ' and ' + tn(ab[1]) + ' on the other half.';
+    return { text: text, acceptable: rotAcc(L), teach: null };
   }
   function t4_quarterRest(rng, av, un) {
     var B = pickBase(rng, un), A = pick(rng, av);

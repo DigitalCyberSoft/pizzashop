@@ -696,6 +696,33 @@ function fillWild(L) {
   ok(checkedA > 0, 'Mode A low-tier simplicity test exercised orders (got ' + checkedA + ')');
 })();
 
+// ---- "Fake halves" (t_fakeHalf, tiers 4-8): a half written as an equivalent
+// fraction (4/8, 2/4, "two quarters") must still grade as a real half-half. The
+// teaching only works if the layout is genuinely a half-half: the canonical build
+// scores 1.0, a blank fails, and a non-half (alternating) build fails. ----
+(function () {
+  var fakeRe = /4\/8 of the pizza|2\/4 of the pizza|4 out of 8 slices|two quarters of the pizza/;
+  var seen = 0;
+  for (var tier = 4; tier <= 8; tier++) {
+    for (var seed = 1; seed <= 600 && seen < 60; seed++) {
+      var o = Core.generateOrder({ difficulty: tier, unlocked: Core.UNLOCK_ORDER, rng: lcg(seed * 13 + tier) });
+      if (!o || !fakeRe.test(o.text)) continue;
+      seen++;
+      ok(/the other half/.test(o.text), 'fake-half anchors the equivalence with "the other half": ' + o.text);
+      eq(Core.grade(o.acceptable[0], o.acceptable).accuracy, 1, 'fake-half canonical half-half build scores 1.0');
+      ok(Core.grade(Core.emptyLayout(), o.acceptable).accuracy < 1, 'fake-half blank build fails');
+      // an ALTERNATING (every-other-slice) build is 4/8 of the slices but NOT a
+      // contiguous half, so it must not score full marks.
+      var alt = Core.emptyLayout(), top = null;
+      o.acceptable[0].forEach(function (s) { if (!s.wildcard && s.toppings.length) top = s.toppings[0]; });
+      Core.paint(alt, Core.REGION.whole, { base: o.acceptable[0][0].base });
+      [0, 2, 4, 6].forEach(function (i) { Core.paint(alt, [i], { addTopping: top }); });
+      ok(Core.grade(alt, o.acceptable).accuracy < 1, 'fake-half rejects a 4/8 alternating (non-contiguous) build');
+    }
+  }
+  ok(seen > 0, 'fake-half orders are reachable at tiers 4-8 (got ' + seen + ')');
+})();
+
 // ---- Every order must be BUILDABLE from the inventory unlocked at that level.
 // The game unlocks ingredients gradually (game-ui unlockedFor: the first
 // 4+round(difficulty) of UNLOCK_ORDER), so an order generated at a low level must
