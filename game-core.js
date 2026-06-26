@@ -494,6 +494,31 @@
     return pick(rng, o);
   }
   function baseWord(b) { return b === 'tomato' ? 'tomato' : (b === 'cheese' ? 'cheese' : (b === 'bbq' ? 'BBQ' : 'plain')); }
+  // Base LANGUAGE variety: the child should meet "lay this base first" in many
+  // wordings, not a rote "<base> base" every time. Every variant still contains the
+  // base WORD, which is the teaching anchor (and what the base-instruction guard
+  // checks). baseAllOver = a whole-pizza base declaration; wholeFillPhrase = a whole
+  // pizza of one topping on a base, phrased relationally ("smother the BBQ with X",
+  // "X on top of the cheese") so the base is taught through natural English.
+  function baseAllOver(rng, B) {
+    var b = baseWord(B);
+    return pick(rng, [
+      b + ' base all over',
+      b + ' on the bottom of every slice',
+      'a base of ' + b + ' everywhere',
+      b + ' spread underneath, on every slice'
+    ]);
+  }
+  function wholeFillPhrase(rng, B, T) {
+    var b = baseWord(B), t = tn(T);
+    return pick(rng, [
+      'A whole pizza on a ' + b + ' base, covered all over in ' + t + '.',
+      'Smother the ' + b + ' with ' + t + ', right to the edges.',
+      'Spread ' + b + ' on the bottom, then ' + t + ' over every slice.',
+      'Put ' + t + ' on top of the ' + b + ', all the way round.',
+      'Start with ' + b + ' underneath, then cover the whole pizza in ' + t + '.'
+    ]);
+  }
 
   // Pick what an otherwise-bare "rest" region should hold. Big empty-base areas
   // were boring, so most of the time fill them with a CONTRASTING topping and
@@ -647,10 +672,10 @@
       2: [t2_halfHalf, t_doubleWhole, t1_whole],
       3: [t4_quarterRest, t2_halfHalf, t_doubleHalf, t_theOther],
       4: [t_threeRegion, t4_twoQuarters, t_doubleHalf, t_theOther, t_fakeHalf],
-      5: [t4_twoQuarters, t4_threeQuarters, t_doubleHalf, t_fakeHalf],
-      6: [t5_oneSlice, t5_twoAdjacent, t_tripleHalf, t_pronoun, t_fakeHalf],
-      7: [t5_twoAdjacent, t5_threeAdjacent, t_tripleHalf, t_riddle, t_fakeHalf],
-      8: [t5_oneSlice, t6_oppositeOf, t_doubleHalf, t_pronoun, t_riddle, t_fakeHalf],
+      5: [t4_twoQuarters, t4_threeQuarters, t_doubleHalf, t_fakeHalf, t_wholeBaseVaried],
+      6: [t5_oneSlice, t5_twoAdjacent, t_tripleHalf, t_pronoun, t_fakeHalf, t_wholeBaseVaried],
+      7: [t5_twoAdjacent, t5_threeAdjacent, t_tripleHalf, t_riddle, t_fakeHalf, t_wholeBaseVaried],
+      8: [t5_oneSlice, t6_oppositeOf, t_doubleHalf, t_pronoun, t_riddle, t_fakeHalf, t_wholeBaseVaried],
       9: [t6_oppositeOf, t_catSeparate, t7_negationBase, t_sillyEvery, t_fruitEvery, t_atLeastOne],
       10: [t6_exceptQuarter, t_catSeparate, t7_negationBase, t_catCountWhole, t_fruitEvery, t_countCompare],
       11: [t6_diagonalQuarters, t6_exceptQuarter, t7_selfCorrect, t_catCountWhole, t_countCompare, t_sharedProperty, t_countCompareHalves],
@@ -725,6 +750,15 @@
     var L = paint(emptyLayout(), REGION.whole, { base: B, addTopping: A });
     return { text: 'A whole pizza on a ' + baseWord(B) + ' base, covered all over in ' + tn(A) + '.', acceptable: rotAcc(L), teach: null };
   }
+  // Same trivial layout as t1_whole (one topping over a whole base), but the base is
+  // phrased in varied, implicit English ("smother the BBQ with X", "X on top of the
+  // cheese"). Mid-tier only: the language is the challenge, so it stays out of the
+  // tier-1 intro where the base must be stated plainly.
+  function t_wholeBaseVaried(rng, av, un) {
+    var B = pickBase(rng, un), A = pick(rng, av);
+    var L = paint(emptyLayout(), REGION.whole, { base: B, addTopping: A });
+    return { text: wholeFillPhrase(rng, B, A), acceptable: rotAcc(L), teach: null, concept: 'whole' };
+  }
   function t2_halfHalf(rng, av, un) {
     if (av.length < 2) return null;
     var B = pickBase(rng, un), ab = pickN(rng, av, 2);
@@ -747,7 +781,7 @@
     paint(L, REGION.right, { addTopping: ab[0] });
     paint(L, REGION.left, { addTopping: ab[1] });
     var f = pick(rng, FAKE_HALF), hint = rng() < 0.5 ? ' (that is the same as one half!)' : '';
-    var text = baseWord(B) + ' base all over, with ' + tn(ab[0]) + ' on ' + f + hint +
+    var text = baseAllOver(rng, B) + ', with ' + tn(ab[0]) + ' on ' + f + hint +
       ' and ' + tn(ab[1]) + ' on the other half.';
     return { text: text, acceptable: rotAcc(L), teach: null };
   }

@@ -739,18 +739,22 @@ function fillWild(L) {
   ok(plain.every(function (c) { return !c.gag; }), 'no gag (e.g. 6-7) customer survives in the meme-off pool');
 })();
 
-// ---- Base instructions: EVERY single-pizza order must NAME each base it lays, as
-// "<base> base" (space or hyphen), so a child always knows which base to lay first.
-// The canonical layout starts from PLAIN/bare dough and grading checks the base, so
-// an unnamed base is an unguessable instruction. Also: no topping may sit on a bare
-// 'plain' base. Full sweep across tomato/cheese/bbq (caught t_unevenShare, which
-// laid a cheese/bbq base over the whole pizza but named only the toppings). ----
+// ---- Base instructions: EVERY single-pizza order must mention the base WORD of
+// each base it lays, so a child always knows which base to lay first. The canonical
+// layout starts from PLAIN/bare dough and grading checks the base, so a base whose
+// word never appears is an unguessable instruction. The phrasing is deliberately
+// FREE ("cheese on the bottom", "on top of the cheese", "smother the BBQ with X")
+// -> the guard checks the word is present, NOT a rote "<base> base". Also: no
+// topping may sit on a bare 'plain' base. Caught t_unevenShare (laid a cheese/bbq
+// base over the whole pizza but named only the toppings). ----
 (function () {
   function namesBase(text, base) {
     var t = text.toLowerCase();
-    if (base === 'tomato') return t.indexOf('tomato base') !== -1 || t.indexOf('tomato-base') !== -1;
-    if (base === 'cheese') return t.indexOf('cheese base') !== -1 || t.indexOf('cheese-base') !== -1;
-    if (base === 'bbq') return t.indexOf('bbq base') !== -1 || t.indexOf('bbq-base') !== -1 || t.indexOf('barbecue base') !== -1;
+    if (base === 'cheese') return /\bcheese\b/.test(t);
+    if (base === 'bbq') return t.indexOf('bbq') !== -1 || t.indexOf('barbecue') !== -1;
+    // tomato: strip the tomato-SLICE topping and tomato SAUCE so they cannot
+    // masquerade as a base mention.
+    if (base === 'tomato') return t.replace(/tomato[ -]slice/g, '').replace(/tomato sauce/g, '').indexOf('tomato') !== -1;
     return true;
   }
   var unnamed = 0, bareTop = 0, checked = 0, ex1 = '', ex2 = '';
@@ -770,9 +774,31 @@ function fillWild(L) {
       });
     }
   }
-  eq(unnamed, 0, 'every base a single-pizza order lays is named "<base> base" in its text (first offender: ' + ex1 + ')');
+  eq(unnamed, 0, 'every base a single-pizza order lays has its base word in the text (first offender: ' + ex1 + ')');
   eq(bareTop, 0, 'no topping sits on an unnamed bare/plain base (first offender: ' + ex2 + ')');
   ok(checked > 0, 'base-naming sweep exercised single-pizza orders (' + checked + ')');
+})();
+
+// ---- Varied base language (t_wholeBaseVaried + baseAllOver, tiers 5-8): the same
+// "lay this base, one topping over it" idea must reach the child in several IMPLICIT
+// wordings ("smother the BBQ with X", "X on top of the cheese", "cheese on the
+// bottom"), each still gradeable and still passing the base-word guard above. ----
+(function () {
+  var rich = /smother the |on top of the |spread \w+ on the bottom|start with \w+ underneath|on the bottom of every slice|a base of /;
+  var forms = {}, graded = 0;
+  for (var tier = 5; tier <= 8; tier++) {
+    for (var seed = 1; seed <= 800; seed++) {
+      var o = Core.generateOrder({ difficulty: tier, unlocked: Core.UNLOCK_ORDER, rng: lcg(seed * 23 + tier * 5) });
+      if (!o || o.pizzas === 2 || !rich.test(o.core.toLowerCase())) continue;
+      var m = o.core.toLowerCase().match(rich)[0];
+      forms[m] = (forms[m] || 0) + 1;
+      // still a real, gradeable order: the canonical build scores 1.0.
+      eq(Core.grade(o.acceptable[0], o.acceptable).accuracy, 1, 'varied-base order still grades its canonical build 1.0');
+      graded++;
+    }
+  }
+  ok(graded > 0, 'varied base-language orders are reachable at tiers 5-8 (got ' + graded + ')');
+  ok(Object.keys(forms).length >= 3, 'at least 3 distinct implicit base phrasings appear (got ' + Object.keys(forms).length + ': ' + Object.keys(forms).join(' | ') + ')');
 })();
 
 // ---- Every order must be BUILDABLE from the inventory unlocked at that level.
