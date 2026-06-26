@@ -2,7 +2,7 @@
 
 A browser game that teaches a child to **read and interpret increasingly complex
 English**. The customer describes a pizza in words; the player reads the order and
-builds it by dragging toppings onto an 8-slice pizza. The teaching target is the
+builds it by tapping toppings onto an 8-slice pizza. The teaching target is the
 *language*, not the manual dexterity: orders climb from "a whole pizza with ham"
 to multi-sentence instructions with recipes, negations, conditionals, and spatial
 constraints.
@@ -21,7 +21,7 @@ GitHub Pages.
 
 The order is generated as a structured **layout spec** (8 slices, each with a base
 and a set of toppings); the English sentence is rendered *from* that spec. The
-player rebuilds a layout by dragging. Grading compares the two per slice, scoring
+player rebuilds a layout by tapping. Grading compares the two per slice, scoring
 both layers (base + topping set), and accepts the full rotation/reflection orbit
 so any valid reading of a relational order ("two slices next to each other") earns
 full marks. The order text never has to be parsed back: the spec it was rendered
@@ -49,7 +49,7 @@ game.html          markup; loads the two scripts and styles.css
 game-core.js       pure logic (no DOM): geometry, order generator, English
                    renderer, grader, recipe + cast data. UMD: window.Core in the
                    browser, module.exports under node (this is what the tests load).
-game-ui.js         DOM, pointer drag, wedge snap, render, game loop. Uses Core.
+game-ui.js         DOM, pointer (tap) input, wedge hit-test, render, game loop.
 styles.css         all game styling
 index.html         GitHub Pages landing page (kids + parents); links to game.html
 LEVELS.md          20-level design spec and difficulty levers

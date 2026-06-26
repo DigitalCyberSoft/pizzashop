@@ -6,151 +6,221 @@
   <title>🍕 Pizza Palace — read the order, make the pizza!</title>
   <meta name="description" content="A free browser game that teaches children to read and understand increasingly complex English by building pizzas to order. Ages 4 to 12. No accounts, no ads, nothing leaves your device.">
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <meta property="og:title" content="🍕 Pizza Palace — a reading game where the words do the work">
+  <meta property="og:description" content="Read the customer's order, build the pizza, get paid for getting it right. Free, offline, ages 4–12.">
+  <meta property="og:image" content="assets/screenshots/play-hero.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --ink: #3a2a16; --accent: #e8542a; --accent2: #2aa877; --cream: #fff3d6;
-      --kid: #2aa877; --parent: #2f6db0;
-      --shadow: 0 6px 0 rgba(0,0,0,.12), 0 12px 24px rgba(0,0,0,.14);
+      --ink: #3a2a16; --accent: #e8542a; --accent-dk: #c43c16; --accent2: #2aa877;
+      --cream: #fff3d6; --kid: #2aa877; --parent: #2f6db0;
+      --shadow: 0 8px 0 rgba(0,0,0,.10), 0 18px 34px rgba(0,0,0,.16);
+      --shadow-sm: 0 4px 0 rgba(0,0,0,.10), 0 10px 18px rgba(0,0,0,.12);
     }
     * { box-sizing: border-box; }
-    html, body { margin: 0; }
+    html { scroll-behavior: smooth; }
     body {
+      margin: 0; color: var(--ink);
       font-family: 'Baloo 2', 'Comic Sans MS', 'Trebuchet MS', system-ui, sans-serif;
-      color: var(--ink);
       background:
-        linear-gradient(rgba(255,243,214,.82), rgba(255,243,214,.92)),
-        url('assets/scene/shop.png') center/cover fixed;
+        radial-gradient(1200px 600px at 80% -10%, #ffd98c 0%, transparent 60%),
+        radial-gradient(900px 500px at -10% 10%, #ffb27a 0%, transparent 55%),
+        linear-gradient(160deg, #fff3d6 0%, #ffe6bd 55%, #ffd9a8 100%);
       min-height: 100vh;
     }
-    .wrap { max-width: 960px; margin: 0 auto; padding: 28px 18px 60px; }
+    .wrap { max-width: 1040px; margin: 0 auto; padding: 0 18px; }
+    a { color: var(--accent-dk); }
 
-    /* ---- Hero ---- */
-    header { text-align: center; padding: 18px 0 6px; }
-    header h1 { font-size: clamp(2.2rem, 6vw, 3.6rem); margin: 0 0 6px; }
-    header p.tag { font-size: clamp(1rem, 2.6vw, 1.3rem); font-weight: 600; margin: 0 auto 18px; max-width: 620px; }
+    /* sprinkle of floating pizzas in the hero */
+    .hero { position: relative; text-align: center; padding: 40px 0 8px; overflow: hidden; }
+    .hero .float { position: absolute; font-size: 2.4rem; opacity: .35; pointer-events: none; animation: bob 6s ease-in-out infinite; }
+    .hero .float:nth-child(1){ left: 6%; top: 18%; animation-delay: 0s; }
+    .hero .float:nth-child(2){ right: 8%; top: 12%; animation-delay: 1.2s; font-size: 3rem; }
+    .hero .float:nth-child(3){ left: 12%; bottom: 12%; animation-delay: 2.1s; }
+    .hero .float:nth-child(4){ right: 14%; bottom: 18%; animation-delay: .6s; font-size: 2rem; }
+    @keyframes bob { 0%,100%{ transform: translateY(0) rotate(-6deg);} 50%{ transform: translateY(-14px) rotate(8deg);} }
+
+    h1 { font-size: clamp(2.4rem, 7vw, 4.2rem); margin: 0 0 6px; line-height: 1; text-shadow: 3px 3px 0 #fff; }
+    .tag { font-size: clamp(1.05rem, 2.6vw, 1.4rem); font-weight: 600; max-width: 640px; margin: 0 auto 14px; }
+    .badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 0 0 20px; }
+    .badge { background: #fff; border: 2px solid #ffd29e; border-radius: 999px; padding: 6px 14px; font-weight: 700; font-size: .82rem; box-shadow: var(--shadow-sm); }
     .play {
       display: inline-block; text-decoration: none; background: var(--accent); color: #fff;
-      font-weight: 800; font-size: 1.4rem; padding: 16px 38px; border-radius: 18px;
-      box-shadow: var(--shadow); transition: transform .08s;
+      font-weight: 800; font-size: 1.45rem; padding: 16px 42px; border-radius: 20px;
+      box-shadow: var(--shadow); transition: transform .08s, box-shadow .08s;
     }
-    .play:hover { transform: translateY(-2px); }
-    .hero-strip { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 22px 0 4px; }
-    .hero-strip img { width: 84px; height: 84px; border-radius: 16px; box-shadow: var(--shadow); object-fit: cover; background: #fff; }
+    .play:hover { transform: translateY(-3px); box-shadow: 0 11px 0 rgba(0,0,0,.10), 0 22px 40px rgba(0,0,0,.20); }
+    .play:active { transform: translateY(2px); box-shadow: var(--shadow-sm); }
 
-    /* ---- Two-audience split ---- */
-    .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-top: 34px; }
+    /* browser-frame mockup around the hero screenshot */
+    .mock { max-width: 880px; margin: 26px auto 0; border-radius: 18px; overflow: hidden; box-shadow: var(--shadow); border: 3px solid #fff; background: #fff; }
+    .mock .bar { display: flex; align-items: center; gap: 7px; padding: 10px 14px; background: #fff5e3; border-bottom: 2px solid #ffe2bb; }
+    .mock .bar i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+    .mock .bar .r{ background:#ff6058;} .mock .bar .y{ background:#ffbd2e;} .mock .bar .g{ background:#28c840;}
+    .mock .bar .addr { flex: 1; text-align: center; font-size: .8rem; font-weight: 700; color: #b08a55; }
+    .mock img { display: block; width: 100%; }
+
+    /* gallery */
+    section.block { padding: 46px 0 8px; }
+    .block h2 { text-align: center; font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 0 0 4px; }
+    .block .sub { text-align: center; font-weight: 600; opacity: .8; margin: 0 0 26px; }
+    .gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    @media (max-width: 720px){ .gallery { grid-template-columns: 1fr; max-width: 460px; margin: 0 auto; } }
+    figure.shot { margin: 0; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-sm); transition: transform .12s; }
+    figure.shot:hover { transform: translateY(-5px) rotate(-.6deg); }
+    figure.shot img { display: block; width: 100%; border-bottom: 3px solid #ffe2bb; }
+    figure.shot figcaption { padding: 12px 14px; font-weight: 700; font-size: .95rem; }
+    figure.shot figcaption span { display: block; font-weight: 600; font-size: .82rem; opacity: .72; }
+
+    /* two-audience split */
+    .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-top: 14px; }
     @media (max-width: 760px) { .cols { grid-template-columns: 1fr; } }
-    .card { background: #fff; border-radius: 22px; padding: 22px 24px; box-shadow: var(--shadow); border-top: 10px solid var(--accent2); }
+    .card { background: #fff; border-radius: 22px; padding: 24px 26px; box-shadow: var(--shadow); border-top: 10px solid var(--accent2); }
     .card.kids { border-top-color: var(--kid); }
     .card.parents { border-top-color: var(--parent); }
-    .card h2 { font-size: 1.7rem; margin: 0 0 4px; display: flex; align-items: center; gap: 10px; }
-    .card .who { font-weight: 700; font-size: .85rem; letter-spacing: .5px; text-transform: uppercase; color: #9a7b4f; margin-bottom: 12px; }
-    .card.kids h2 { color: var(--kid); }
-    .card.parents h2 { color: var(--parent); }
+    .card .who { font-weight: 800; font-size: .78rem; letter-spacing: .6px; text-transform: uppercase; color: #9a7b4f; margin-bottom: 6px; }
+    .card h3 { font-size: 1.6rem; margin: 0 0 12px; display: flex; align-items: center; gap: 10px; }
+    .card.kids h3 { color: var(--kid); }
+    .card.parents h3 { color: var(--parent); }
 
-    /* Kid-facing: big, friendly, numbered steps */
     .steps { list-style: none; padding: 0; margin: 0; }
-    .steps li { display: flex; gap: 12px; align-items: flex-start; margin: 0 0 14px; font-size: 1.15rem; font-weight: 600; }
+    .steps li { display: flex; gap: 12px; align-items: flex-start; margin: 0 0 14px; font-size: 1.14rem; font-weight: 600; }
     .steps .n { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; background: var(--kid); color: #fff; font-weight: 800; display: grid; place-items: center; }
-    .kid-cta { text-align: center; margin-top: 8px; }
-    .kid-cta a { text-decoration: none; background: var(--kid); color: #fff; font-weight: 800; font-size: 1.2rem; padding: 12px 28px; border-radius: 14px; box-shadow: var(--shadow); display: inline-block; }
+    .kid-cta { text-align: center; margin-top: 4px; }
+    .kid-cta a { text-decoration: none; background: var(--kid); color: #fff; font-weight: 800; font-size: 1.2rem; padding: 12px 28px; border-radius: 14px; box-shadow: var(--shadow-sm); display: inline-block; }
 
-    /* Parent-facing: denser prose */
     .parents p { font-size: 1rem; line-height: 1.5; margin: 0 0 12px; }
-    .parents h3 { font-size: 1.05rem; margin: 16px 0 6px; color: var(--parent); }
+    .parents h4 { font-size: 1.05rem; margin: 16px 0 6px; color: var(--parent); }
     .parents ul { margin: 0 0 12px; padding-left: 20px; }
     .parents li { margin: 5px 0; line-height: 1.45; }
     .pill { display: inline-block; background: #eef5fc; color: var(--parent); border: 2px solid #cfe2f5; border-radius: 999px; padding: 3px 12px; font-weight: 700; font-size: .85rem; margin: 2px 4px 2px 0; }
     .safe { background: #eafff5; border: 2px solid #bfe9d7; border-radius: 14px; padding: 12px 14px; margin-top: 10px; }
     .safe b { color: var(--accent2); }
 
-    footer { text-align: center; margin-top: 40px; font-size: .9rem; font-weight: 600; opacity: .8; }
-    footer a { color: var(--accent); }
+    footer { text-align: center; margin: 48px 0 56px; font-size: .92rem; font-weight: 600; opacity: .85; }
   </style>
 </head>
 <body>
-  <div class="wrap">
 
-    <header>
+  <!-- ===================== HERO ===================== -->
+  <header class="hero">
+    <span class="float" aria-hidden="true">🍕</span>
+    <span class="float" aria-hidden="true">🍕</span>
+    <span class="float" aria-hidden="true">🧀</span>
+    <span class="float" aria-hidden="true">🍄</span>
+    <div class="wrap">
       <h1>🍕 Pizza Palace</h1>
-      <p class="tag">Read what the customer wants. Build the pizza. Get paid for getting it right.
-        A reading game where the words do the work.</p>
-      <a class="play" href="game.html">▶ Play now</a>
-      <div class="hero-strip" aria-hidden="true">
-        <img src="assets/customers/nonna.png" alt="">
-        <img src="assets/customers/dino.png" alt="">
-        <img src="assets/customers/astro.png" alt="">
-        <img src="assets/customers/wizard.png" alt="">
-        <img src="assets/customers/ballerina.png" alt="">
+      <p class="tag">Read what the customer wants. Build the pizza. Get paid for getting it
+        right. A reading game where the <b>words do the work</b>.</p>
+      <div class="badges">
+        <span class="badge">🆓 Free</span>
+        <span class="badge">🚫 No ads</span>
+        <span class="badge">🧒 Ages 4–12</span>
+        <span class="badge">📶 Works offline</span>
+        <span class="badge">📱 Tablet ready</span>
       </div>
-    </header>
+      <a class="play" href="game.html">▶ Play now</a>
 
-    <div class="cols">
-
-      <!-- ============ KIDS ============ -->
-      <section class="card kids">
-        <div class="who">👀 Read this part yourself</div>
-        <h2>🧒 For Kids</h2>
-        <ol class="steps">
-          <li><span class="n">1</span><span>A hungry customer tells you what pizza they want. <b>Read it carefully!</b></span></li>
-          <li><span class="n">2</span><span>Pick up the toppings and drop them on the right slices.</span></li>
-          <li><span class="n">3</span><span>Press <b>Box it!</b> when your pizza looks right.</span></li>
-          <li><span class="n">4</span><span>Get it right and you earn <b>coins</b> 💰. Be quick <i>and</i> right for a bonus tip!</span></li>
-          <li><span class="n">5</span><span>The more pizzas you nail, the trickier the orders get. Can you become a <b>Pizza Legend?</b> 🏆</span></li>
-        </ol>
-        <p style="font-weight:600; text-align:center;">Tip: if you get stuck, read the order one more time. The answer is always in the words. 🍕</p>
-        <div class="kid-cta"><a href="game.html">Start cooking! 🧑‍🍳</a></div>
-      </section>
-
-      <!-- ============ PARENTS ============ -->
-      <section class="card parents">
-        <div class="who">📋 For the grown-ups</div>
-        <h2>👩‍🏫 For Parents &amp; Teachers</h2>
-        <p>Pizza Palace is a <b>reading-comprehension game disguised as a cooking game</b>.
-          Every order is a short piece of English the child has to read, understand, and act
-          on. The difficulty is in the <i>language</i>, not the dragging: orders grow from
-          "a whole pizza with ham" to multi-sentence instructions with recipes, negations,
-          conditionals, and spatial rules like "the two slices directly across from each other."</p>
-
-        <h3>What it teaches</h3>
-        <ul>
-          <li>Reading carefully and following multi-step instructions in order.</li>
-          <li>Spatial and quantity language: half, quarter, every other, next to, opposite, except.</li>
-          <li>Ignoring distractions: friendly chatter and red-herring lines that must be read <i>past</i>, not followed.</li>
-          <li>Memory and inference: recalling a named recipe, or working out that "me, my wife and two kids" means four quarters.</li>
-        </ul>
-
-        <h3>Ages &amp; levels</h3>
-        <p>Twenty levels span roughly <b>ages 4 to 12</b>. The level <b>adapts automatically</b>:
-          fast, accurate pizzas raise it; mistakes or running out of time lower it, so the game
-          settles where the child is challenged but not stuck. There is nothing to configure.</p>
-        <span class="pill">Level 1–5 · ages 4–6</span>
-        <span class="pill">Level 6–12 · ages 6–9</span>
-        <span class="pill">Level 13–20 · ages 9–12</span>
-
-        <h3>The money is the gentle stakes</h3>
-        <p>The shop starts with $20; each pizza costs $3 to make and accuracy pays it back, with
-          a $1 tip for being quick and correct. A wrong pizza is refused. It teaches that reading
-          carefully has a payoff, with no harsh "game over" sting beyond reopening the shop.</p>
-
-        <div class="safe">
-          <p style="margin:0;"><b>✅ Safe &amp; private.</b> No accounts, no sign-in, no ads, no chat, no in-app
-          purchases. The game makes <b>no internet connection at all</b> while playing: progress is saved only
-          in this browser, on this device, and <b>nothing is ever sent anywhere</b>. You can switch off the
-          slang ("meme mode") and reset progress for a new player from inside the game.</p>
-        </div>
-      </section>
-
+      <div class="mock">
+        <div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span class="addr">pizza-palace 🍕 read &amp; build</span></div>
+        <img src="assets/screenshots/play-hero.png" alt="Gameplay: a customer's order and a half-built pizza with the topping tray">
+      </div>
     </div>
+  </header>
 
-    <footer>
-      Free and open source · runs offline · <a href="game.html">Open the game</a> ·
-      <a href="README.md">Read the docs</a>
-    </footer>
+  <!-- ===================== GALLERY ===================== -->
+  <section class="block">
+    <div class="wrap">
+      <h2>See it in action</h2>
+      <p class="sub">Every order is a little reading puzzle. The pictures do the rest.</p>
+      <div class="gallery">
+        <figure class="shot">
+          <img src="assets/screenshots/welcome.png" alt="Welcome screen explaining how the shop's money works">
+          <figcaption>Open the shop <span>Clear money rules, picks up right where you left off</span></figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="assets/screenshots/play-mid.png" alt="A mid-level order being built on the pizza">
+          <figcaption>Read &amp; build <span>Tap a topping, tap the slices — orders get trickier as you improve</span></figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="assets/screenshots/victory.png" alt="Victory screen: You beat Pizza Palace">
+          <figcaption>Become a legend <span>Climb 20 levels to the Pizza Legend trophy</span></figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
 
-  </div>
+  <!-- ===================== KIDS / PARENTS ===================== -->
+  <section class="block">
+    <div class="wrap">
+      <h2>One game, two readers</h2>
+      <p class="sub">A part for the player, and a part for the grown-up.</p>
+      <div class="cols">
+
+        <!-- KIDS -->
+        <section class="card kids">
+          <div class="who">👀 Read this part yourself</div>
+          <h3>🧒 For Kids</h3>
+          <ol class="steps">
+            <li><span class="n">1</span><span>A hungry customer tells you what pizza they want. <b>Read it carefully!</b></span></li>
+            <li><span class="n">2</span><span>Tap a topping to pick it up, then tap the slices you want it on.</span></li>
+            <li><span class="n">3</span><span>Press <b>Box it!</b> when your pizza looks right.</span></li>
+            <li><span class="n">4</span><span>Get it right and you earn <b>coins</b> 💰. Be quick <i>and</i> right for a bonus tip!</span></li>
+            <li><span class="n">5</span><span>The more pizzas you nail, the trickier the orders get. Can you become a <b>Pizza Legend?</b> 🏆</span></li>
+          </ol>
+          <p style="font-weight:600; text-align:center;">Stuck? Read the order one more time. The answer is always in the words. 🍕</p>
+          <div class="kid-cta"><a href="game.html">Start cooking! 🧑‍🍳</a></div>
+        </section>
+
+        <!-- PARENTS -->
+        <section class="card parents">
+          <div class="who">📋 For the grown-ups</div>
+          <h3>👩‍🏫 For Parents &amp; Teachers</h3>
+          <p>Pizza Palace is a <b>reading-comprehension game disguised as a cooking game</b>.
+            Every order is a short piece of English the child reads, understands, and acts on.
+            The difficulty is in the <i>language</i>, not the tapping: orders grow from
+            "a whole pizza with ham" to multi-sentence instructions with recipes, negations,
+            conditionals, and spatial rules like "the two slices directly across from each other."</p>
+
+          <h4>What it teaches</h4>
+          <ul>
+            <li>Reading carefully and following multi-step instructions in order.</li>
+            <li>Spatial and quantity language: half, quarter, every other, next to, opposite, except.</li>
+            <li>Ignoring distractions: chatter and red-herring lines that must be read <i>past</i>, not followed.</li>
+            <li>Memory and inference: recalling a named recipe, or working out that "me, my wife and two kids" means four quarters.</li>
+          </ul>
+
+          <h4>Ages &amp; levels</h4>
+          <p>Twenty levels span roughly <b>ages 4 to 12</b>. The level <b>adapts automatically</b>:
+            fast, accurate pizzas raise it; mistakes or running out of time lower it, so the game
+            settles where the child is challenged but not stuck. Nothing to configure.</p>
+          <span class="pill">Level 1–5 · ages 4–6</span>
+          <span class="pill">Level 6–12 · ages 6–9</span>
+          <span class="pill">Level 13–20 · ages 9–12</span>
+
+          <h4>The money is the gentle stakes</h4>
+          <p>The shop starts with $20; each pizza costs $3 to make and accuracy pays it back, with
+            a $1 tip for being quick and correct. It teaches that reading carefully has a payoff,
+            with no harsh sting beyond reopening the shop.</p>
+
+          <div class="safe">
+            <p style="margin:0;"><b>✅ Safe &amp; private.</b> No accounts, no sign-in, no ads, no chat, no in-app
+            purchases. The game makes <b>no internet connection at all</b> while playing: progress is saved only
+            in this browser, on this device, and <b>nothing is ever sent anywhere</b>. You can switch off the
+            slang ("meme mode") and reset progress for a new player from inside the game.</p>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Free and open source · runs offline · <a href="game.html">Open the game</a> ·
+    <a href="https://github.com/DigitalCyberSoft/pizzashop">Source on GitHub</a>
+  </footer>
+
 </body>
 </html>

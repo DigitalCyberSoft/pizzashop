@@ -33,7 +33,7 @@ body {
 #hud .stat b { font-variant-numeric: tabular-nums; }
 #hud .stat.cash { background: #1f8a4c; box-shadow: 0 0 0 2px rgba(255,255,255,.5) inset; }
 #hud .spacer { flex: 1; }
-#hud button.toggle { border: none; border-radius: 999px; padding: 6px 12px; font-weight: 700; cursor: pointer; background: #fff; color: var(--accent); }
+#hud button.toggle { border: none; border-radius: 999px; padding: 10px 14px; font-weight: 700; cursor: pointer; background: #fff; color: var(--accent); }
 
 /* ---- Layout ---- */
 /* Main reading column (customer on top, pizza below) + tray palette beside it. */
@@ -82,8 +82,8 @@ button.eraser.on { background: var(--ink); color: #fff; }
 #tray .chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
 .chip {
   display: flex; align-items: center; gap: 6px; background: #fff; border: 2px solid #e8d6b0;
-  border-radius: 12px; padding: 8px 10px; font-weight: 700; font-size: .85rem; cursor: grab; touch-action: none;
-  min-width: 0;
+  border-radius: 12px; padding: 11px 10px; font-weight: 700; font-size: .9rem; cursor: pointer; touch-action: none;
+  min-width: 0; min-height: 44px; /* finger-sized tap target for tablet play */
 }
 .chip span:last-child { min-width: 0; overflow-wrap: anywhere; }
 .chip .ic { font-size: 1.3rem; }
