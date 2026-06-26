@@ -155,11 +155,17 @@
   // ~tier 3) so kids get the "X on a PIZZA?!" laugh before the late game, not just
   // a wall of serious toppings. The truly weird ones (beetroot/raisins/marshmallow)
   // still come last.
+  // Real foods unlock first (a child learns genuine pizza vocab through the whole
+  // early/mid game); the novelty "funny" foods unlock LAST, so a low or mid level
+  // never has to build with banana/broccoli/etc. First novelty (banana) sits at
+  // index 18 -> unlocks around tier 15 (unlockedFor: 4 + round(difficulty)).
   var UNLOCK_ORDER = [
-    'pepperoni', 'mushroom', 'ham', 'cheese-base', 'banana', 'olive', 'broccoli',
-    'pineapple', 'onion', 'sweetcorn', 'green-beans', 'pepper', 'spinach', 'bbq-base', 'peas',
-    'bacon', 'sausage', 'meatball', 'chicken', 'tomato-slice', 'chilli',
-    'brussels-sprout', 'extra-cheese', 'beetroot', 'raisins', 'marshmallow', 'fish-heads'
+    'pepperoni', 'mushroom', 'ham', 'cheese-base', 'olive', 'pineapple', 'onion',
+    'sweetcorn', 'pepper', 'spinach', 'bbq-base', 'bacon', 'sausage', 'meatball',
+    'chicken', 'tomato-slice', 'chilli', 'extra-cheese',
+    // novelty (funny foods) last:
+    'banana', 'broccoli', 'green-beans', 'peas', 'brussels-sprout', 'beetroot',
+    'raisins', 'marshmallow', 'fish-heads'
   ];
 
   // Recipes: name -> { base, toppings }. Lives only here; never a tray chip.

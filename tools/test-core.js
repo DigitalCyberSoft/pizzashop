@@ -257,11 +257,16 @@ function fillWild(L) {
     });
   });
 
-  // a funny (novelty) ingredient unlocks early (by ~tier 3 = first 7 unlocks)
-  var earlyFunny = Core.UNLOCK_ORDER.slice(0, 7).some(function (id) {
-    return Core.TOPPING[id] && Core.TOPPING[id].novelty;
+  // novelty ("funny") foods unlock LAST: every novelty ingredient comes after
+  // every real ingredient, so a low/mid level never builds with banana/broccoli/etc.
+  // (First novelty is index 18 -> unlocks ~tier 15.)
+  var firstNovelty = Core.UNLOCK_ORDER.length, lastReal = -1;
+  Core.UNLOCK_ORDER.forEach(function (id, i) {
+    if (Core.TOPPING[id] && Core.TOPPING[id].novelty) { if (i < firstNovelty) firstNovelty = i; }
+    else if (i > lastReal) lastReal = i;
   });
-  ok(earlyFunny, 'a funny ingredient is unlocked among the first 7 (reaches ~tier 3)');
+  ok(firstNovelty > lastReal, 'every novelty ingredient unlocks after every real ingredient (novelty is last)');
+  ok(firstNovelty >= 15, 'first novelty unlocks no earlier than ~tier 15 (index ' + firstNovelty + ')');
 
   // tier 7 actually generates multi-topping slices AND names combo recipes
   var rng = lcg(555), multi = false, combo = false;
