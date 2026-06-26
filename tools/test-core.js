@@ -219,6 +219,7 @@ function fillWild(L) {
 
 // ---- Difficulty + creativity ----
 (function () {
+  ok(Core.generateOrder({ difficulty: Core.MAX_TIER, unlocked: Core.UNLOCK_ORDER, rng: lcg(5) }).tier === Core.MAX_TIER, 'difficulty MAX_TIER -> top tier (' + Core.MAX_TIER + ')');
   ok(Core.generateOrder({ difficulty: 20, unlocked: Core.UNLOCK_ORDER, rng: lcg(5) }).tier === 20, 'difficulty 20 -> tier 20');
   ok(Core.generateOrder({ difficulty: 7, unlocked: Core.UNLOCK_ORDER, rng: lcg(5) }).tier === 7, 'difficulty 7 -> tier 7');
   ok(Core.generateOrder({ difficulty: 1, unlocked: Core.UNLOCK_ORDER, rng: lcg(5) }).tier === 1, 'difficulty 1 -> tier 1');
@@ -386,17 +387,65 @@ function fillWild(L) {
   }
 })();
 
-// ---- Level 20 must be genuinely hard: never a trivial near-uniform pizza ----
+// ---- The whole top band (20..MAX_TIER) must be genuinely hard: never a trivial
+// near-uniform pizza. This guards against a tier with no templatesForTier entry
+// silently falling back to the level-1 whole-pizza template. ----
 (function () {
-  var rng = lcg(2020);
-  for (var n = 0; n < 80; n++) {
-    var o = Core.generateOrder({ difficulty: 20, unlocked: Core.UNLOCK_ORDER, rng: rng });
-    var sigs = {};
-    o.acceptable[0].forEach(function (s) {
-      sigs[s.wildcard ? 'w' : (s.base + ':' + s.toppings.join(','))] = 1;
-    });
-    ok(Object.keys(sigs).length >= 3, 'tier 20 order has >=3 distinct slice states (not a uniform pizza)');
+  for (var tier = 20; tier <= Core.MAX_TIER; tier++) {
+    var rng = lcg(2020 + tier);
+    for (var n = 0; n < 60; n++) {
+      var o = Core.generateOrder({ difficulty: tier, unlocked: Core.UNLOCK_ORDER, rng: rng });
+      if (o.pizzas === 2) continue; // two-pizza orders are graded as a pool, checked elsewhere
+      var sigs = {};
+      o.acceptable[0].forEach(function (s) {
+        sigs[s.wildcard ? 'w' : (s.base + ':' + s.toppings.join(','))] = 1;
+      });
+      ok(Object.keys(sigs).length >= 3, 'tier ' + tier + ' order has >=3 distinct slice states (not a uniform/trivial pizza)');
+    }
   }
+})();
+
+// ---- Peak relocation: the densest single-pizza lever (t_composite4, a half/half
+// base with FOUR stacked clauses) must land at the TOP, not at 19/20. It is
+// reachable at tier 25 and tier 22, but NOT below tier 22 (tiers 19-21 top out at
+// the 3-clause t_composite3). Markers: a composite order says "the other half all";
+// the 4th clause is the only one that says "is just <X> on its own". ----
+(function () {
+  function composite4Seen(tier, seeds) {
+    var rng = lcg(7000 + tier);
+    for (var n = 0; n < seeds; n++) {
+      var o = Core.generateOrder({ difficulty: tier, unlocked: Core.UNLOCK_ORDER, rng: rng });
+      if (o.pizzas === 2) continue;
+      // count composite clauses: composite4 has all four, composite3 only three.
+      if (/the other half all/.test(o.core) && /is just .* on its own/.test(o.core)) return true;
+    }
+    return false;
+  }
+  ok(composite4Seen(25, 1500), 'composite4 (the peak) is reachable at level 25');
+  ok(composite4Seen(22, 1500), 'composite4 enters by level 22');
+  ok(!composite4Seen(21, 2500), 'composite4 does NOT appear at level 21 (ceiling there is composite3)');
+  ok(!composite4Seen(19, 2500), 'composite4 does NOT appear at level 19 (peak relocated up to 25)');
+})();
+
+// ---- The three previously-orphaned "hard single-construct" templates are now wired
+// into the stretched top band (19-25) and must each be reachable. ----
+(function () {
+  var markers = {
+    clockSequence: /going all the way around, one topping per slice/,
+    negateAndPlace: /on every slice EXCEPT one quarter, which gets/,
+    buildRemovePlace: /take the .* back OFF one half/
+  };
+  Object.keys(markers).forEach(function (name) {
+    var seen = false;
+    for (var tier = 19; tier <= Core.MAX_TIER && !seen; tier++) {
+      var rng = lcg(8000 + tier);
+      for (var n = 0; n < 800 && !seen; n++) {
+        var o = Core.generateOrder({ difficulty: tier, unlocked: Core.UNLOCK_ORDER, rng: rng });
+        if (o.pizzas !== 2 && markers[name].test(o.core)) seen = true;
+      }
+    }
+    ok(seen, 'orphan template "' + name + '" is reachable in the top band (19-' + Core.MAX_TIER + ')');
+  });
 })();
 
 // ---- New language constructs: each must be reachable, grade its canonical
@@ -706,7 +755,7 @@ function fillWild(L) {
   ok(noveltyCount(15) >= 1, 'the first novelty food arrives at ~level 15');
   eq(Core.unlockCount(19), Core.UNLOCK_ORDER.length, 'all ' + Core.UNLOCK_ORDER.length + ' ingredients unlocked by level 19');
   eq(Core.unlockCount(20), Core.UNLOCK_ORDER.length, 'full kitchen at level 20');
-  for (var t = 1; t < 20; t++) ok(Core.unlockCount(t + 1) >= Core.unlockCount(t), 'unlock count is monotonic across tier ' + t + '->' + (t + 1));
+  for (var t = 1; t < Core.MAX_TIER; t++) ok(Core.unlockCount(t + 1) >= Core.unlockCount(t), 'unlock count is monotonic across tier ' + t + '->' + (t + 1));
   var at20 = Core.UNLOCK_ORDER.slice(0, Core.unlockCount(20));
   ['raisins', 'marshmallow', 'fish-heads'].forEach(function (id) {
     ok(at20.indexOf(id) !== -1, 'the weirdest novelty food "' + id + '" is reachable by level 20 (was stranded before)');

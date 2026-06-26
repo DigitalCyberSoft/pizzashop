@@ -1,4 +1,4 @@
-# Pizza Palace: Level 1-20 Design Plan
+# Pizza Palace: Level 1-25 Design Plan
 
 The teaching target is reading and interpreting English, not manual dexterity.
 Each level raises difficulty by advancing one or more of the levers below while
@@ -55,17 +55,22 @@ a correct build scores 100% whichever way the child orients it.
 | 16 | quarter | 4 | 2-5 | recipe placement + nesting | recipe quarter, nested exception, share, named diagonal | place a recipe precisely; one-slice swap; 4-person share |
 | 17 | quarter/whole | 4-8 | 1-2 | composition begins (3 clauses) | four-different-quarters, composite-3, in-order distractor, negate-and-place | combine several learned clauses; ignore a red herring |
 | 18 | full + constraint | 3-8 | 1-3 | composition + constraint | composite-3, per-slice, constraint, layer-conditional, negate-and-place | several rules at once; "two slices that aren't touching" |
-| 19 | composite | 4-8 | 1-5 | 4 clauses + recipe recall + dietary | composite-4, dietary-share, recipe-halves+exception, 4-quarter recipes, compound | recall recipes; dietary constraint (veg across from meat) |
-| 20 | composite (densest) | 4-8 | 1-5 | all levers, 5-6 sentences | composite-4, dietary-share, recipe-halves+exception, 4-quarter recipes | parse a 5-6 sentence order chaining every earlier lesson |
+| 19 | composite (3 clauses) | 4-8 | 1-5 | composite-3 holds; **clock-sequence** enters | composite-3, per-slice, clock-sequence, constraint, 4-quarter recipes, uneven-share, buffer-ring | one ordered topping per slice, all the way round |
+| 20 | composite (3 clauses) | 4-8 | 1-5 | + **negate-and-place**; floor rises | composite-3, per-slice, clock-sequence, negate-and-place, 4-quarter recipes, dietary-share, buffer-ring | the old peak, redone as a rung (not the ceiling) |
+| 21 | composite (3 clauses) | 4-8 | 1-5 | + **build-remove-place** (heaviest single construct) | composite-3, clock-sequence, negate-and-place, build-remove-place, 4-quarter recipes, dietary-share | build up, remove from a half, add, place |
+| 22 | composite (4 clauses) | 4-8 | 1-5 | **composite-4 enters** | composite-4, negate-and-place, build-remove-place, 4-quarter recipes, recipe-halves+exception, dietary-share | the 4-clause peak lever first appears |
+| 23 | composite (4 clauses) | 4-8 | 1-5 | composite-4 + heavy mutators | composite-4, build-remove-place, negate-and-place, 4-quarter recipes, recipe-halves+exception, buffer-ring | several dense constructs in one pool |
+| 24 | composite (4 clauses) | 4-8 | 1-5 | narrowing toward the densest | composite-4, build-remove-place, 4-quarter recipes, recipe-halves+exception, dietary-share | the pool tightens to the hardest |
+| 25 | composite (densest) | 4-8 | 1-5 | all levers, 5-6 sentences (**the relocated peak**, was Level 20) | composite-4, dietary-share, recipe-halves+exception, 4-quarter recipes, buffer-ring | parse a 5-6 sentence order chaining every earlier lesson |
 
 ## Progression double-check (per lever, monotonic)
 
-- **Granularity**: whole (1) -> halves (2-3) -> three-region (4) -> quarters (5-6) -> pairs/slices (7-8) -> sequences (13, 18) -> full composite (19-20). Rises, never regresses.
-- **Regions / slice-states**: 1 -> 2 -> 3 -> 4 -> up to 8. Level 20 is guaranteed >= 3 distinct slice-states by an automated test (no "X everywhere" at the top).
+- **Granularity**: whole (1) -> halves (2-3) -> three-region (4) -> quarters (5-6) -> pairs/slices (7-8) -> sequences (13, 18) -> full composite (17-25). Rises, never regresses. The old 17->20 cram is stretched into a smooth 17->25 climb; the densest pool (the old Level 20) now lands at Level 25.
+- **Regions / slice-states**: 1 -> 2 -> 3 -> 4 -> up to 8. Levels 20-25 are guaranteed >= 3 distinct slice-states by an automated test (no "X everywhere" at the top).
 - **Toppings per slice**: 1 (L1-7) -> 2 introduced (L2/4/8) -> 3 (L8/11/13) -> recipe sets of 2-5 (L14+). Multi-topping is now common from the mid game, not just the recipe tiers.
 - **Construct family** strictly escalates: direct -> counting -> relational -> negation -> alternating/sequence -> intersection -> nested exception -> revision/removal -> distractor -> recipe -> recipe+exception -> compound.
 - **Recipe load**: none (1-13) -> 1 scaffolded (14) -> 2 (15-16) -> recall + single-slice exception (19-20) -> 4 (17, 19, 20). Scaffold fades to bare name once `taught`.
-- **Clauses**: 1 (L1-8) -> 2 (L9-13) -> 2-3 (L14-17) -> 4 (L18-20).
+- **Clauses**: 1 (L1-8) -> 2 (L9-13) -> 2-3 (L14-16) -> 3 (composite, L17-21) -> 4 (composite, L22-25). The composite ceiling rises one clause (3->4) at L22 and the floor climbs each level via the three hard single-construct templates (clock-sequence, negate-and-place, build-remove-place) so the climb stays smooth all the way to the relocated peak at 25.
 - **Time pressure & palette & reward** scale continuously with the level number.
 
 ### Known knobs still available to tune later

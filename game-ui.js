@@ -135,7 +135,8 @@
     C.CAST.forEach(function (c) { items.push({ u: 'assets/customers/' + c.id + '.png' }); });
     var lvl = Math.max(1, Math.min(C.MAX_TIER, Math.round(LS.difficulty)));
     items.push({ u: 'assets/customers/kid.png' }, { u: 'assets/scene/shopfront.png' },
-      { u: 'assets/scene/shop.png' }, { u: 'assets/scene/shop-' + lvl + '.png' });
+      // shop-1..20.png exist; levels 21-25 reuse the level-20 backdrop (SCENE_MAX).
+      { u: 'assets/scene/shop.png' }, { u: 'assets/scene/shop-' + Math.min(SCENE_MAX, lvl) + '.png' });
     var total = items.length, loaded = 0, finished = false, stall;
     // Reveal the welcome ONLY when every asset has loaded. The watchdog is a STALL
     // detector, not a deadline: it fires only if NO image resolves for 20s (a real
@@ -174,7 +175,7 @@
     // that kept the browser's loading indicator up for a long time.
     var lvl = Math.max(1, Math.min(C.MAX_TIER, Math.round(LS.difficulty)));
     var urls = [];
-    for (var t = lvl; t <= Math.min(C.MAX_TIER, lvl + 3); t++) urls.push('assets/scene/shop-' + t + '.png');
+    for (var t = lvl; t <= Math.min(C.MAX_TIER, lvl + 3); t++) urls.push('assets/scene/shop-' + Math.min(SCENE_MAX, t) + '.png');
     var i = 0;
     function next() {
       if (i >= urls.length) return;
@@ -352,12 +353,13 @@
   // Robust to a missing per-tier file: preload via Image() and only switch once it
   // loads; on error we leave the current/default background (never blank it). The
   // current tier is tracked so the same scene isn't re-set every order.
-  var sceneTier = 0;
+  // Only shop-1..20.png exist; levels 21-25 reuse the level-20 backdrop.
+  var sceneTier = 0, SCENE_MAX = 20;
   function setScene(tier) {
     var t = Math.max(1, Math.min(C.MAX_TIER, Math.round(tier || 1)));
     if (t === sceneTier) return;
     sceneTier = t;
-    var src = 'assets/scene/shop-' + t + '.png';
+    var src = 'assets/scene/shop-' + Math.min(SCENE_MAX, t) + '.png';
     var im = new Image();
     im.onload = function () {
       // guard against a stale load if the tier changed again before this fired

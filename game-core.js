@@ -631,11 +631,11 @@
     return out;
   }
 
-  // 20 difficulty tiers. Tier is driven by adaptive difficulty (tips raise it,
+  // 25 difficulty tiers. Tier is driven by adaptive difficulty (tips raise it,
   // fails/timeouts lower it); TIER_AT is ONLY a first-play seed for a player with
   // no stored difficulty, never a gate on a returning player.
-  var MAX_TIER = 20;
-  var TIER_AT = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
+  var MAX_TIER = 25;
+  var TIER_AT = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24];
   function tierFor(ordersServed) {
     var t = 1;
     for (var i = 0; i < TIER_AT.length; i++) if (ordersServed >= TIER_AT[i]) t = i + 1;
@@ -666,13 +666,17 @@
   // Every order lays a base first; the canonical layout always has a base under
   // each topping (the UI enforces base-before-toppings). Signature (rng, av, un).
   function templatesForTier(tier) {
-    // 20 tiers, escalating: whole -> halves -> quarters/counts -> relations &
+    // 25 tiers, escalating: whole -> halves -> quarters/counts -> relations &
     // negation & categories -> combos & multi-topping -> inference & composition.
     // Multi-topping (double/triple-half) is sprinkled from the mid tiers so 2-3
     // toppings on one slice are common before recipes. The dense, multi-clause,
-    // composite templates own the top tiers; Level 20 draws only composites, so
-    // it is never an easy order in disguise. buildOne() falls back to a lower
-    // tier if a template can't build from the unlocked ingredients.
+    // composite templates own the top tiers, and the climb to the peak is STRETCHED
+    // over tiers 19-25: composite3 owns the ceiling at 19-21 while three hard
+    // single-construct templates (clockSequence, negateAndPlace, buildRemovePlace)
+    // are introduced one per level and the floor rises; composite4 takes the ceiling
+    // at 22-25, narrowing until Level 25 draws only the densest pool (the orders that
+    // used to be Level 20). buildOne() falls back to a lower tier if a template can't
+    // build from the unlocked ingredients.
     var T = {
       1: [t1_whole],
       2: [t2_halfHalf, t_doubleWhole, t1_whole],
@@ -694,8 +698,15 @@
       16: [t_comboQuarter, t7_nestedException, t7_share, t7_namedDiagonal, t_recipeSwap, t_intersectionCat, t_conditionTrue, t_notException],
       17: [t8_fourQuarters, t_composite3, t7_inOrderDistractor, t_threeBaseConditional, t_gapShare, t_recipeHalfMinus, t_notBoth, t_elimination],
       18: [t_composite3, t10_perSlice, t7_constraint, t7_layerConditional, t_threeBaseConditional, t_normative, t_unevenShare],
-      19: [t_composite4, t_dietaryShare, t20_recipeHalvesException, t9_quarterRecipes, t11_compound, t_unevenShare, t_bufferRing],
-      20: [t_composite4, t_dietaryShare, t20_recipeHalvesException, t9_quarterRecipes, t_bufferRing]
+      // The top band (19-25) stretches the old 17->20 cram into a smooth climb whose
+      // peak (the old Level-20 "densest only" pool) now lands at Level 25.
+      19: [t_composite3, t10_perSlice, t20_clockSequence, t7_constraint, t9_quarterRecipes, t_unevenShare, t_bufferRing],
+      20: [t_composite3, t10_perSlice, t20_clockSequence, t20_negateAndPlace, t9_quarterRecipes, t_dietaryShare, t_bufferRing],
+      21: [t_composite3, t20_clockSequence, t20_negateAndPlace, t20_buildRemovePlace, t9_quarterRecipes, t_dietaryShare],
+      22: [t_composite4, t20_negateAndPlace, t20_buildRemovePlace, t9_quarterRecipes, t20_recipeHalvesException, t_dietaryShare],
+      23: [t_composite4, t20_buildRemovePlace, t20_negateAndPlace, t9_quarterRecipes, t20_recipeHalvesException, t_bufferRing],
+      24: [t_composite4, t20_buildRemovePlace, t9_quarterRecipes, t20_recipeHalvesException, t_dietaryShare],
+      25: [t_composite4, t9_quarterRecipes, t20_recipeHalvesException, t_dietaryShare, t_bufferRing]
     };
     return T[tier] || T[1];
   }
@@ -1871,10 +1882,13 @@
   // Combo difficulty scales with tier so a high level is never trivially easy:
   //  - [8,8] (two halves) is just two whole pizzas (a Mode-A, ~level-3 idea) and
   //    reads like "one pizza each", so it is barred once we phrase as FRACTIONS (15+).
-  //  - the top tiers (18+) demand a real 3-4 way mix, not a single 2-kind split.
+  //  - the upper tiers (18+) demand a real 3-way mix, not a single 2-kind split, and
+  //    the very top (24+) demands the densest 4-way mix, so the two-pizza peak lands
+  //    at Level 25 alongside the single-pizza peak (no new combos, just re-spaced).
   function comboAllowed(c, tier) {
     if (tier >= 15 && c.length === 2 && c[0] === 8 && c[1] === 8) return false;
     if (tier >= 18 && c.length < 3) return false;
+    if (tier >= 24 && c.length < 4) return false;
     return true;
   }
   function pickModeBCombo(rng, maxKinds, tier) {
@@ -2006,8 +2020,8 @@
     t5_twoAdjacent: 'nextTo', t5_threeAdjacent: 'threeInRow',
     t6_oppositeOf: 'opposite',
     t6_diagonalQuarters: 'diagonal', t7_namedDiagonal: 'diagonal',
-    t6_exceptQuarter: 'except', t7_negationBase: 'except', t7_nestedException: 'except',
-    t7_alternating: 'everyOther', t7_ordinalRun: 'ordinalRun',
+    t6_exceptQuarter: 'except', t7_negationBase: 'except', t7_nestedException: 'except', t20_negateAndPlace: 'except',
+    t7_alternating: 'everyOther', t7_ordinalRun: 'ordinalRun', t20_clockSequence: 'ordinalRun',
     t_catCountWhole: 'catCount', t_catCountHalves: 'catCount', t_sillyEvery: 'catCount', t_fruitEvery: 'catCount',
     t_countCompare: 'compare', t7_layerConditional: 'intersection',
     t_catSeparate: 'notTouch', t_dietaryShare: 'notTouch', t_gapShare: 'notTouch'
