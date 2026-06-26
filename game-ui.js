@@ -833,6 +833,9 @@
     if (location.hash.indexOf('demo') !== -1) demoFill();
     if (location.hash.indexOf('victory') !== -1) { markSeen(C.UNLOCK_ORDER); startGame(); showVictory(); }
     else if (location.hash.indexOf('win') !== -1) devWin();
+    else if (location.hash.indexOf('solvebox') !== -1) devSolve(true);
+    else if (location.hash.indexOf('failbox') !== -1) devFail();
+    else if (location.hash.indexOf('solve') !== -1) devSolve(false);
   }
   function demoFill() {
     markSeen(C.UNLOCK_ORDER); startGame();
@@ -847,6 +850,43 @@
     markSeen(C.UNLOCK_ORDER); startGame();
     S.layout = C.cloneLayout(S.order.acceptable[0]).map(function (s) { return s.wildcard ? C.makeSlice('tomato', ['olive']) : s; });
     renderPizza(); boxIt();
+  }
+  // QA / screenshot hooks: build a genuinely correct solution for the current
+  // order (catCount and wildcard slices filled with valid choices), or a botched
+  // one. #solve shows the solved pizza; #solvebox boxes it (success result);
+  // #failbox boxes a half-wrong build (refused result + concept feedback).
+  function canonicalFill(spec) {
+    var meats = ['pepperoni', 'ham', 'bacon', 'sausage'], veg = ['mushroom', 'olive', 'onion', 'pepper'],
+      fruit = ['pineapple', 'banana', 'raisins'], silly = ['banana', 'peas', 'broccoli', 'marshmallow'],
+      fruitsilly = ['banana', 'raisins'], puresilly = ['marshmallow', 'fish-heads'],
+      green = ['pepper', 'spinach', 'broccoli', 'peas'], red = ['pepperoni', 'tomato-slice', 'chilli'],
+      anyList = meats.concat(veg);
+    return C.cloneLayout(spec).map(function (s) {
+      if (s.catCount) {
+        var src = s.cat === 'meat' ? meats : (s.cat === 'veg' ? veg : (s.cat === 'fruit' ? fruit :
+          (s.cat === 'fruitsilly' ? fruitsilly : (s.cat === 'puresilly' ? puresilly :
+            (s.cat === 'green' ? green : (s.cat === 'red' ? red : (s.cat === 'any' ? anyList : silly)))))));
+        var k = s.count != null ? s.count : (s.min != null ? s.min : 1);
+        return C.makeSlice(s.base, src.slice(0, k));
+      }
+      if (s.wildcard) {
+        var against = s.surpriseAgainst || [];
+        var t = ['olive', 'banana', 'mushroom', 'ham'].filter(function (c) { return against.indexOf(c) === -1; })[0] || 'olive';
+        return C.makeSlice('tomato', [t]);
+      }
+      return s;
+    });
+  }
+  function devSolve(box) {
+    markSeen(C.UNLOCK_ORDER); startGame();
+    S.layout = canonicalFill(S.order.acceptable[0]);
+    renderPizza(); if (box) boxIt();
+  }
+  function devFail() {
+    markSeen(C.UNLOCK_ORDER); startGame();
+    var L = canonicalFill(S.order.acceptable[0]);
+    C.REGION.right.forEach(function (i) { L[i] = C.makeSlice(L[i].base, ['olive']); }); // botch one half
+    S.layout = L; renderPizza(); boxIt();
   }
 
   function runSelfTest() {
