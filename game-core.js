@@ -154,7 +154,7 @@
   // first (a child learns genuine pizza vocab through the early/mid game); the
   // novelty "funny" foods come LAST, so a low/mid level never has to build with
   // banana/broccoli/etc. With the unlockCount pace below, the real foods are all
-  // out by ~level 11 and the first novelty (banana, index 18) arrives ~level 12.
+  // out by ~level 14 and the first novelty (banana, index 18) arrives at level 15.
   var UNLOCK_ORDER = [
     'pepperoni', 'mushroom', 'ham', 'cheese-base', 'olive', 'pineapple', 'onion',
     'sweetcorn', 'pepper', 'spinach', 'bbq-base', 'bacon', 'sausage', 'meatball',
@@ -163,11 +163,16 @@
     'banana', 'broccoli', 'green-beans', 'peas', 'brussels-sprout', 'beetroot',
     'raisins', 'marshmallow', 'fish-heads'
   ];
-  // How many of UNLOCK_ORDER are available at a given tier. Tuned so ALL 27 are
-  // unlocked by ~level 18 (a full kitchen well before level 20), growing from a
-  // 5-item start. Single source of truth: the UI and the tests both call this, so
-  // the unlock pace can never drift between the game and its tests.
-  function unlockCount(tier) { return Math.min(UNLOCK_ORDER.length, 4 + Math.round(tier * 1.3)); }
+  // How many of UNLOCK_ORDER are available at a given tier. Real foods (the first
+  // 18) unlock ~one per level, so the last lands around level 14 and the first
+  // novelty (banana) arrives at level 15; the 9 novelty foods then unlock faster
+  // (~2 per level) so the whole kitchen (27) is complete by ~level 19, ahead of
+  // level 20. Single source of truth: the UI and the tests both call this, so the
+  // unlock pace can never drift between the game and its tests.
+  function unlockCount(tier) {
+    var n = tier <= 15 ? 4 + Math.round(tier) : 19 + Math.round((tier - 15) * 2);
+    return Math.min(UNLOCK_ORDER.length, n);
+  }
 
   // Recipes: name -> { base, toppings }. Lives only here; never a tray chip.
   function R(base, toppings) { return { base: base, toppings: normToppings(toppings) }; }

@@ -693,12 +693,18 @@ function fillWild(L) {
   ok(checkedB > 0, 'Mode B tier-difficulty test exercised orders (' + checkedB + ')');
 })();
 
-// ---- Ingredient unlock pace (Core.unlockCount): a gentle 5-item start, monotonic,
-// and ALL 27 unlocked by ~level 18 so the kitchen is complete well before level 20
-// (the old 4+round(diff) cap stranded the last 3 novelty foods past level 20). ----
+// ---- Ingredient unlock pace (Core.unlockCount): a gentle 5-item start, real foods
+// first with novelty held back to ~level 15, then all 27 unlocked by ~level 19 so
+// the kitchen is complete before level 20 (the old 4+round(diff) cap stranded the
+// last 3 novelty foods past level 20). ----
 (function () {
+  function noveltyCount(tier) {
+    return Core.UNLOCK_ORDER.slice(0, Core.unlockCount(tier)).filter(function (id) { return Core.TOPPING[id] && Core.TOPPING[id].novelty; }).length;
+  }
   eq(Core.unlockCount(1), 5, 'level 1 starts with 5 ingredients unlocked');
-  eq(Core.unlockCount(18), Core.UNLOCK_ORDER.length, 'all ' + Core.UNLOCK_ORDER.length + ' ingredients unlocked by level 18');
+  eq(noveltyCount(14), 0, 'no novelty food is unlocked before level 15 (real foods first)');
+  ok(noveltyCount(15) >= 1, 'the first novelty food arrives at ~level 15');
+  eq(Core.unlockCount(19), Core.UNLOCK_ORDER.length, 'all ' + Core.UNLOCK_ORDER.length + ' ingredients unlocked by level 19');
   eq(Core.unlockCount(20), Core.UNLOCK_ORDER.length, 'full kitchen at level 20');
   for (var t = 1; t < 20; t++) ok(Core.unlockCount(t + 1) >= Core.unlockCount(t), 'unlock count is monotonic across tier ' + t + '->' + (t + 1));
   var at20 = Core.UNLOCK_ORDER.slice(0, Core.unlockCount(20));
