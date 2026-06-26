@@ -577,16 +577,18 @@
       6: [t5_oneSlice, t5_twoAdjacent, t_tripleHalf, t_pronoun],
       7: [t5_twoAdjacent, t5_threeAdjacent, t_tripleHalf, t_riddle],
       8: [t5_oneSlice, t6_oppositeOf, t_doubleHalf, t_pronoun, t_riddle],
-      9: [t6_oppositeOf, t_catSeparate, t7_negationBase, t_sillyEvery, t_fruitEvery, t_atLeastOne, t_dietary],
-      10: [t6_exceptQuarter, t_catSeparate, t7_negationBase, t_catCountWhole, t_fruitEvery, t_countCompare, t_eitherOr, t_intersectionCat],
-      11: [t6_diagonalQuarters, t6_exceptQuarter, t7_selfCorrect, t_catCountWhole, t_countCompare, t_conditionTrue, t_sharedProperty],
-      12: [t7_alternating, t7_twoBases, t7_selfCorrect, t6_diagonalQuarters, t_countCompare, t_notBoth, t_eitherOr],
-      13: [t7_ordinalRun, t7_alternating, t7_wildcard, t_twoBaseConditional, t_elimination, t_intersectionCat],
-      14: [t_comboWhole, t_comboHalves, t_doubleHalf, t_catCountHalves, t_twoBaseConditional],
-      15: [t_comboHalves, t_comboQuarter, t_tripleHalf, t_threeBases, t_recipeRemove],
-      16: [t_comboQuarter, t7_nestedException, t7_share, t7_namedDiagonal, t_recipeSwap],
-      17: [t8_fourQuarters, t_composite3, t7_inOrderDistractor, t_threeBaseConditional, t_gapShare, t_recipeHalfMinus],
-      18: [t_composite3, t10_perSlice, t7_constraint, t7_layerConditional, t_threeBaseConditional],
+      9: [t6_oppositeOf, t_catSeparate, t7_negationBase, t_sillyEvery, t_fruitEvery, t_atLeastOne],
+      10: [t6_exceptQuarter, t_catSeparate, t7_negationBase, t_catCountWhole, t_fruitEvery, t_countCompare],
+      11: [t6_diagonalQuarters, t6_exceptQuarter, t7_selfCorrect, t_catCountWhole, t_countCompare, t_sharedProperty],
+      12: [t7_alternating, t7_twoBases, t7_selfCorrect, t6_diagonalQuarters, t_countCompare],
+      13: [t7_ordinalRun, t7_alternating, t7_wildcard, t_twoBaseConditional],
+      // tiers 14+ carry the harder LOGIC constructs (inference, either/or, not-both,
+      // set intersection, conditional, elimination) alongside the combo templates.
+      14: [t_comboWhole, t_comboHalves, t_doubleHalf, t_catCountHalves, t_twoBaseConditional, t_dietary, t_eitherOr, t_notException],
+      15: [t_comboHalves, t_comboQuarter, t_tripleHalf, t_threeBases, t_recipeRemove, t_eitherOr, t_intersectionCat, t_normative],
+      16: [t_comboQuarter, t7_nestedException, t7_share, t7_namedDiagonal, t_recipeSwap, t_intersectionCat, t_conditionTrue, t_notException],
+      17: [t8_fourQuarters, t_composite3, t7_inOrderDistractor, t_threeBaseConditional, t_gapShare, t_recipeHalfMinus, t_notBoth, t_elimination],
+      18: [t_composite3, t10_perSlice, t7_constraint, t7_layerConditional, t_threeBaseConditional, t_normative],
       19: [t_composite4, t_dietaryShare, t20_recipeHalvesException, t9_quarterRecipes, t11_compound],
       20: [t_composite4, t_dietaryShare, t20_recipeHalvesException, t9_quarterRecipes]
     };
@@ -1373,6 +1375,45 @@
     var c = pick(rng, cols), B = pickBase(rng, un);
     var L = []; for (var i = 0; i < 8; i++) L.push({ catCount: true, base: B, cat: c[0], count: 1, phrase: 'one ' + c[0] + ' topping' });
     return { text: 'A colour pizza on a ' + baseWord(B) + ' base! Every single slice gets ONE topping that is ' + c[0].toUpperCase() + ' (' + c[1] + '). They all share the same colour.', acceptable: [L], teach: null, concept: 'catCount' };
+  }
+
+  // Normative keywords (RFC 2119 register): a rules order where each clause's
+  // keyword sets the grading strictness.
+  //   mandatory  (MUST / SHALL / REQUIRED)        -> topping present in EVERY reading
+  //   forbidden  (MUST NOT / SHALL NOT)           -> topping absent in EVERY reading
+  //   optional   (MAY / OPTIONAL / SHOULD /        -> player's choice: both the with-
+  //               RECOMMENDED / SHOULD NOT)            and without- layouts are accepted
+  function t_normative(rng, av, un) {
+    if (av.length < 3) return null;
+    var t = pickN(rng, av, 3), A = t[0], C = t[1], D = t[2], B = pickBase(rng, un);
+    var mand = pick(rng, ['MUST', 'SHALL', 'REQUIRED']);
+    var opt = pick(rng, ['MAY', 'OPTIONAL', 'SHOULD', 'RECOMMENDED', 'SHOULD NOT']);
+    var proh = pick(rng, ['MUST NOT', 'SHALL NOT']);
+    // required A on one half (both readings); C on the other half is optional
+    // (with-C reading + without-C reading); D forbidden (in neither reading).
+    var withC = paint(emptyLayout(), REGION.whole, { base: B });
+    paint(withC, REGION.right, { addTopping: A }); paint(withC, REGION.left, { addTopping: C });
+    var without = paint(emptyLayout(), REGION.whole, { base: B });
+    paint(without, REGION.right, { addTopping: A });
+    var mandClause = mand === 'REQUIRED' ? (tn(A) + ' is REQUIRED on one half') : ('you ' + mand + ' put ' + tn(A) + ' on one half');
+    var optClause = opt === 'OPTIONAL' ? ('adding ' + tn(C) + ' to the other half is OPTIONAL')
+      : (opt === 'RECOMMENDED' ? ('adding ' + tn(C) + ' to the other half is RECOMMENDED')
+        : ('you ' + opt + ' add ' + tn(C) + ' to the other half'));
+    var prohClause = 'you ' + proh + ' use any ' + tn(D);
+    optClause = optClause.charAt(0).toUpperCase() + optClause.slice(1); // new sentence after the full stop
+    var text = 'Order rules! On a ' + baseWord(B) + ' base: ' + mandClause + '. ' + optClause + '. And ' + prohClause + '.';
+    return { text: text, acceptable: rotAcc(withC).concat(rotAcc(without)), teach: null };
+  }
+
+  // NOT-in-combination: a positive whole-coverage clause plus a localized
+  // negation exception. "Covered in banana, but one slice must NOT have banana."
+  // Exactly one slice is left bare; rotAcc accepts whichever slice the child picks.
+  function t_notException(rng, av, un) {
+    if (!av.length) return null;
+    var A = pick(rng, av), B = pickBase(rng, un);
+    var L = paint(emptyLayout(), REGION.whole, { base: B, addTopping: A });
+    L[0] = makeSlice(B, []); // exactly one slice has NO A on it
+    return { text: 'Cover the whole ' + baseWord(B) + ' base in ' + tn(A) + '. But ONE single slice - any one you pick - should NOT have ' + tn(A) + ' on it. Leave that one slice with just the base.', acceptable: rotAcc(L), teach: null, concept: 'except' };
   }
 
   function tn(id) { return toppingName(id); }

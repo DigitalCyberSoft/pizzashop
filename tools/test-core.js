@@ -392,14 +392,16 @@ function fillWild(L) {
     { name: 'riddle', tier: 8, marker: 'Guess the topping' },
     { name: 'pronoun (it)', tier: 8, marker: 'put it on the other half' },
     { name: 'the other one', tier: 4, marker: 'the other one goes' },
-    { name: 'conditional-true', tier: 11, marker: 'because that is true' },
-    { name: 'elimination', tier: 13, marker: 'NOT a vegetable and NOT a fruit' },
-    { name: 'either/or', tier: 12, marker: 'EITHER' },
-    { name: 'not both', tier: 12, marker: 'but NOT both' },
-    { name: 'intersection-category', tier: 10, marker: 'BOTH a fruit AND a silly' },
+    { name: 'conditional-true', tier: 16, marker: 'because that is true' },
+    { name: 'elimination', tier: 17, marker: 'NOT a vegetable and NOT a fruit' },
+    { name: 'either/or', tier: 14, marker: 'EITHER' },
+    { name: 'not both', tier: 17, marker: 'but NOT both' },
+    { name: 'intersection-category', tier: 15, marker: 'BOTH a fruit AND a silly' },
     { name: 'at-least-one', tier: 9, marker: 'AT LEAST ONE' },
-    { name: 'dietary inference', tier: 9, marker: 'CANNOT eat meat' },
-    { name: 'shared property (colour)', tier: 11, marker: 'share the same colour' }
+    { name: 'dietary inference', tier: 14, marker: 'CANNOT eat meat' },
+    { name: 'shared property (colour)', tier: 11, marker: 'share the same colour' },
+    { name: 'normative keywords', tier: 15, marker: 'Order rules!' },
+    { name: 'not-in-combination exception', tier: 14, marker: 'should NOT have' }
   ];
   CONSTRUCTS.forEach(function (c) {
     var found = null;
@@ -426,14 +428,14 @@ function fillWild(L) {
     return null;
   }
   // fruitsilly: a plain meat slice (pepperoni) is neither fruit nor silly -> fail.
-  var fs = firstCat(10, 'fruitsilly', 4000);
+  var fs = firstCat(15, 'fruitsilly', 4000);
   ok(!!fs, 'found a fruit-AND-silly order');
   if (fs) {
     var wrong = Core.cloneLayout(fs.acceptable[0]).map(function () { return Core.makeSlice(fs.acceptable[0][0].base, ['pepperoni']); });
     ok(Core.grade(wrong, fs.acceptable).accuracy < 1, 'fruit-AND-silly rejects a meat topping');
   }
   // puresilly: broccoli is silly but ALSO a vegetable -> must fail "not a vegetable".
-  var ps = firstCat(13, 'puresilly', 4000);
+  var ps = firstCat(17, 'puresilly', 4000);
   ok(!!ps, 'found a silly-only (elimination) order');
   if (ps) {
     var wrongP = Core.cloneLayout(ps.acceptable[0]).map(function () { return Core.makeSlice(ps.acceptable[0][0].base, ['broccoli']); });
@@ -444,6 +446,72 @@ function fillWild(L) {
   if (gr) {
     var wrongG = Core.cloneLayout(gr.acceptable[0]).map(function () { return Core.makeSlice(gr.acceptable[0][0].base, ['pepperoni']); });
     ok(Core.grade(wrongG, gr.acceptable).accuracy < 1, 'green-colour order rejects a red topping');
+  }
+})();
+
+// ---- Normative keyword orders: every RFC-2119 keyword must appear, and the
+// strictness (mandatory / forbidden / optional) must actually be graded. ----
+(function () {
+  var KEYWORDS = {
+    'MUST NOT': /MUST NOT/, 'SHALL NOT': /SHALL NOT/, 'SHOULD NOT': /SHOULD NOT/,
+    MUST: /MUST(?! NOT)/, SHALL: /SHALL(?! NOT)/, SHOULD: /SHOULD(?! NOT)/,
+    REQUIRED: /REQUIRED/, RECOMMENDED: /RECOMMENDED/, MAY: /\bMAY\b/, OPTIONAL: /OPTIONAL/
+  };
+  var seen = {}, sample = null;
+  [15, 18].forEach(function (tier) {
+    for (var seed = 1; seed <= 3000; seed++) {
+      var o = Core.generateOrder({ difficulty: tier, unlocked: Core.UNLOCK_ORDER, rng: lcg(seed * 9 + tier) });
+      if (!o || (o.core || o.text).indexOf('Order rules!') === -1) continue;
+      var txt = o.core || o.text;
+      Object.keys(KEYWORDS).forEach(function (k) { if (KEYWORDS[k].test(txt)) seen[k] = 1; });
+      if (!sample) sample = o;
+    }
+  });
+  Object.keys(KEYWORDS).forEach(function (k) { ok(seen[k], 'normative keyword "' + k + '" appears in generated orders'); });
+
+  ok(!!sample, 'a normative order was generated');
+  if (sample) {
+    // a correct build of the with-topping reading scores 1.0
+    eq(Core.grade(fillWild(sample.acceptable[0]), sample.acceptable).accuracy, 1, 'normative: a compliant pizza scores 1.0');
+    // the optional clause is genuinely optional: the without-topping reading is also 1.0
+    eq(Core.grade(fillWild(sample.acceptable[sample.acceptable.length - 1]), sample.acceptable).accuracy, 1, 'normative: leaving the optional topping off still scores 1.0');
+    // forbidden / extras: adding an unasked topping breaks it (the MUST NOT mechanic)
+    var used = {};
+    sample.acceptable[0].forEach(function (s) { (s.toppings || []).forEach(function (t) { used[t] = 1; }); });
+    var extra = ['olive', 'banana', 'chilli', 'spinach'].filter(function (t) { return !used[t]; })[0];
+    var withExtra = Core.cloneLayout(sample.acceptable[0]);
+    withExtra[0] = Core.makeSlice(withExtra[0].base, (withExtra[0].toppings || []).concat([extra]));
+    ok(Core.grade(withExtra, sample.acceptable).accuracy < 1, 'normative: adding a forbidden/extra topping fails');
+    // mandatory clause: stripping all toppings to bare base fails (the MUST topping is gone)
+    var bare = Core.cloneLayout(sample.acceptable[0]).map(function (s) { return Core.makeSlice(s.base, []); });
+    ok(Core.grade(bare, sample.acceptable).accuracy < 1, 'normative: dropping the required topping fails');
+  }
+})();
+
+// ---- NOT-in-combination exception: covered all over EXCEPT exactly one slice. ----
+(function () {
+  var o = null;
+  for (var seed = 1; seed <= 4000 && !o; seed++) {
+    var g = Core.generateOrder({ difficulty: 14, unlocked: Core.UNLOCK_ORDER, rng: lcg(seed * 11 + 5) });
+    if (g && (g.core || g.text).indexOf('should NOT have') !== -1) o = g;
+  }
+  ok(!!o, 'not-in-combination exception order is reachable');
+  if (o) {
+    var canon = o.acceptable[0];
+    var topped = canon.filter(function (s) { return s.toppings && s.toppings.length; })[0];
+    var A = topped.toppings[0];
+    eq(canon.filter(function (s) { return !s.toppings || !s.toppings.length; }).length, 1, 'exactly one slice is left bare');
+    eq(Core.grade(fillWild(canon), o.acceptable).accuracy, 1, 'leaving one slice bare scores 1.0');
+    // covering ALL eight (no exception) must fail
+    var full = canon.map(function (s) { return Core.makeSlice(s.base, [A]); });
+    ok(Core.grade(full, o.acceptable).accuracy < 1, 'covering every slice (ignoring the NOT) fails');
+    // leaving TWO slices bare must fail
+    var twoBare = Core.cloneLayout(canon); var bareCount = 0;
+    twoBare = twoBare.map(function (s) {
+      if (s.toppings && s.toppings.length && bareCount < 1) { bareCount++; return Core.makeSlice(s.base, []); }
+      return s;
+    });
+    ok(Core.grade(twoBare, o.acceptable).accuracy < 1, 'leaving two slices bare fails (only one should be)');
   }
 })();
 
