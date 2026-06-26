@@ -11,10 +11,12 @@ No build step, no server, no dependencies. It is plain HTML, CSS, and classic
 `<script>` JavaScript, so it runs straight from a `file://` double-click or from
 GitHub Pages.
 
-## Play it
+## ▶ Play it now: <https://digitalcybersoft.github.io/pizzashop/>
 
-- **Online:** `https://<your-user>.github.io/<your-repo>/` (landing page with a
-  Play button). See [GitHub Pages setup](#github-pages-setup) below.
+- **Online:** **<https://digitalcybersoft.github.io/pizzashop/>** — the landing
+  page with a Play button (the game itself is
+  [`game.html`](https://digitalcybersoft.github.io/pizzashop/game.html)). See
+  [GitHub Pages setup](#github-pages-setup) below.
 - **Locally:** open `game.html` in any modern browser. No install.
 
 ## How it works
