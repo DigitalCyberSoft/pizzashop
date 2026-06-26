@@ -510,7 +510,9 @@
   function stopPatienceTimer() { if (S.patienceTimer) { clearInterval(S.patienceTimer); S.patienceTimer = null; } }
 
   // ---- box it ----
-  function rewardBase(tier) { return 4 + 0.5 * (tier - 1); } // tier1~$4 .. tier20~$13.5
+  // Simple, explicit economy a kid can hold in their head: a pizza costs $3 of
+  // dough to make and a correct one sells for $5 (a $2 profit), plus a $1 speed tip.
+  var MAKE_COST = 3, SALE_PRICE = 5;
   // Adaptive difficulty IS the level. It is driven only by performance, never by
   // how many pizzas have been served:
   //   - finish fast AND accurately (you earn the speed tip) -> level UP
@@ -535,9 +537,9 @@
     // Below 0.8 accuracy the customer refuses the pizza: no pay, player still eats
     // the $3 make-cost.
     var refused = acc < 0.8;
-    var reward = refused ? 0 : Math.round(rewardBase(tier) * acc);
+    var reward = refused ? 0 : SALE_PRICE;
     var tip = (!refused && fast) ? 1 : 0; // refused already requires acc>=0.8
-    S.money += -3 + reward + tip;
+    S.money += -MAKE_COST + reward + tip;
     // Refused pizzas (acc < 0.8) cost aura; accepted ones earn it.
     S.aura += acc >= 1 ? 1000 : (acc >= 0.8 ? 250 : -500);
     if (S.money > LS.high) LS.high = S.money;
