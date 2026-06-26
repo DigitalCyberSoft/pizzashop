@@ -1,0 +1,126 @@
+/* Pizza Shop - bright cartoon pizzeria. Drawn in CSS; only customers are images. */
+:root {
+  --bg: #fff3d6;
+  --panel: #fff;
+  --ink: #3a2a16;
+  --crust: #e0a85a;
+  --crust-dark: #c98a3c;
+  --accent: #e8542a;
+  --accent2: #2aa877;
+  --shadow: 0 6px 0 rgba(0,0,0,.12), 0 12px 24px rgba(0,0,0,.12);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  font-family: 'Baloo 2', 'Comic Sans MS', 'Trebuchet MS', system-ui, sans-serif;
+  background-color: #e8b06a;
+  background-image: linear-gradient(rgba(20,10,0,.25), rgba(20,10,0,.35)), url('assets/scene/shop.png');
+  background-size: cover;
+  background-position: center bottom;
+  color: var(--ink);
+  -webkit-user-select: none; user-select: none;
+  overflow: hidden;
+}
+
+/* ---- HUD ---- */
+#hud {
+  display: flex; align-items: center; gap: 14px;
+  padding: 8px 16px; background: var(--accent); color: #fff;
+  box-shadow: 0 4px 0 rgba(0,0,0,.15); position: relative; z-index: 5;
+}
+#hud .logo { font-weight: 800; font-size: 1.4rem; letter-spacing: .5px; }
+#hud .stat { background: rgba(255,255,255,.18); border-radius: 999px; padding: 4px 12px; font-weight: 700; }
+#hud .stat b { font-variant-numeric: tabular-nums; }
+#hud .stat.cash { background: #1f8a4c; box-shadow: 0 0 0 2px rgba(255,255,255,.5) inset; }
+#hud .spacer { flex: 1; }
+#hud button.toggle { border: none; border-radius: 999px; padding: 6px 12px; font-weight: 700; cursor: pointer; background: #fff; color: var(--accent); }
+
+/* ---- Layout ---- */
+/* Main reading column (customer on top, pizza below) + tray palette beside it. */
+#stage { display: grid; grid-template-columns: 1fr 250px; gap: 14px; padding: 14px; height: calc(100% - 52px); }
+#main-col { display: flex; flex-direction: column; gap: 14px; min-height: 0; overflow: hidden; }
+.panel { background: rgba(255,255,255,.62); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); border-radius: 18px; box-shadow: var(--shadow); padding: 14px; overflow: hidden; }
+
+/* ---- Customer (banner above the pizza: avatar left, name + order right) ---- */
+#customer { display: flex; flex-direction: row; align-items: flex-start; gap: 16px; text-align: left; flex: 0 0 auto; }
+#customer .avatar { width: 132px; height: 132px; flex: 0 0 auto; border-radius: 18px; background: #ffe; object-fit: cover; box-shadow: var(--shadow); }
+#customer .avatar.placeholder { display: grid; place-items: center; font-size: 4rem; }
+#customer .name { font-weight: 800; margin: 0 0 6px; font-size: 1.1rem; }
+#customer .cust-text { flex: 1 1 auto; min-width: 0; }
+#bubble {
+  position: relative; background: #fff; border: 3px solid var(--ink); border-radius: 16px;
+  padding: 12px 14px; font-size: 1.12rem; line-height: 1.4; font-weight: 600; margin-top: 6px;
+  /* long Level-15+ orders can be several sentences: grow, then scroll, never clip. */
+  min-height: 64px; max-height: 42vh; overflow-y: auto;
+}
+#bubble:after { content: ''; position: absolute; top: 18px; left: -16px; border: 8px solid transparent; border-right-color: var(--ink); }
+.tier-pill { display: inline-block; margin-top: 10px; font-size: .8rem; background: var(--accent2); color: #fff; padding: 3px 10px; border-radius: 999px; font-weight: 700; }
+
+/* ---- Kitchen (below the customer) ---- */
+#kitchen { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 10px; overflow: auto; }
+#tipbar-wrap { width: 320px; height: 26px; background: #eee; border-radius: 999px; overflow: hidden; position: relative; box-shadow: inset 0 2px 4px rgba(0,0,0,.15); }
+#tipbar { height: 100%; width: 100%; background: linear-gradient(90deg, #ffd34d, #ffb000); transition: width .25s linear; display: flex; align-items: center; }
+#tipbar-wrap.amber #tipbar { background: linear-gradient(90deg, #ff9d3c, #ff6a00); }
+#tipbar-wrap.gone { opacity: .35; }
+#tip-label { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 800; font-size: .85rem; color: #5a3b00; }
+#pizza-wrap { position: relative; }
+#pizza { filter: drop-shadow(0 8px 0 rgba(0,0,0,.12)); touch-action: none; }
+#pizza path.wedge { stroke: var(--crust-dark); stroke-width: 2; cursor: pointer; }
+#pizza path.wedge.hover { stroke: var(--accent); stroke-width: 5; }
+#pizza .crust { fill: none; stroke: var(--crust); stroke-width: 14; }
+#pizza text.top { font-size: 26px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.kitchen-buttons { display: flex; gap: 10px; }
+button.big { border: none; border-radius: 14px; padding: 12px 22px; font-size: 1.1rem; font-weight: 800; cursor: pointer; box-shadow: var(--shadow); }
+button.box { background: var(--accent2); color: #fff; }
+button.clear { background: #fff; color: var(--ink); }
+button.eraser { background: #fff; color: var(--ink); }
+button.eraser.on { background: var(--ink); color: #fff; }
+
+/* ---- Tray ---- */
+#tray { overflow-y: auto; }
+#tray h3 { margin: 4px 0 8px; font-size: .9rem; text-transform: uppercase; letter-spacing: .5px; color: #9a7b4f; }
+#tray .chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+.chip {
+  display: flex; align-items: center; gap: 6px; background: #fff; border: 2px solid #e8d6b0;
+  border-radius: 12px; padding: 8px 10px; font-weight: 700; font-size: .85rem; cursor: grab; touch-action: none;
+  min-width: 0;
+}
+.chip span:last-child { min-width: 0; overflow-wrap: anywhere; }
+.chip .ic { font-size: 1.3rem; }
+.chip.base { border-color: var(--accent); }
+.chip.novelty { border-color: #b06cd6; background: #faf0ff; }
+.chip.selected { outline: 3px solid var(--accent2); background: #eafff5; box-shadow: 0 0 0 4px rgba(42,168,119,.25); transform: scale(1.04); }
+.chip .ic img { width: 1.4rem; height: 1.4rem; vertical-align: middle; }
+#hint { position: absolute; left: 50%; top: 6px; transform: translateX(-50%); background: #cf3a22; color: #fff; padding: 6px 14px; border-radius: 999px; font-weight: 800; opacity: 0; transition: opacity .15s; pointer-events: none; white-space: nowrap; z-index: 3; }
+#hint.show { opacity: 1; }
+.money-fly { position: fixed; font-size: 2.3rem; font-weight: 900; color: #1f8a4c; z-index: 80; pointer-events: none; text-shadow: 1px 1px 0 #fff, 0 0 8px rgba(31,138,76,.4); animation: moneyfly 1.15s ease-out forwards; }
+@keyframes moneyfly { 0% { opacity: 0; transform: translateY(12px) scale(.6); } 25% { opacity: 1; } 100% { opacity: 0; transform: translateY(-95px) scale(1.25); } }
+#tray .group { margin-bottom: 12px; }
+#drag-ghost { position: fixed; pointer-events: none; font-size: 2rem; z-index: 1000; transform: translate(-50%,-50%); filter: drop-shadow(0 3px 3px rgba(0,0,0,.3)); }
+
+/* ---- Overlays ---- */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: center; justify-content: center; z-index: 50; }
+.overlay.show { display: flex; }
+.card { background: #fff; border-radius: 22px; padding: 26px 28px; max-width: 540px; width: 90%; box-shadow: var(--shadow); text-align: center; }
+.card h2 { margin: 0 0 8px; font-size: 1.8rem; }
+.card .reaction { font-size: 1.25rem; font-weight: 700; margin: 10px 0; }
+.card .money-line { font-size: 1.1rem; font-weight: 800; margin: 8px 0; }
+.card .plus { color: var(--accent2); }
+.card .minus { color: var(--accent); }
+.card .econ { text-align: left; margin: 6px auto 12px; max-width: 400px; font-size: .95rem; line-height: 1.45; }
+.card .econ li { margin: 3px 0; }
+.resume-line { margin: 14px 0 0; font-size: .9rem; opacity: .85; }
+.resume-line .toggle { border: 2px solid var(--accent); border-radius: 999px; padding: 5px 12px; margin-left: 6px; font-weight: 700; cursor: pointer; background: #fff; color: var(--accent); }
+.resume-line .toggle:hover { background: var(--accent); color: #fff; }
+.mistakes { text-align: left; margin: 12px 0; max-height: 220px; overflow: auto; }
+.mistakes li { margin: 4px 0; }
+.compare { display: flex; gap: 24px; justify-content: center; margin: 12px 0; }
+.compare figure { margin: 0; text-align: center; font-weight: 700; font-size: .85rem; }
+.card .big-emoji { font-size: 4rem; line-height: 1.1; margin-bottom: 2px; }
+.card .rank { font-size: 1.25rem; font-weight: 800; color: var(--accent2); margin: 6px 0 10px; }
+.card .stat-block { font-size: 1.05rem; line-height: 1.75; font-weight: 600; margin: 12px auto; }
+.card .encourage { font-weight: 700; margin: 12px 0 4px; }
+.coin-pop { position: fixed; font-size: 2rem; font-weight: 900; color: #c98a00; z-index: 60; pointer-events: none; animation: pop 1s ease-out forwards; }
+@keyframes pop { 0% { transform: translateY(0) scale(.6); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(-70px) scale(1.2); opacity: 0; } }
+.banner67 { position: fixed; top: 30%; left: 50%; transform: translateX(-50%) rotate(-6deg); font-size: 4rem; font-weight: 900; color: #e8542a; text-shadow: 3px 3px 0 #fff; z-index: 70; pointer-events: none; animation: pop67 1.4s ease-out forwards; }
+@keyframes pop67 { 0%{opacity:0; transform:translateX(-50%) scale(.4) rotate(-6deg);} 25%{opacity:1; transform:translateX(-50%) scale(1.1) rotate(-6deg);} 100%{opacity:0; transform:translateX(-50%) scale(1.3) rotate(-6deg);} }

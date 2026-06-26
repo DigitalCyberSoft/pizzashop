@@ -1,0 +1,2 @@
+# Secrets - never commit the API key
+.env

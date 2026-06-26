@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Pizza Palace - read the order, make the pizza!</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="hud">
+    <span class="logo">🍕 Pizza Palace</span>
+    <span class="stat cash">💰 $<b id="money">20</b></span>
+    <span class="stat">📦 <b id="served">0</b> served</span>
+    <span class="stat">🏆 best $<b id="highscore">0</b></span>
+    <span class="stat">✨ aura <b id="aura">0</b></span>
+    <span class="spacer"></span>
+    <button class="toggle" id="meme-toggle">Meme mode: ON</button>
+  </div>
+
+  <div id="stage">
+    <!-- Main column: customer on top, pizza kitchen below (read top-down) -->
+    <div id="main-col">
+      <!-- Customer -->
+      <section class="panel" id="customer">
+        <div class="avatar placeholder" id="avatar">🙂</div>
+        <div class="cust-text">
+          <div class="name" id="cust-name">—</div>
+          <div id="bubble">Press Start to open the shop!</div>
+          <span class="tier-pill" id="tier-pill" style="display:none"></span>
+        </div>
+      </section>
+
+      <!-- Kitchen -->
+      <section class="panel" id="kitchen">
+        <div id="tipbar-wrap" title="Be quick and accurate for a $1 tip!">
+          <div id="tipbar"></div>
+          <div id="tip-label">💲1 tip: —</div>
+        </div>
+        <div id="pizza-wrap">
+          <svg id="pizza" width="470" height="470" viewBox="0 0 360 360" aria-label="pizza"></svg>
+          <div id="hint"></div>
+        </div>
+        <div class="kitchen-buttons">
+          <button class="big eraser" id="eraser-btn">🧽 Eraser</button>
+          <button class="big clear" id="clear-btn">🔄 Clear</button>
+          <button class="big box" id="box-btn">📦 Box it!</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- Tray -->
+    <section class="panel" id="tray">
+      <div class="group" id="base-group">
+        <h3>Bases (lay these first!)</h3>
+        <div class="chips" id="base-chips"></div>
+      </div>
+      <div class="group">
+        <h3>Toppings</h3>
+        <div class="chips" id="topping-chips"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Start -->
+  <div class="overlay show" id="start-overlay">
+    <div class="card">
+      <h2>🍕 Welcome to Pizza Palace!</h2>
+      <p>Customers tell you how they want their pizza. Read carefully, tap a base
+         and toppings onto the right slices, then press <b>Box it!</b></p>
+      <p class="money-line">💰 How the money works</p>
+      <ul class="econ">
+        <li>You start the day with <b>$20</b>.</li>
+        <li>Every pizza costs <b>$3</b> to make (dough + oven).</li>
+        <li>Get it right and the customer <b>pays you back</b> — more for trickier pizzas.</li>
+        <li>Be quick <i>and</i> accurate for a <b>+$1 speed tip</b>.</li>
+        <li>A wrong pizza is <b>refused</b>: no pay, and you still lose the $3.</li>
+        <li>If your till drops below <b>$3</b> you can’t make the next pizza — day over!</li>
+      </ul>
+      <button class="big box" id="start-btn">Start the day ▶</button>
+      <p class="resume-line">Resuming at <b id="resume-level">Level 1</b>.
+        <button class="toggle" id="reset-btn">New player? Reset to Level 1</button></p>
+    </div>
+  </div>
+
+  <!-- Result (reaction + mistakes) -->
+  <div class="overlay" id="result-overlay">
+    <div class="card">
+      <h2 id="result-title">Order up!</h2>
+      <div class="reaction" id="result-reaction"></div>
+      <div class="money-line" id="result-money"></div>
+      <div class="compare" id="result-compare"></div>
+      <ul class="mistakes" id="result-mistakes"></ul>
+      <button class="big box" id="next-btn">Next customer ▶</button>
+    </div>
+  </div>
+
+  <!-- Ingredient / recipe intro -->
+  <div class="overlay" id="intro-overlay">
+    <div class="card intro">
+      <div class="big-emoji" id="intro-emoji">✨</div>
+      <h2 id="intro-title">New ingredient!</h2>
+      <p id="intro-text"></p>
+      <button class="big box" id="intro-btn">Got it!</button>
+    </div>
+  </div>
+
+  <!-- Game over -->
+  <div class="overlay" id="over-overlay">
+    <div class="card">
+      <div class="big-emoji">🍕💸</div>
+      <h2>🛑 Out of dough!</h2>
+      <p class="rank" id="over-rank"></p>
+      <p>Oh no, the till ran dry! Every pizza costs <b>$3</b> of dough to make, and
+         there wasn’t enough left to start the next one. It happens to the best chefs.
+         Read each order nice and slowly, grab the <b>speedy tip</b> when you can, and
+         your coins will stretch a lot further next time.</p>
+      <div class="stat-block" id="over-stats"></div>
+      <p class="encourage">Flip the sign back to <b>OPEN</b> and have another go! 🧑‍🍳</p>
+      <button class="big box" id="restart-btn">Open up again ▶</button>
+    </div>
+  </div>
+
+  <!-- Victory: 5 tipped pizzas at the top level -->
+  <div class="overlay" id="victory-overlay">
+    <div class="card">
+      <div class="big-emoji">🏆🍕👑</div>
+      <h2>You beat Pizza Palace!</h2>
+      <p>Five speedy, tip-winning pizzas at <b>Level 20</b>, the very top. You read
+         every order perfectly. You are an official <b>Pizza Legend!</b></p>
+      <div class="stat-block" id="victory-stats"></div>
+      <button class="big box" id="victory-btn">Keep cooking ▶</button>
+    </div>
+  </div>
+
+  <script src="game-core.js"></script>
+  <script src="game-ui.js"></script>
+</body>
+</html>

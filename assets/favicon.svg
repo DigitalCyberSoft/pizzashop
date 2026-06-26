@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- A single pizza slice: crust, cheese, pepperoni. Matches the game's flat
+       cartoon style; vector so it stays crisp at any size. -->
+  <path d="M32 6 L58 52 A29 29 0 0 1 6 52 Z" fill="#e0a85a"/>
+  <path d="M32 13 L52 49 A23 23 0 0 1 12 49 Z" fill="#f1c40f"/>
+  <circle cx="32" cy="30" r="4.5" fill="#cf3a22"/>
+  <circle cx="23" cy="43" r="4.5" fill="#cf3a22"/>
+  <circle cx="41" cy="43" r="4.5" fill="#cf3a22"/>
+  <circle cx="32" cy="49" r="3.2" fill="#2e7d32"/>
+</svg>
