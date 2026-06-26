@@ -569,6 +569,7 @@
       ov = document.createElement('div'); ov.id = 'order-intro'; ov.className = 'overlay order-intro';
       ov.innerHTML =
         '<div class="oi-card">' +
+          '<div class="oi-stats" id="oi-stats"></div>' +
           '<img class="oi-face" id="oi-face" alt="">' +
           '<div class="oi-name" id="oi-name"></div>' +
           '<div class="oi-bubble" id="oi-bubble"></div>' +
@@ -586,6 +587,7 @@
     face.onerror = function () { face.style.visibility = 'hidden'; };
     face.src = 'assets/customers/' + cust.id + '.png';
     el('oi-name').textContent = cust.name;
+    el('oi-stats').innerHTML = '<span>📖 Level ' + S.order.tier + '</span><span>💰 $' + S.money + '</span>';
     el('oi-bubble').innerHTML = window.Glossary.linkify(S.order.text, ingredientNames(), recipeNames());
     ov.classList.remove('folding');
     show('order-intro');

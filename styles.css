@@ -144,6 +144,8 @@ button.eraser.on { background: var(--ink); color: #fff; }
   text-align: center; box-shadow: var(--shadow); transform-origin: top center;
   transition: transform .46s cubic-bezier(.4,.0,.2,1), opacity .46s ease; }
 .oi-face { width: 152px; height: 152px; border-radius: 22px; object-fit: cover; box-shadow: 0 6px 18px rgba(0,0,0,.3); }
+.oi-stats { display: flex; justify-content: center; gap: 14px; margin-bottom: 10px; font-weight: 800; color: #6a4a22; font-size: 1.05rem; }
+.oi-stats span { background: #f3e9d2; border-radius: 999px; padding: 4px 16px; }
 .oi-name { font-size: 1.45rem; font-weight: 800; color: #6a4a22; margin: 12px 0 4px; }
 /* same speech bubble as the in-game #bubble (white, ink border, tail), here with
    the tail pointing UP toward the character above it. */
