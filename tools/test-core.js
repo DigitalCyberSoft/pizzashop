@@ -739,26 +739,39 @@ function fillWild(L) {
   ok(plain.every(function (c) { return !c.gag; }), 'no gag (e.g. 6-7) customer survives in the meme-off pool');
 })();
 
-// ---- Base instructions: any single-pizza order that lays a CHEESE or BBQ base
-// MUST name that base in its text, so a child always knows which base to lay
-// (tomato is the implied default). Caught t_unevenShare, which painted a cheese/
-// bbq base over the whole pizza but described only the toppings. ----
+// ---- Base instructions: EVERY single-pizza order must NAME each base it lays, as
+// "<base> base" (space or hyphen), so a child always knows which base to lay first.
+// The canonical layout starts from PLAIN/bare dough and grading checks the base, so
+// an unnamed base is an unguessable instruction. Also: no topping may sit on a bare
+// 'plain' base. Full sweep across tomato/cheese/bbq (caught t_unevenShare, which
+// laid a cheese/bbq base over the whole pizza but named only the toppings). ----
 (function () {
-  var bad = 0, checked = 0, example = '';
+  function namesBase(text, base) {
+    var t = text.toLowerCase();
+    if (base === 'tomato') return t.indexOf('tomato base') !== -1 || t.indexOf('tomato-base') !== -1;
+    if (base === 'cheese') return t.indexOf('cheese base') !== -1 || t.indexOf('cheese-base') !== -1;
+    if (base === 'bbq') return t.indexOf('bbq base') !== -1 || t.indexOf('bbq-base') !== -1 || t.indexOf('barbecue base') !== -1;
+    return true;
+  }
+  var unnamed = 0, bareTop = 0, checked = 0, ex1 = '', ex2 = '';
   for (var tier = 1; tier <= Core.MAX_TIER; tier++) {
-    for (var seed = 1; seed <= 400; seed++) {
+    for (var seed = 1; seed <= 500; seed++) {
       var o = Core.generateOrder({ difficulty: tier, unlocked: Core.UNLOCK_ORDER, rng: lcg(seed * 17 + tier) });
       if (!o || o.pizzas === 2) continue;
       checked++;
-      var t = o.text.toLowerCase();
-      var spec = o.acceptable[0];
-      var usesCheese = spec.some(function (s) { return !s.wildcard && !s.catCount && s.base === 'cheese'; });
-      var usesBbq = spec.some(function (s) { return !s.wildcard && !s.catCount && s.base === 'bbq'; });
-      if (usesCheese && t.indexOf('cheese') === -1) { bad++; if (!example) example = 'CHEESE: ' + o.core; }
-      if (usesBbq && t.indexOf('bbq') === -1 && t.indexOf('barbecue') === -1) { bad++; if (!example) example = 'BBQ: ' + o.core; }
+      var bases = {};
+      o.acceptable[0].forEach(function (s) {
+        if (s.wildcard || s.catCount) return;
+        if (s.base !== 'plain') bases[s.base] = 1;
+        else if (s.toppings.length) { bareTop++; if (!ex2) ex2 = o.core; }
+      });
+      Object.keys(bases).forEach(function (b) {
+        if (!namesBase(o.core, b)) { unnamed++; if (!ex1) ex1 = b + ': ' + o.core; }
+      });
     }
   }
-  eq(bad, 0, 'every cheese/bbq base is named in the order text (first offender: ' + example + ')');
+  eq(unnamed, 0, 'every base a single-pizza order lays is named "<base> base" in its text (first offender: ' + ex1 + ')');
+  eq(bareTop, 0, 'no topping sits on an unnamed bare/plain base (first offender: ' + ex2 + ')');
   ok(checked > 0, 'base-naming sweep exercised single-pizza orders (' + checked + ')');
 })();
 
