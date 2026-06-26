@@ -571,17 +571,17 @@
     var T = {
       1: [t1_whole],
       2: [t2_halfHalf, t_doubleWhole, t1_whole],
-      3: [t4_quarterRest, t2_halfHalf, t_doubleHalf],
-      4: [t_threeRegion, t4_twoQuarters, t_doubleHalf],
+      3: [t4_quarterRest, t2_halfHalf, t_doubleHalf, t_theOther],
+      4: [t_threeRegion, t4_twoQuarters, t_doubleHalf, t_theOther],
       5: [t4_twoQuarters, t4_threeQuarters, t_doubleHalf],
-      6: [t5_oneSlice, t5_twoAdjacent, t_tripleHalf],
-      7: [t5_twoAdjacent, t5_threeAdjacent, t_tripleHalf],
-      8: [t5_oneSlice, t6_oppositeOf, t_doubleHalf],
-      9: [t6_oppositeOf, t_catSeparate, t7_negationBase, t_sillyEvery, t_fruitEvery],
-      10: [t6_exceptQuarter, t_catSeparate, t7_negationBase, t_catCountWhole, t_fruitEvery, t_countCompare],
-      11: [t6_diagonalQuarters, t6_exceptQuarter, t7_selfCorrect, t_catCountWhole, t_countCompare],
-      12: [t7_alternating, t7_twoBases, t7_selfCorrect, t6_diagonalQuarters, t_countCompare],
-      13: [t7_ordinalRun, t7_alternating, t7_wildcard, t_twoBaseConditional],
+      6: [t5_oneSlice, t5_twoAdjacent, t_tripleHalf, t_pronoun],
+      7: [t5_twoAdjacent, t5_threeAdjacent, t_tripleHalf, t_riddle],
+      8: [t5_oneSlice, t6_oppositeOf, t_doubleHalf, t_pronoun, t_riddle],
+      9: [t6_oppositeOf, t_catSeparate, t7_negationBase, t_sillyEvery, t_fruitEvery, t_atLeastOne, t_dietary],
+      10: [t6_exceptQuarter, t_catSeparate, t7_negationBase, t_catCountWhole, t_fruitEvery, t_countCompare, t_eitherOr, t_intersectionCat],
+      11: [t6_diagonalQuarters, t6_exceptQuarter, t7_selfCorrect, t_catCountWhole, t_countCompare, t_conditionTrue, t_sharedProperty],
+      12: [t7_alternating, t7_twoBases, t7_selfCorrect, t6_diagonalQuarters, t_countCompare, t_notBoth, t_eitherOr],
+      13: [t7_ordinalRun, t7_alternating, t7_wildcard, t_twoBaseConditional, t_elimination, t_intersectionCat],
       14: [t_comboWhole, t_comboHalves, t_doubleHalf, t_catCountHalves, t_twoBaseConditional],
       15: [t_comboHalves, t_comboQuarter, t_tripleHalf, t_threeBases, t_recipeRemove],
       16: [t_comboQuarter, t7_nestedException, t7_share, t7_namedDiagonal, t_recipeSwap],
@@ -1182,13 +1182,24 @@
 
   // ---- Category-count: "any N different meats / vegetables per slice". The
   // player chooses which toppings; the grader only checks count + category.
+  // Colour groups, for "shared property" orders ("put a GREEN topping on every
+  // slice"). Membership is by the topping's real colour, a property the child can
+  // see, independent of the food categories above.
+  var GREEN = { pepper: 1, spinach: 1, broccoli: 1, 'green-beans': 1, 'brussels-sprout': 1, peas: 1 };
+  var RED = { pepperoni: 1, 'tomato-slice': 1, chilli: 1 };
+  function isFruitSilly(id) { return isFruit(id) && isSilly(id); }      // banana, raisins
+  function isPureSilly(id) { return isSilly(id) && !isVeg(id) && !isFruit(id); } // marshmallow, fish-heads
   function catTest(cat) {
     return cat === 'meat' ? isMeat : (cat === 'veg' ? isVeg : (cat === 'silly' ? isSilly :
-      (cat === 'fruit' ? isFruit : (cat === 'any' ? function () { return true; } : function () { return false; }))));
+      (cat === 'fruit' ? isFruit : (cat === 'fruitsilly' ? isFruitSilly : (cat === 'puresilly' ? isPureSilly :
+        (cat === 'green' ? function (id) { return !!GREEN[id]; } : (cat === 'red' ? function (id) { return !!RED[id]; } :
+          (cat === 'any' ? function () { return true; } : function () { return false; }))))))));
   }
   // plural noun for a category, used in order text and the mistakes report.
   function catWord(cat) {
-    return cat === 'meat' ? 'meats' : (cat === 'veg' ? 'vegetables' : (cat === 'silly' ? 'silly toppings' : (cat === 'fruit' ? 'fruits' : 'toppings')));
+    return cat === 'meat' ? 'meats' : (cat === 'veg' ? 'vegetables' : (cat === 'silly' ? 'silly toppings' :
+      (cat === 'fruit' ? 'fruits' : (cat === 'fruitsilly' ? 'fruity silly toppings' : (cat === 'puresilly' ? 'silly-only toppings' :
+        (cat === 'green' ? 'green toppings' : (cat === 'red' ? 'red toppings' : 'toppings')))))));
   }
   var NUMWORD = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'];
   function numWord(n) { return NUMWORD[n] != null ? NUMWORD[n] : ('' + n); }
@@ -1251,6 +1262,117 @@
     REGION.right.forEach(function (i) { L[i] = { catCount: true, base: B, cat: 'meat', count: 3 }; });
     REGION.left.forEach(function (i) { L[i] = { catCount: true, base: B, cat: 'veg', count: 3 }; });
     return { text: 'A ' + baseWord(B) + ' base. On one half, pile any 3 different MEATS onto every slice. On the other half, any 3 different VEGETABLES on every slice. Your pick which ones!', acceptable: rotAcc(L), teach: null };
+  }
+
+  // ===========================================================================
+  // Language-construct templates. Each resolves to an EXISTING layout/grader
+  // shape (fixed, multi-acceptable, or catCount); the teaching is in the English.
+  // Markers in CAPS / fixed phrases let the tests detect each construct.
+  // ===========================================================================
+
+  // Riddle: name the topping by a clue, not its word. Reading + inference.
+  var RIDDLE = {
+    pepperoni: 'a round red circle of spicy meat', mushroom: 'a little pale umbrella shape',
+    pineapple: 'a sweet, spiky yellow fruit', olive: 'a tiny black ring',
+    banana: 'a soft yellow fruit you peel', sweetcorn: 'a tiny yellow kernel of corn',
+    chilli: 'a small red pepper that is super spicy', broccoli: 'a little green tree you can eat'
+  };
+  function t_riddle(rng, av, un) {
+    var pool = av.filter(function (id) { return RIDDLE[id]; });
+    if (!pool.length) return null;
+    var A = pick(rng, pool), B = pickBase(rng, un);
+    var L = paint(emptyLayout(), REGION.whole, { base: B, addTopping: A });
+    return { text: 'Guess the topping! It is ' + RIDDLE[A] + '. Put that topping all over a ' + baseWord(B) + ' base.', acceptable: rotAcc(L), teach: null, concept: 'whole' };
+  }
+
+  // Pronoun carry-over: the second sentence says "it" for the topping just named.
+  function t_pronoun(rng, av, un) {
+    if (!av.length) return null;
+    var A = pick(rng, av), B = pickBase(rng, un);
+    var L = paint(emptyLayout(), REGION.whole, { base: B, addTopping: A });
+    return { text: 'Put ' + tn(A) + ' on one half of a ' + baseWord(B) + ' base. Now put it on the other half too, so it ends up everywhere.', acceptable: rotAcc(L), teach: null, concept: 'whole' };
+  }
+
+  // "The other one": two toppings, assigned by "the first one / the other one".
+  function t_theOther(rng, av, un) {
+    if (av.length < 2) return null;
+    var ab = pickN(rng, av, 2), B = pickBase(rng, un);
+    var L = paint(emptyLayout(), REGION.whole, { base: B });
+    paint(L, REGION.right, { addTopping: ab[0] });
+    paint(L, REGION.left, { addTopping: ab[1] });
+    return { text: 'Grab ' + tn(ab[0]) + ' and ' + tn(ab[1] ) + '. On a ' + baseWord(B) + ' base, the first one goes on one half, and the other one goes on the other half.', acceptable: rotAcc(L), teach: null, concept: 'half' };
+  }
+
+  // Conditional with a stated (always true) fact: the child evaluates it to true
+  // and does the THEN branch. The category claim is genuinely correct.
+  function t_conditionTrue(rng, av, un) {
+    var pool = av.filter(function (id) { return isMeat(id) || isVeg(id) || isFruit(id); });
+    if (!pool.length) return null;
+    var A = pick(rng, pool), B = pickBase(rng, un);
+    var word = isMeat(A) ? 'a meat' : (isFruit(A) ? 'a fruit' : 'a vegetable');
+    var L = paint(emptyLayout(), REGION.whole, { base: B, addTopping: A });
+    return { text: 'Is ' + tn(A) + ' ' + word + '? Yes, it is! So, because that is true, cover the whole ' + baseWord(B) + ' base in ' + tn(A) + '.', acceptable: rotAcc(L), teach: null, concept: 'whole' };
+  }
+
+  // Deduction by elimination: not a meat, not a fruit, not a vegetable -> a
+  // silly-only topping (marshmallow / fish heads).
+  function t_elimination(rng, av, un) {
+    if (av.filter(isPureSilly).length < 1) return null;
+    var B = pickBase(rng, un);
+    var L = []; for (var i = 0; i < 8; i++) L.push({ catCount: true, base: B, cat: 'puresilly', count: 1, phrase: 'one silly topping that is not a meat, vegetable or fruit' });
+    return { text: 'Mystery topping on a ' + baseWord(B) + ' base! It is NOT a meat, NOT a vegetable and NOT a fruit. Work out what kind is left, and put one of those silly toppings on every single slice.', acceptable: [L], teach: null, concept: 'catCount' };
+  }
+
+  // Either/or: one region, two named toppings, pick exactly one to use.
+  function t_eitherOr(rng, av, un) {
+    if (av.length < 2) return null;
+    var ab = pickN(rng, av, 2), B = pickBase(rng, un);
+    var La = paint(emptyLayout(), REGION.whole, { base: B }); paint(La, REGION.top, { addTopping: ab[0] });
+    var Lb = paint(emptyLayout(), REGION.whole, { base: B }); paint(Lb, REGION.top, { addTopping: ab[1] });
+    return { text: 'On one half of a ' + baseWord(B) + ' base, put EITHER ' + tn(ab[0]) + ' OR ' + tn(ab[1]) + ' - you choose just one of them. The other half stays plain.', acceptable: rotAcc(La).concat(rotAcc(Lb)), teach: null };
+  }
+
+  // Not both: whole pizza in one of two toppings, never a mix.
+  function t_notBoth(rng, av, un) {
+    if (av.length < 2) return null;
+    var ab = pickN(rng, av, 2), B = pickBase(rng, un);
+    var La = paint(emptyLayout(), REGION.whole, { base: B, addTopping: ab[0] });
+    var Lb = paint(emptyLayout(), REGION.whole, { base: B, addTopping: ab[1] });
+    return { text: 'Cover the whole ' + baseWord(B) + ' base in ' + tn(ab[0]) + ' or ' + tn(ab[1]) + ', but NOT both. Pick one and use only that one, all over.', acceptable: rotAcc(La).concat(rotAcc(Lb)), teach: null };
+  }
+
+  // Intersection of categories: a topping that is BOTH a fruit AND silly.
+  function t_intersectionCat(rng, av, un) {
+    if (av.filter(isFruitSilly).length < 1) return null;
+    var B = pickBase(rng, un);
+    var L = []; for (var i = 0; i < 8; i++) L.push({ catCount: true, base: B, cat: 'fruitsilly', count: 1, phrase: 'one topping that is both a fruit and silly' });
+    return { text: 'On a ' + baseWord(B) + ' base, every single slice gets ONE topping that is BOTH a fruit AND a silly topping at the same time. Which toppings are in both groups?', acceptable: [L], teach: null, concept: 'intersection' };
+  }
+
+  // At least one of a category: min 1, no upper limit (player chooses how many).
+  function t_atLeastOne(rng, av, un) {
+    var cats = ['meat', 'veg', 'fruit', 'silly'].filter(function (c) { return av.filter(catTest(c)).length >= 2; });
+    if (!cats.length) return null;
+    var cat = pick(rng, cats), B = pickBase(rng, un), hi = av.filter(catTest(cat)).length;
+    var L = []; for (var i = 0; i < 8; i++) L.push({ catCount: true, base: B, cat: cat, min: 1, max: hi, phrase: 'at least one ' + catWord(cat) });
+    return { text: 'A ' + baseWord(B) + ' base. On every single slice, put AT LEAST ONE of the ' + catWord(cat).toUpperCase() + ' - one is fine, more is fine, you choose!', acceptable: [L], teach: null, concept: 'catCount' };
+  }
+
+  // Dietary inference: "can't eat meat" -> no meat -> a vegetable instead.
+  function t_dietary(rng, av, un) {
+    if (av.filter(isVeg).length < 1) return null;
+    var B = pickBase(rng, un);
+    var L = []; for (var i = 0; i < 8; i++) L.push({ catCount: true, base: B, cat: 'veg', count: 1, phrase: 'one vegetable (no meat)' });
+    return { text: 'My little brother CANNOT eat meat. So put NO meat at all on a ' + baseWord(B) + ' base. Give every slice one VEGETABLE instead, so it is safe for him.', acceptable: [L], teach: null, concept: 'catCount' };
+  }
+
+  // Shared property (colour): every slice gets a topping of one shared colour.
+  function t_sharedProperty(rng, av, un) {
+    var cols = [['green', 'green like grass'], ['red', 'red like a tomato']].filter(function (c) { return av.filter(catTest(c[0])).length >= 1; });
+    if (!cols.length) return null;
+    var c = pick(rng, cols), B = pickBase(rng, un);
+    var L = []; for (var i = 0; i < 8; i++) L.push({ catCount: true, base: B, cat: c[0], count: 1, phrase: 'one ' + c[0] + ' topping' });
+    return { text: 'A colour pizza on a ' + baseWord(B) + ' base! Every single slice gets ONE topping that is ' + c[0].toUpperCase() + ' (' + c[1] + '). They all share the same colour.', acceptable: [L], teach: null, concept: 'catCount' };
   }
 
   function tn(id) { return toppingName(id); }

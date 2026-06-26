@@ -24,10 +24,16 @@ function fillWild(L) {
   var choices = ['olive', 'banana', 'mushroom', 'ham', 'onion', 'pepper'];
   var meats = ['pepperoni', 'ham', 'bacon', 'sausage'], veg = ['mushroom', 'olive', 'onion', 'pepper'],
     silly = ['banana', 'peas', 'broccoli', 'beetroot', 'marshmallow'], fruit = ['pineapple', 'banana', 'raisins'];
+  // new construct categories: intersection (fruit AND silly), silly-only (no
+  // veg/fruit), and the colour groups.
+  var fruitsilly = ['banana', 'raisins'], puresilly = ['marshmallow', 'fish-heads'],
+    green = ['pepper', 'spinach', 'broccoli', 'peas'], red = ['pepperoni', 'tomato-slice', 'chilli'];
   var anyList = meats.concat(veg);
   return Core.cloneLayout(L).map(function (s) {
     if (s.catCount) {
-      var src = s.cat === 'meat' ? meats : (s.cat === 'veg' ? veg : (s.cat === 'fruit' ? fruit : (s.cat === 'any' ? anyList : silly)));
+      var src = s.cat === 'meat' ? meats : (s.cat === 'veg' ? veg : (s.cat === 'fruit' ? fruit :
+        (s.cat === 'fruitsilly' ? fruitsilly : (s.cat === 'puresilly' ? puresilly :
+          (s.cat === 'green' ? green : (s.cat === 'red' ? red : (s.cat === 'any' ? anyList : silly)))))));
       var k = s.count != null ? s.count : (s.min != null ? s.min : 1); // fill the lower bound -> always in range
       return Core.makeSlice(s.base, src.slice(0, k));
     }
@@ -375,6 +381,69 @@ function fillWild(L) {
       sigs[s.wildcard ? 'w' : (s.base + ':' + s.toppings.join(','))] = 1;
     });
     ok(Object.keys(sigs).length >= 3, 'tier 20 order has >=3 distinct slice states (not a uniform pizza)');
+  }
+})();
+
+// ---- New language constructs: each must be reachable, grade its canonical
+// build to 1.0, reject a blank pizza, and (for category orders) reject the
+// wrong category. Detected by a marker phrase in the order's core text.
+(function () {
+  var CONSTRUCTS = [
+    { name: 'riddle', tier: 8, marker: 'Guess the topping' },
+    { name: 'pronoun (it)', tier: 8, marker: 'put it on the other half' },
+    { name: 'the other one', tier: 4, marker: 'the other one goes' },
+    { name: 'conditional-true', tier: 11, marker: 'because that is true' },
+    { name: 'elimination', tier: 13, marker: 'NOT a vegetable and NOT a fruit' },
+    { name: 'either/or', tier: 12, marker: 'EITHER' },
+    { name: 'not both', tier: 12, marker: 'but NOT both' },
+    { name: 'intersection-category', tier: 10, marker: 'BOTH a fruit AND a silly' },
+    { name: 'at-least-one', tier: 9, marker: 'AT LEAST ONE' },
+    { name: 'dietary inference', tier: 9, marker: 'CANNOT eat meat' },
+    { name: 'shared property (colour)', tier: 11, marker: 'share the same colour' }
+  ];
+  CONSTRUCTS.forEach(function (c) {
+    var found = null;
+    for (var seed = 1; seed <= 4000 && !found; seed++) {
+      var rng = lcg(seed * 7 + 3);
+      var o = Core.generateOrder({ difficulty: c.tier, unlocked: Core.UNLOCK_ORDER, rng: rng });
+      if (o && (o.core || o.text).indexOf(c.marker) !== -1) found = o;
+    }
+    ok(!!found, 'construct "' + c.name + '" is reachable at tier ' + c.tier);
+    if (!found) return;
+    eq(found.acceptable.length >= 1, true, c.name + ' has >=1 acceptable layout');
+    eq(Core.grade(fillWild(found.acceptable[0]), found.acceptable).accuracy, 1, c.name + ': canonical build scores 1.0');
+    eq(Core.grade(fillWild(found.acceptable[found.acceptable.length - 1]), found.acceptable).accuracy, 1, c.name + ': last reading scores 1.0');
+    ok(Core.grade(Core.emptyLayout(), found.acceptable).accuracy < 1, c.name + ': blank pizza fails');
+  });
+
+  // Category orders must reject the wrong category. Build a slice that satisfies
+  // a DIFFERENT predicate and confirm it scores below 1.0.
+  function firstCat(tier, cat, seeds) {
+    for (var seed = 1; seed <= seeds; seed++) {
+      var o = Core.generateOrder({ difficulty: tier, unlocked: Core.UNLOCK_ORDER, rng: lcg(seed * 13 + 1) });
+      if (o && o.acceptable[0][0] && o.acceptable[0][0].cat === cat) return o;
+    }
+    return null;
+  }
+  // fruitsilly: a plain meat slice (pepperoni) is neither fruit nor silly -> fail.
+  var fs = firstCat(10, 'fruitsilly', 4000);
+  ok(!!fs, 'found a fruit-AND-silly order');
+  if (fs) {
+    var wrong = Core.cloneLayout(fs.acceptable[0]).map(function () { return Core.makeSlice(fs.acceptable[0][0].base, ['pepperoni']); });
+    ok(Core.grade(wrong, fs.acceptable).accuracy < 1, 'fruit-AND-silly rejects a meat topping');
+  }
+  // puresilly: broccoli is silly but ALSO a vegetable -> must fail "not a vegetable".
+  var ps = firstCat(13, 'puresilly', 4000);
+  ok(!!ps, 'found a silly-only (elimination) order');
+  if (ps) {
+    var wrongP = Core.cloneLayout(ps.acceptable[0]).map(function () { return Core.makeSlice(ps.acceptable[0][0].base, ['broccoli']); });
+    ok(Core.grade(wrongP, ps.acceptable).accuracy < 1, 'silly-only rejects broccoli (it is a vegetable)');
+  }
+  // green: pepperoni (red) is not green -> fail.
+  var gr = firstCat(11, 'green', 4000);
+  if (gr) {
+    var wrongG = Core.cloneLayout(gr.acceptable[0]).map(function () { return Core.makeSlice(gr.acceptable[0][0].base, ['pepperoni']); });
+    ok(Core.grade(wrongG, gr.acceptable).accuracy < 1, 'green-colour order rejects a red topping');
   }
 })();
 
