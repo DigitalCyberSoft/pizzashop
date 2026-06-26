@@ -150,15 +150,11 @@
   };
 
   // Order in which ingredients become available (one at a time). Bases unlock
-  // alongside their first recipe; tracked separately by the UI.
-  // Funny "novelty" ingredients are sprinkled in EARLY (banana by the 5th unlock,
-  // ~tier 3) so kids get the "X on a PIZZA?!" laugh before the late game, not just
-  // a wall of serious toppings. The truly weird ones (beetroot/raisins/marshmallow)
-  // still come last.
-  // Real foods unlock first (a child learns genuine pizza vocab through the whole
-  // early/mid game); the novelty "funny" foods unlock LAST, so a low or mid level
-  // never has to build with banana/broccoli/etc. First novelty (banana) sits at
-  // index 18 -> unlocks around tier 15 (unlockedFor: 4 + round(difficulty)).
+  // alongside their first recipe; tracked separately by the UI. Real foods come
+  // first (a child learns genuine pizza vocab through the early/mid game); the
+  // novelty "funny" foods come LAST, so a low/mid level never has to build with
+  // banana/broccoli/etc. With the unlockCount pace below, the real foods are all
+  // out by ~level 11 and the first novelty (banana, index 18) arrives ~level 12.
   var UNLOCK_ORDER = [
     'pepperoni', 'mushroom', 'ham', 'cheese-base', 'olive', 'pineapple', 'onion',
     'sweetcorn', 'pepper', 'spinach', 'bbq-base', 'bacon', 'sausage', 'meatball',
@@ -167,6 +163,11 @@
     'banana', 'broccoli', 'green-beans', 'peas', 'brussels-sprout', 'beetroot',
     'raisins', 'marshmallow', 'fish-heads'
   ];
+  // How many of UNLOCK_ORDER are available at a given tier. Tuned so ALL 27 are
+  // unlocked by ~level 18 (a full kitchen well before level 20), growing from a
+  // 5-item start. Single source of truth: the UI and the tests both call this, so
+  // the unlock pace can never drift between the game and its tests.
+  function unlockCount(tier) { return Math.min(UNLOCK_ORDER.length, 4 + Math.round(tier * 1.3)); }
 
   // Recipes: name -> { base, toppings }. Lives only here; never a tray chip.
   function R(base, toppings) { return { base: base, toppings: normToppings(toppings) }; }
@@ -1862,8 +1863,18 @@
     [6, 6, 4], [2, 6, 8], [4, 6, 6],          // assorted 3-way mixes
     [2, 2, 4, 8], [2, 4, 4, 6]                // 4-way mixes
   ];
-  function pickModeBCombo(rng, maxKinds) {
-    var ok = MODEB_COMBOS.filter(function (c) { return c.length <= maxKinds; });
+  // Combo difficulty scales with tier so a high level is never trivially easy:
+  //  - [8,8] (two halves) is just two whole pizzas (a Mode-A, ~level-3 idea) and
+  //    reads like "one pizza each", so it is barred once we phrase as FRACTIONS (15+).
+  //  - the top tiers (18+) demand a real 3-4 way mix, not a single 2-kind split.
+  function comboAllowed(c, tier) {
+    if (tier >= 15 && c.length === 2 && c[0] === 8 && c[1] === 8) return false;
+    if (tier >= 18 && c.length < 3) return false;
+    return true;
+  }
+  function pickModeBCombo(rng, maxKinds, tier) {
+    var ok = MODEB_COMBOS.filter(function (c) { return c.length <= maxKinds && comboAllowed(c, tier); });
+    if (!ok.length) ok = MODEB_COMBOS.filter(function (c) { return c.length <= maxKinds; }); // safety: never empty
     var combo = pick(rng, ok).slice();
     for (var z = combo.length - 1; z > 0; z--) { var k = Math.floor(rng() * (z + 1)); var t = combo[z]; combo[z] = combo[k]; combo[k] = t; }
     return combo; // shuffled so the big kind (and "the rest") isn't always the same slot
@@ -1871,7 +1882,7 @@
   function buildModeB(rng, av, unlocked, tier, taught) {
     var cands = poolKindCandidates(av, unlocked);
     if (cands.length < 2) return null;
-    var combo = pickModeBCombo(rng, cands.length);
+    var combo = pickModeBCombo(rng, cands.length, tier);
     var picks = pickN(rng, cands, combo.length);
     var kinds = picks.map(function (k, i) { return { spec: k.spec, label: k.label, count: combo[i], recipe: k.recipe }; });
     var canon = []; kinds.forEach(function (k) { for (var c = 0; c < k.count; c++) canon.push(cloneSpec(k.spec)); });
@@ -1883,7 +1894,12 @@
     if (phrasing === 'count') parts[parts.length - 1] = 'the rest ' + kinds[kinds.length - 1].label;
     // scaffold any recipe the player has not been taught yet (base + toppings).
     var names = untaught(kinds.map(function (k) { return k.recipe; }).filter(Boolean), taught);
-    var text = 'For my two pizzas: ' + listJoin(parts) + '. Build them in any order you like!' +
+    // FRACTION phrasing spells out that the fractions are of BOTH pizzas combined
+    // (a "half" is one whole pizza's worth), so "half X, half Y" can't be misread as
+    // "one pizza each". COUNT phrasing ("8 slices of X, the rest Y") is already clear.
+    var text = (phrasing === 'fraction'
+      ? 'Out of both pizzas together, I want ' + listJoin(parts) + '. Spread it over the two pizzas any way you like!'
+      : 'For my two pizzas: ' + listJoin(parts) + '. Build them in any order you like!') +
       (names.length ? recipeReminder(names) : '');
     return { pizzas: 2, mode: 'B', pool: { total: 16, phrasing: phrasing, kinds: kinds }, canonical16: canon,
       acceptable: [canon.slice(0, 8)], text: text, concept: 'fraction',
@@ -2062,7 +2078,7 @@
     opposite: opposite, neighbours: neighbours,
     rot: rot, reflectV: reflectV, applyPerm: applyPerm, ALL_ROTATIONS: ALL_ROTATIONS, orbit: orbit,
     makeSlice: makeSlice, emptyLayout: emptyLayout, cloneLayout: cloneLayout, paint: paint, isBare: isBare,
-    BASES: BASES, TOPPING: TOPPING, RECIPE: RECIPE, UNLOCK_ORDER: UNLOCK_ORDER,
+    BASES: BASES, TOPPING: TOPPING, RECIPE: RECIPE, UNLOCK_ORDER: UNLOCK_ORDER, unlockCount: unlockCount,
     expandRecipe: expandRecipe, recipeBuildable: recipeBuildable, buildableRecipes: buildableRecipes,
     recipeWords: recipeWords, recipeDescribe: recipeDescribe, RECIPE_ORDER: RECIPE_ORDER, toppingName: toppingName,
     grade: grade, layoutScore: layoutScore, sliceScore: sliceScore, describeMistakes: describeMistakes,

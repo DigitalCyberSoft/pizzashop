@@ -102,8 +102,7 @@
     // returning high-level player has the right kitchen straight away (and a fresh
     // player still meets ingredients one level at a time as they climb).
     var diff = S ? S.difficulty : 1;
-    var count = Math.min(C.UNLOCK_ORDER.length, 4 + Math.round(diff));
-    return C.UNLOCK_ORDER.slice(0, count);
+    return C.UNLOCK_ORDER.slice(0, C.unlockCount(diff));
   }
   function toppingsUnlocked(served) { return unlockedFor(served).filter(function (id) { return C.TOPPING[id]; }); }
   function basesUnlocked(served) {

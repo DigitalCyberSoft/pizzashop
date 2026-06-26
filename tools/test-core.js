@@ -670,12 +670,49 @@ function fillWild(L) {
   ok(!anyMulti, 'no multi orders without multiPizza:true (UI opt-in gate)');
 })();
 
+// ---- Mode B difficulty + phrasing by tier. A high-level two-pizza order must not
+// collapse to "half X, half Y" (= two whole pizzas, a level-3 idea): no [8,8] at
+// FRACTION tiers (15+), and at least 3 kinds at the top (18+). Fraction phrasing
+// must spell out the COMBINED pool ("out of both pizzas together") so it can't be
+// misread as "one pizza each". ----
+(function () {
+  var checkedB = 0, av = Core.availableToppings(Core.UNLOCK_ORDER);
+  for (var tier = 15; tier <= Core.MAX_TIER; tier++) {
+    for (var seed = 1; seed <= 500; seed++) {
+      var o = Core.buildMultiPizza(lcg(seed * 41 + tier), av, Core.UNLOCK_ORDER, tier, []);
+      if (!o || o.mode !== 'B') continue;
+      checkedB++;
+      var counts = o.pool.kinds.map(function (k) { return k.count; }).sort(function (a, b) { return a - b; });
+      ok(!(counts.length === 2 && counts[0] === 8 && counts[1] === 8), 'tier ' + tier + ' Mode B is not two whole pizzas (8+8)');
+      if (tier >= 18) ok(o.pool.kinds.length >= 3, 'tier ' + tier + ' Mode B has a real 3+ way mix (got ' + o.pool.kinds.length + ')');
+      ok(/both pizzas together/i.test(o.text), 'fraction Mode B clarifies the combined pool (not "one pizza each"): ' + o.text.slice(0, 60));
+      // every kind still sums to 16 and the canonical pool still grades 1.0.
+      eq(counts.reduce(function (a, b) { return a + b; }, 0), 16, 'tier ' + tier + ' Mode B counts sum to 16');
+    }
+  }
+  ok(checkedB > 0, 'Mode B tier-difficulty test exercised orders (' + checkedB + ')');
+})();
+
+// ---- Ingredient unlock pace (Core.unlockCount): a gentle 5-item start, monotonic,
+// and ALL 27 unlocked by ~level 18 so the kitchen is complete well before level 20
+// (the old 4+round(diff) cap stranded the last 3 novelty foods past level 20). ----
+(function () {
+  eq(Core.unlockCount(1), 5, 'level 1 starts with 5 ingredients unlocked');
+  eq(Core.unlockCount(18), Core.UNLOCK_ORDER.length, 'all ' + Core.UNLOCK_ORDER.length + ' ingredients unlocked by level 18');
+  eq(Core.unlockCount(20), Core.UNLOCK_ORDER.length, 'full kitchen at level 20');
+  for (var t = 1; t < 20; t++) ok(Core.unlockCount(t + 1) >= Core.unlockCount(t), 'unlock count is monotonic across tier ' + t + '->' + (t + 1));
+  var at20 = Core.UNLOCK_ORDER.slice(0, Core.unlockCount(20));
+  ['raisins', 'marshmallow', 'fish-heads'].forEach(function (id) {
+    ok(at20.indexOf(id) !== -1, 'the weirdest novelty food "' + id + '" is reachable by level 20 (was stranded before)');
+  });
+})();
+
 // ---- Mode A (the SIMPLE two-whole-pizzas mode, tiers 3-9) must stay simple at
 // low levels: no novelty combo (e.g. "Gone Bananas") and no recipe demanding more
 // toppings than the tier cap, sampled against the REALISTIC partial unlock the UI
 // uses (first 4+round(diff) of UNLOCK_ORDER), not the full inventory. ----
 (function () {
-  function unlockedFor(tier) { return Core.UNLOCK_ORDER.slice(0, Math.min(Core.UNLOCK_ORDER.length, 4 + Math.round(tier))); }
+  function unlockedFor(tier) { return Core.UNLOCK_ORDER.slice(0, Core.unlockCount(tier)); }
   function cap(tier) { return tier <= 4 ? 2 : (tier <= 6 ? 3 : 4); }
   var checkedA = 0;
   for (var tier = 3; tier <= 9; tier++) {
@@ -802,13 +839,13 @@ function fillWild(L) {
 })();
 
 // ---- Every order must be BUILDABLE from the inventory unlocked at that level.
-// The game unlocks ingredients gradually (game-ui unlockedFor: the first
-// 4+round(difficulty) of UNLOCK_ORDER), so an order generated at a low level must
-// never demand more than that partial inventory can supply (e.g. "any 3 different
-// silly" when only 2 silly toppings are unlocked). Samples the PARTIAL unlock the
-// per-tier tests above do not. ----
+// The game unlocks ingredients gradually (Core.unlockCount: the first N of
+// UNLOCK_ORDER), so an order generated at a low level must never demand more than
+// that partial inventory can supply (e.g. "any 3 different silly" when only 2
+// silly toppings are unlocked). Samples the PARTIAL unlock the per-tier tests
+// above do not. ----
 (function () {
-  function unlockedFor(diff) { return Core.UNLOCK_ORDER.slice(0, Math.min(Core.UNLOCK_ORDER.length, 4 + Math.round(diff))); }
+  function unlockedFor(diff) { return Core.UNLOCK_ORDER.slice(0, Core.unlockCount(diff)); }
   // independent of Core.orderBuildable: re-derive category availability here so a
   // bug in the engine guard can't hide behind itself.
   var MEAT = ['pepperoni', 'ham', 'bacon', 'sausage', 'meatball', 'chicken'];
