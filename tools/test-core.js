@@ -195,13 +195,13 @@ function fillWild(L) {
       var o = Core.generateOrder({ difficulty: tier, unlocked: Core.UNLOCK_ORDER, rng: rng });
       var canon = o.acceptable[0];
       // base-first invariant: no topping ever sits on a bare ('plain') base
-      for (var i = 0; i < 8; i++) {
+      for (var i = 0; i < canon.length; i++) {
         var s = canon[i];
         if (s.wildcard || s.catCount) continue;
         if (s.toppings.length > 0) ok(s.base !== 'plain', 'tier ' + o.tier + ': topping requires a base (slice ' + i + ')');
       }
       // a blank pizza must never score a perfect/refusal-free pass
-      ok(Core.grade(Core.emptyLayout(), o.acceptable).accuracy < 1, 'tier ' + o.tier + ': blank pizza never scores 100%');
+      ok(Core.grade(Core.emptyLayout(canon.length), o.acceptable).accuracy < 1, 'tier ' + o.tier + ': blank pizza never scores 100%');
       // no order is trivially empty
       var hasContent = canon.some(function (sl) { return sl.wildcard || sl.catCount || sl.base !== 'plain' || sl.toppings.length; });
       ok(hasContent, 'tier ' + o.tier + ': order asks for something');
@@ -215,6 +215,97 @@ function fillWild(L) {
     if (a.key === b.key) repeats++;
   }
   ok(repeats === 0, 'dedupe avoids the same pizza back-to-back (repeats=' + repeats + ')');
+})();
+
+// ---- Variable slice counts: 6-slice youngest levels (Phase A) ----
+(function () {
+  var rng = lcg(77);
+  // Tiers 1-2 are SIX-slice pizzas (whole/half only). Tier 3 resumes the 8-slice
+  // backbone, where quarters arrive and the pizza visibly grows.
+  for (var t = 1; t <= 2; t++) {
+    for (var n = 0; n < 30; n++) {
+      var o = Core.generateOrder({ difficulty: t, unlocked: Core.UNLOCK_ORDER, rng: rng });
+      ok(o.acceptable[0].length === 6, 'tier ' + t + ' is a 6-slice pizza (got ' + o.acceptable[0].length + ')');
+    }
+  }
+  for (var m = 0; m < 20; m++) {
+    var th = Core.generateOrder({ difficulty: 3, unlocked: Core.UNLOCK_ORDER, rng: rng });
+    ok(th.acceptable[0].length === 8, 'tier 3 resumes 8-slice (got ' + th.acceptable[0].length + ')');
+  }
+  // a correctly-built 6-slice half/half scores 1.0, and so does a rotation of it
+  // (orientation-free grading under the 6-wedge dihedral group)
+  var half = null;
+  for (var k = 0; k < 300 && !half; k++) {
+    var c = Core.generateOrder({ difficulty: 2, unlocked: Core.UNLOCK_ORDER, rng: rng });
+    if (/one half/.test(c.text)) half = c;
+  }
+  ok(half, 'tier 2 produces a 6-slice half/half order');
+  if (half) {
+    ok(Math.abs(Core.grade(Core.cloneLayout(half.acceptable[0]), half.acceptable).accuracy - 1) < 1e-9, '6-slice half/half: exact build = 100%');
+    ok(Math.abs(Core.grade(Core.applyPerm(half.acceptable[0], Core.rot(1, 6)), half.acceptable).accuracy - 1) < 1e-9, '6-slice half/half: a rotation also = 100%');
+  }
+})();
+
+// ---- Variable slice counts: 10/12-slice big pizzas at the top (Phase A) ----
+(function () {
+  var rng = lcg(91);
+  function findLen(tier, len, tries) {
+    for (var i = 0; i < (tries || 800); i++) {
+      var o = Core.generateOrder({ difficulty: tier, unlocked: Core.UNLOCK_ORDER, rng: rng });
+      if (o.acceptable[0].length === len) return o;
+    }
+    return null;
+  }
+  var ten = findLen(20, 10), twelve = findLen(25, 12);
+  ok(ten, 'a 10-slice order is reachable at tier 20');
+  ok(twelve, 'a 12-slice order is reachable at tier 25');
+  // big pizzas grade orientation-free, and a blank board scores below 1
+  [ten, twelve].forEach(function (o) {
+    if (!o) return;
+    var len = o.acceptable[0].length;
+    ok(Math.abs(Core.grade(Core.cloneLayout(o.acceptable[0]), o.acceptable).accuracy - 1) < 1e-9, len + '-slice: exact build = 100%');
+    ok(Math.abs(Core.grade(Core.applyPerm(o.acceptable[0], Core.rot(1, len)), o.acceptable).accuracy - 1) < 1e-9, len + '-slice: a rotation also = 100%');
+    ok(Core.grade(Core.emptyLayout(len), o.acceptable).accuracy < 1, len + '-slice: blank board scores < 100%');
+    // 3+ distinct slice states even on the big relational pizzas (not trivial)
+    var states = {};
+    o.acceptable[0].forEach(function (s) { if (!s.wildcard && !s.catCount) states[s.base + '|' + s.toppings.join(',')] = 1; });
+    ok(Object.keys(states).length >= 3, len + '-slice big pizza has 3+ distinct slice states');
+  });
+  // 8-slice still owns the middle band: no big pizza leaks down to e.g. tier 8
+  for (var m = 0; m < 40; m++) {
+    var mid = Core.generateOrder({ difficulty: 8, unlocked: Core.UNLOCK_ORDER, rng: rng });
+    ok(mid.acceptable[0].length === 8, 'tier 8 stays 8-slice (got ' + mid.acceptable[0].length + ')');
+  }
+})();
+
+// ---- Phase B: fraction curriculum on the new slice counts ----
+(function () {
+  var rng = lcg(123);
+  function findConcept(tier, concept, len, tries) {
+    for (var i = 0; i < (tries || 1500); i++) {
+      var o = Core.generateOrder({ difficulty: tier, unlocked: Core.UNLOCK_ORDER, rng: rng });
+      if (o.concept === concept && o.acceptable[0].length === len) return o;
+    }
+    return null;
+  }
+  var thirds = findConcept(9, 'thirds', 6), fifths = findConcept(16, 'fifths', 10), sixth = findConcept(13, 'sixths', 6);
+  ok(thirds, 'thirds (6-slice) reachable at tier 9');
+  ok(fifths, 'fifths (10-slice) reachable at tier 16');
+  ok(sixth, 'sixths (6-slice) reachable at tier 13');
+  [thirds, fifths, sixth].forEach(function (o) {
+    if (!o) return;
+    var len = o.acceptable[0].length;
+    ok(Math.abs(Core.grade(Core.cloneLayout(o.acceptable[0]), o.acceptable).accuracy - 1) < 1e-9, o.concept + ' (' + len + '-slice): exact build = 100%');
+    ok(Math.abs(Core.grade(Core.applyPerm(o.acceptable[0], Core.rot(1, len)), o.acceptable).accuracy - 1) < 1e-9, o.concept + ' (' + len + '-slice): a rotation also = 100%');
+    ok(Core.grade(Core.emptyLayout(len), o.acceptable).accuracy < 1, o.concept + ' (' + len + '-slice): blank board < 100%');
+  });
+  // the thirds order really splits 2/3 vs 1/3: count the dominant topping's slices
+  if (thirds) {
+    var counts = {};
+    thirds.acceptable[0].forEach(function (s) { var t = s.toppings[0]; counts[t] = (counts[t] || 0) + 1; });
+    var vals = Object.keys(counts).map(function (k) { return counts[k]; }).sort(function (a, b) { return b - a; });
+    ok(vals[0] === 4 && vals[1] === 2, 'thirds on a 6-slice pizza is 4 slices (two thirds) vs 2 (one third)');
+  }
 })();
 
 // ---- Difficulty + creativity ----
@@ -284,7 +375,7 @@ function fillWild(L) {
   var comboRe = /Hawaiian|Margherita|Meat Feast|Veggie Supreme|Pepperoni Classic|BBQ Chicken|Popeye|Dragon’s Breath|Cheesy|Gone Bananas|Lunchbox/;
   for (var n = 0; n < 300 && !(multi && combo); n++) {
     var o = Core.generateOrder({ difficulty: 16, unlocked: Core.UNLOCK_ORDER, rng: rng });
-    o.acceptable[0].forEach(function (s) { if (!s.wildcard && s.toppings.length >= 2) multi = true; });
+    o.acceptable[0].forEach(function (s) { if (!s.wildcard && !s.catCount && s.toppings.length >= 2) multi = true; });
     if (comboRe.test(o.text)) combo = true;
   }
   ok(multi, 'combo tiers generate at least one slice carrying 2+ toppings');

@@ -44,8 +44,8 @@
     'the 10-o’clock slice', 'the 11-o’clock slice'
   ];
 
-  function opposite(i) { return (i + 4) % N; }
-  function neighbours(i) { return [(i + N - 1) % N, (i + 1) % N]; }
+  function opposite(i, n) { n = n || N; return (i + n / 2) % n; }
+  function neighbours(i, n) { n = n || N; return [(i + n - 1) % n, (i + 1) % n]; }
 
   // ---------------------------------------------------------------------------
   // Symmetry transforms over the 8 wedges. A transform is a permutation `perm`
@@ -53,13 +53,13 @@
   // Used to expand an ambiguous order's canonical layout into its acceptable
   // orbit (e.g. "any quarter" -> all rotations).
   // ---------------------------------------------------------------------------
-  function rot(k) { var p = []; for (var i = 0; i < N; i++) p[i] = (i + k) % N; return p; }
-  // Mirror across the vertical axis: wedge i -> wedge (7-i) (derived from angles).
-  function reflectV() { var p = []; for (var i = 0; i < N; i++) p[i] = (7 - i + N) % N; return p; }
+  function rot(k, n) { n = n || N; var p = []; for (var i = 0; i < n; i++) p[i] = (i + k) % n; return p; }
+  // Mirror across the vertical axis: wedge i -> wedge (n-1-i) (derived from angles).
+  function reflectV(n) { n = n || N; var p = []; for (var i = 0; i < n; i++) p[i] = (n - 1 - i + n) % n; return p; }
 
   function applyPerm(layout, perm) {
-    var out = new Array(N);
-    for (var i = 0; i < N; i++) out[perm[i]] = cloneSlice(layout[i]);
+    var n = layout.length, out = new Array(n);
+    for (var i = 0; i < n; i++) out[perm[i]] = cloneSlice(layout[i]);
     return out;
   }
   var ALL_ROTATIONS = [];
@@ -85,7 +85,7 @@
     if (s.catCount) return { catCount: true, base: s.base, cat: s.cat, count: s.count, min: s.min, max: s.max, phrase: s.phrase };
     return { base: s.base, toppings: s.toppings.slice() };
   }
-  function emptyLayout() { var L = []; for (var i = 0; i < N; i++) L.push(makeSlice('plain', [])); return L; }
+  function emptyLayout(n) { n = n || N; var L = []; for (var i = 0; i < n; i++) L.push(makeSlice('plain', [])); return L; }
   function cloneLayout(L) { return L.map(cloneSlice); }
   function isBare(s) { return s.base === 'plain' && s.toppings.length === 0; }
 
@@ -307,9 +307,9 @@
     return 0.4 * baseOk + 0.6 * topScore;
   }
   function layoutScore(player, acceptableLayout) {
-    var sum = 0;
-    for (var i = 0; i < N; i++) sum += sliceScore(player[i], acceptableLayout[i]);
-    return sum / N;
+    var n = acceptableLayout.length, sum = 0;
+    for (var i = 0; i < n; i++) sum += sliceScore(player[i], acceptableLayout[i]);
+    return sum / n;
   }
   // acceptable: array of layouts (each an array of 8 spec-slices).
   function grade(player, acceptable) {
@@ -392,14 +392,15 @@
   // Region-phrased diff of player vs the closest acceptable layout.
   function describeMistakes(player, closest) {
     var msgs = [];
-    for (var i = 0; i < N; i++) {
+    for (var i = 0, n = closest.length; i < n; i++) {
       var spec = closest[i];
       var p = player[i];
+      var where = SLICE_NAME[i] || 'a slice'; // 8-wedge clock names; 6/10-slice fall back
       if (spec.wildcard) {
         // free slice: only a problem if it wasn't a genuine surprise.
         if (sliceScore(p, spec) < 1) {
           msgs.push({
-            slice: i, where: SLICE_NAME[i], surprise: true,
+            slice: i, where: where, surprise: true,
             wantBase: '', gotBase: BASES[p.base].name,
             wantToppings: ['a surprise of your own (not a copy, not bare)'],
             gotToppings: p.toppings.map(toppingName)
@@ -410,7 +411,7 @@
       if (spec.catCount) {
         if (sliceScore(p, spec) < 1) {
           msgs.push({
-            slice: i, where: SLICE_NAME[i],
+            slice: i, where: where,
             wantBase: BASES[spec.base].name, gotBase: BASES[p.base].name,
             wantToppings: [spec.phrase ? spec.phrase : ('any ' + spec.count + ' different ' + catWord(spec.cat))],
             gotToppings: p.toppings.map(toppingName)
@@ -423,7 +424,7 @@
       if (baseOk && topOk) continue;
       msgs.push({
         slice: i,
-        where: SLICE_NAME[i],
+        where: where,
         wantBase: BASES[spec.base].name,
         gotBase: BASES[p.base].name,
         wantToppings: spec.toppings.map(toppingName),
@@ -476,21 +477,27 @@
   var HALVES = ['left', 'right', 'top', 'bottom'];
   var QUARTERS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
 
-  // Dihedral group of the 8 wedges: 8 rotations + 8 reflections. Used so an
-  // ambiguous order accepts every rotation/flip of its canonical layout.
-  var V_REFLECT = reflectV(); // mirror left<->right, keeps top/bottom
-  var DIHEDRAL = [];
-  for (var _k2 = 0; _k2 < N; _k2++) {
-    DIHEDRAL.push(rot(_k2));
-    var _rf = [];
-    for (var _i2 = 0; _i2 < N; _i2++) _rf[_i2] = ((7 - _i2) + _k2) % N;
-    DIHEDRAL.push(_rf);
+  // Dihedral group of the n wedges: n rotations + n reflections, cached per n, so
+  // an ambiguous order accepts every rotation/flip of its canonical layout. n is
+  // the layout's OWN wedge count, so 6/8/10-slice orders each grade under their own
+  // group (8 is by far the common case; other counts build on first use).
+  var DIHEDRAL_CACHE = {};
+  function dihedralFor(n) {
+    if (DIHEDRAL_CACHE[n]) return DIHEDRAL_CACHE[n];
+    var g = [];
+    for (var k = 0; k < n; k++) {
+      g.push(rot(k, n));
+      var rf = [];
+      for (var i = 0; i < n; i++) rf[i] = ((n - 1 - i) + k) % n;
+      g.push(rf);
+    }
+    return (DIHEDRAL_CACHE[n] = g);
   }
   // Handing a pizza across the counter flips left<->right but not top/bottom, so
   // EVERY order also accepts its vertical mirror. Pinned orders -> {self, mirror};
   // ambiguous orders -> the full rotation+reflection orbit.
-  function pinnedAcc(L) { return orbit(L, [rot(0), V_REFLECT]); }
-  function rotAcc(L) { return orbit(L, DIHEDRAL); }
+  function pinnedAcc(L) { return orbit(L, [rot(0, L.length), reflectV(L.length)]); }
+  function rotAcc(L) { return orbit(L, dihedralFor(L.length)); }
 
   // Bases. Tomato is the everyday base; the pizza starts bare ('plain').
   function pickBase(rng, unlocked) {
@@ -678,35 +685,35 @@
     // used to be Level 20). buildOne() falls back to a lower tier if a template can't
     // build from the unlocked ingredients.
     var T = {
-      1: [t1_whole],
-      2: [t2_halfHalf, t_doubleWhole, t1_whole],
-      3: [t4_quarterRest, t2_halfHalf, t_doubleHalf, t_theOther],
+      1: [t6_whole],
+      2: [t6_halfHalf, t6_whole],
+      3: [t4_quarterRest, t2_halfHalf, t_doubleHalf, t_theOther, t_doubleWhole],
       4: [t_threeRegion, t4_twoQuarters, t_doubleHalf, t_theOther, t_fakeHalf],
       5: [t4_twoQuarters, t4_threeQuarters, t_doubleHalf, t_fakeHalf, t_wholeBaseVaried],
       6: [t5_oneSlice, t5_twoAdjacent, t_tripleHalf, t_pronoun, t_fakeHalf, t_wholeBaseVaried],
       7: [t5_twoAdjacent, t5_threeAdjacent, t_tripleHalf, t_riddle, t_fakeHalf, t_wholeBaseVaried],
       8: [t5_oneSlice, t6_oppositeOf, t_doubleHalf, t_pronoun, t_riddle, t_fakeHalf, t_wholeBaseVaried],
-      9: [t6_oppositeOf, t_catSeparate, t7_negationBase, t_sillyEvery, t_fruitEvery, t_atLeastOne],
+      9: [t6_oppositeOf, t_catSeparate, t7_negationBase, t_sillyEvery, t_fruitEvery, t_atLeastOne, tSlice6_thirds],
       10: [t6_exceptQuarter, t_catSeparate, t7_negationBase, t_catCountWhole, t_fruitEvery, t_countCompare],
-      11: [t6_diagonalQuarters, t6_exceptQuarter, t7_selfCorrect, t_catCountWhole, t_countCompare, t_sharedProperty, t_countCompareHalves],
+      11: [t6_diagonalQuarters, t6_exceptQuarter, t7_selfCorrect, t_catCountWhole, t_countCompare, t_sharedProperty, t_countCompareHalves, tSlice6_thirds],
       12: [t7_alternating, t7_twoBases, t7_selfCorrect, t6_diagonalQuarters, t_countCompare, t_countCompareHalves, t_checkerboard],
-      13: [t7_ordinalRun, t7_alternating, t7_wildcard, t_twoBaseConditional, t_checkerboard],
+      13: [t7_ordinalRun, t7_alternating, t7_wildcard, t_twoBaseConditional, t_checkerboard, tSlice6_sixth],
       // tiers 14+ carry the harder LOGIC constructs (inference, either/or, not-both,
       // set intersection, conditional, elimination) alongside the combo templates.
       14: [t_comboWhole, t_comboHalves, t_doubleHalf, t_catCountHalves, t_twoBaseConditional, t_dietary, t_eitherOr, t_notException, t_altRecipes],
       15: [t_comboHalves, t_comboQuarter, t_tripleHalf, t_threeBases, t_recipeRemove, t_eitherOr, t_intersectionCat, t_normative, t_altRecipes],
-      16: [t_comboQuarter, t7_nestedException, t7_share, t7_namedDiagonal, t_recipeSwap, t_intersectionCat, t_conditionTrue, t_notException],
-      17: [t8_fourQuarters, t_composite3, t7_inOrderDistractor, t_threeBaseConditional, t_gapShare, t_recipeHalfMinus, t_notBoth, t_elimination],
-      18: [t_composite3, t10_perSlice, t7_constraint, t7_layerConditional, t_threeBaseConditional, t_normative, t_unevenShare],
+      16: [t_comboQuarter, t7_nestedException, t7_share, t7_namedDiagonal, t_recipeSwap, t_intersectionCat, t_conditionTrue, t_notException, tSlice10_alt, tSlice10_fifths],
+      17: [t8_fourQuarters, t_composite3, t7_inOrderDistractor, t_threeBaseConditional, t_gapShare, t_recipeHalfMinus, t_notBoth, t_elimination, tSlice10_fifths],
+      18: [t_composite3, t10_perSlice, t7_constraint, t7_layerConditional, t_threeBaseConditional, t_normative, t_unevenShare, tSlice10_run],
       // The top band (19-25) stretches the old 17->20 cram into a smooth climb whose
       // peak (the old Level-20 "densest only" pool) now lands at Level 25.
       19: [t_composite3, t10_perSlice, t20_clockSequence, t7_constraint, t9_quarterRecipes, t_unevenShare, t_bufferRing],
-      20: [t_composite3, t10_perSlice, t20_clockSequence, t20_negateAndPlace, t9_quarterRecipes, t_dietaryShare, t_bufferRing],
+      20: [t_composite3, t10_perSlice, t20_clockSequence, t20_negateAndPlace, t9_quarterRecipes, t_dietaryShare, t_bufferRing, tSlice10_alt],
       21: [t_composite3, t20_clockSequence, t20_negateAndPlace, t20_buildRemovePlace, t9_quarterRecipes, t_dietaryShare],
       22: [t_composite4, t20_negateAndPlace, t20_buildRemovePlace, t9_quarterRecipes, t20_recipeHalvesException, t_dietaryShare],
-      23: [t_composite4, t20_buildRemovePlace, t20_negateAndPlace, t9_quarterRecipes, t20_recipeHalvesException, t_bufferRing],
-      24: [t_composite4, t20_buildRemovePlace, t9_quarterRecipes, t20_recipeHalvesException, t_dietaryShare],
-      25: [t_composite4, t9_quarterRecipes, t20_recipeHalvesException, t_dietaryShare, t_bufferRing]
+      23: [t_composite4, t20_buildRemovePlace, t20_negateAndPlace, t9_quarterRecipes, t20_recipeHalvesException, t_bufferRing, tSlice12_alt],
+      24: [t_composite4, t20_buildRemovePlace, t9_quarterRecipes, t20_recipeHalvesException, t_dietaryShare, tSlice12_run, tSlice12_thirds],
+      25: [t_composite4, t9_quarterRecipes, t20_recipeHalvesException, t_dietaryShare, t_bufferRing, tSlice12_alt]
     };
     return T[tier] || T[1];
   }
@@ -784,6 +791,23 @@
     paint(L, REGION.left, { addTopping: ab[1] });
     return { text: baseWord(B) + ' base all over, then one half ' + tn(ab[0]) + ' and the other half ' + tn(ab[1]) + '.', acceptable: rotAcc(L), teach: null };
   }
+  // SIX-SLICE pizzas for the youngest levels (tiers 1-2): a physically smaller pie
+  // that only does WHOLE and HALF (3+3), so the early game stays gentle and the pizza
+  // visibly GROWS to 8 slices when quarters arrive at tier 3. Same whole/half words as
+  // t1_whole/t2_halfHalf; the grader keys off each layout's own length (dihedralFor).
+  function t6_whole(rng, av, un) {
+    var B = pickBase(rng, un), A = pick(rng, av);
+    var L = paint(emptyLayout(6), [0, 1, 2, 3, 4, 5], { base: B, addTopping: A });
+    return { text: 'A whole pizza on a ' + baseWord(B) + ' base, covered all over in ' + tn(A) + '.', acceptable: rotAcc(L), teach: null, concept: 'whole' };
+  }
+  function t6_halfHalf(rng, av, un) {
+    if (av.length < 2) return null;
+    var B = pickBase(rng, un), ab = pickN(rng, av, 2);
+    var L = paint(emptyLayout(6), [0, 1, 2, 3, 4, 5], { base: B });
+    paint(L, [0, 1, 2], { addTopping: ab[0] });
+    paint(L, [3, 4, 5], { addTopping: ab[1] });
+    return { text: baseWord(B) + ' base all over, then one half ' + tn(ab[0]) + ' and the other half ' + tn(ab[1]) + '.', acceptable: rotAcc(L), teach: null };
+  }
   // "Fake halves": a half written as an EQUIVALENT FRACTION (4/8, 2/4) or as "two
   // quarters", so the child learns 4/8 = 2/4 = two quarters = one half. The layout
   // is a plain half-half graded normally (rotAcc); only the WORDS change. The first
@@ -848,6 +872,83 @@
     paint(L, [0, 1, 2], { setToppings: [ab[0]] });
     return { text: baseWord(B) + ' base. Three slices in a row of ' + tn(ab[0]) + ', and all the rest ' + tn(ab[1]) + '.', acceptable: rotAcc(L), teach: null };
   }
+  // BIG-PIZZA relational orders (Phase A): the same block / "straight across"
+  // relations as the 8-slice templates, but on 10- or 12-slice pizzas so MORE
+  // POSITIONS must be tracked. No new fraction words (halves + relations only); the
+  // grader keys off each layout's own length, so rotAcc handles 10 and 12 directly.
+  // Both leave plain-base slices, so a top-tier big pizza still has 3+ slice states.
+  function bigBlocks(rng, av, un, n) {
+    if (av.length < 2) return null;
+    var B = pickBase(rng, un), ab = pickN(rng, av, 2), k = n >= 12 ? 4 : 3, m = n >= 12 ? 4 : 3;
+    var all = [], ar = [], br = [], i;
+    for (i = 0; i < n; i++) all.push(i);
+    for (i = 0; i < k; i++) ar.push(i);
+    for (i = 0; i < m; i++) br.push(k + i);
+    var L = paint(emptyLayout(n), all, { base: B });
+    paint(L, ar, { addTopping: ab[0] });
+    paint(L, br, { addTopping: ab[1] });
+    return { text: baseWord(B) + ' base on this big ' + n + '-slice pizza. Put ' + tn(ab[0]) + ' on ' + numWord(k) + ' slices in a row, then ' + tn(ab[1]) + ' on the next ' + numWord(m) + ' slices right beside them. All the other slices stay just base.', acceptable: rotAcc(L), teach: null };
+  }
+  function bigAcross(rng, av, un, n) {
+    if (av.length < 2) return null;
+    var B = pickBase(rng, un), ab = pickN(rng, av, 2), k = 3, half = n / 2;
+    var all = [], ar = [], br = [], i;
+    for (i = 0; i < n; i++) all.push(i);
+    for (i = 0; i < k; i++) { ar.push(i); br.push((i + half) % n); }
+    var L = paint(emptyLayout(n), all, { base: B });
+    paint(L, ar, { addTopping: ab[0] });
+    paint(L, br, { addTopping: ab[1] });
+    return { text: baseWord(B) + ' base on all ' + n + ' slices. Put ' + tn(ab[0]) + ' on ' + numWord(k) + ' slices in a row. On the ' + numWord(k) + ' slices STRAIGHT ACROSS the pizza from them, put ' + tn(ab[1]) + '. Everything else stays just base.', acceptable: rotAcc(L), teach: null };
+  }
+  function tSlice10_run(rng, av, un) { return bigBlocks(rng, av, un, 10); }
+  function tSlice10_alt(rng, av, un) { return bigAcross(rng, av, un, 10); }
+  function tSlice12_run(rng, av, un) { return bigBlocks(rng, av, un, 12); }
+  function tSlice12_alt(rng, av, un) { return bigAcross(rng, av, un, 12); }
+  // PHASE B fraction curriculum: the new slice counts unlock fractions the 8-slice
+  // pizza cannot show. Thirds/sixths live on the 6-slice (and 12-slice) pie, fifths
+  // on the 10-slice. Each tags a `concept` so the result screen and glossary teach
+  // the fraction word; the grader keys off the layout length, so rotAcc handles all.
+  function fracThirds(rng, av, un, n) {
+    if (av.length < 2) return null;
+    var B = pickBase(rng, un), ab = pickN(rng, av, 2), t = n / 3, all = [], idx = [], i;
+    for (i = 0; i < n; i++) all.push(i);
+    for (i = 0; i < 2 * t; i++) idx.push(i); // two thirds, contiguous
+    var L = paint(emptyLayout(n), all, { base: B, addTopping: ab[1] });
+    paint(L, idx, { setToppings: [ab[0]] });
+    return { text: baseWord(B) + ' base. Two THIRDS of the pizza ' + tn(ab[0]) + ', and the last third ' + tn(ab[1]) + '. (Each third is ' + numWord(t) + ' slices.)', acceptable: rotAcc(L), teach: null, concept: 'thirds' };
+  }
+  // Three-way thirds (one topping per third, named in order): three distinct slice
+  // states, so it holds up as a top-tier order on the big 12-slice pizza.
+  function fracThirds3(rng, av, un, n) {
+    if (av.length < 3) return null;
+    var B = pickBase(rng, un), abc = pickN(rng, av, 3), t = n / 3, all = [], i, g;
+    for (i = 0; i < n; i++) all.push(i);
+    var L = paint(emptyLayout(n), all, { base: B });
+    for (g = 0; g < 3; g++) { var idx = []; for (i = 0; i < t; i++) idx.push(g * t + i); paint(L, idx, { addTopping: abc[g] }); }
+    return { text: baseWord(B) + ' base, split into THIRDS. Going around in order, each third (' + numWord(t) + ' slices) is different: ' + tn(abc[0]) + ', then ' + tn(abc[1]) + ', then ' + tn(abc[2]) + '.', acceptable: rotAcc(L), teach: null, concept: 'thirds' };
+  }
+  function fracSixth(rng, av, un, n) {
+    if (av.length < 2) return null;
+    var B = pickBase(rng, un), ab = pickN(rng, av, 2), s = n / 6, all = [], idx = [], i;
+    for (i = 0; i < n; i++) all.push(i);
+    for (i = 0; i < s; i++) idx.push(i);
+    var L = paint(emptyLayout(n), all, { base: B, addTopping: ab[1] });
+    paint(L, idx, { setToppings: [ab[0]] });
+    return { text: baseWord(B) + ' base. Just one SIXTH of the pizza ' + tn(ab[0]) + ' (' + numWord(s) + ' of the ' + n + ' slices), and all the rest ' + tn(ab[1]) + '.', acceptable: rotAcc(L), teach: null, concept: 'sixths' };
+  }
+  function fracFifths(rng, av, un) {
+    if (av.length < 2) return null;
+    var B = pickBase(rng, un), ab = pickN(rng, av, 2), all = [], idx = [], i;
+    for (i = 0; i < 10; i++) all.push(i);
+    for (i = 0; i < 4; i++) idx.push(i); // two fifths = 4 of 10
+    var L = paint(emptyLayout(10), all, { base: B, addTopping: ab[1] });
+    paint(L, idx, { setToppings: [ab[0]] });
+    return { text: baseWord(B) + ' base. Two FIFTHS of this ten-slice pizza ' + tn(ab[0]) + ' (that is four slices), and the other three fifths ' + tn(ab[1]) + '.', acceptable: rotAcc(L), teach: null, concept: 'fifths' };
+  }
+  function tSlice6_thirds(rng, av, un) { return fracThirds(rng, av, un, 6); }
+  function tSlice12_thirds(rng, av, un) { return fracThirds3(rng, av, un, 12); }
+  function tSlice6_sixth(rng, av, un) { return fracSixth(rng, av, un, 6); }
+  function tSlice10_fifths(rng, av, un) { return fracFifths(rng, av, un); }
   function t5_oneSlice(rng, av, un) {
     if (av.length < 2) return null;
     var B = pickBase(rng, un), ab = pickN(rng, av, 2);
@@ -2072,7 +2173,7 @@
 
   function orderUsesTopping(order, id) {
     var spec = order.acceptable[0];
-    for (var i = 0; i < N; i++) {
+    for (var i = 0, n = spec.length; i < n; i++) {
       if (!spec[i].wildcard && !spec[i].catCount && spec[i].toppings.indexOf(id) !== -1) return true;
     }
     return false;
@@ -2080,7 +2181,7 @@
 
   function orderUsesNovelty(order) {
     var spec = order.acceptable[0];
-    for (var i = 0; i < N; i++) {
+    for (var i = 0, n = spec.length; i < n; i++) {
       var s = spec[i];
       if (s.wildcard || s.catCount) continue;
       for (var j = 0; j < s.toppings.length; j++) {

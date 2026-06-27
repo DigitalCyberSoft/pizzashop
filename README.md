@@ -2,7 +2,7 @@
 
 A browser game that teaches a child to **read and interpret increasingly complex
 English**. The customer describes a pizza in words; the player reads the order and
-builds it by tapping toppings onto an 8-slice pizza. The teaching target is the
+builds it by tapping toppings onto the pizza slices. The teaching target is the
 *language*, not the manual dexterity: orders climb from "a whole pizza with ham"
 to multi-sentence instructions with recipes, negations, conditionals, and spatial
 constraints.
@@ -21,8 +21,9 @@ GitHub Pages.
 
 ## How it works
 
-The order is generated as a structured **layout spec** (8 slices, each with a base
-and a set of toppings); the English sentence is rendered *from* that spec. The
+The order is generated as a structured **layout spec** (6 to 12 slices depending on
+the level, each with a base and a set of toppings); the English sentence is rendered
+*from* that spec. The
 player rebuilds a layout by tapping. Grading compares the two per slice, scoring
 both layers (base + topping set), and accepts the full rotation/reflection orbit
 so any valid reading of a relational order ("two slices next to each other") earns
@@ -30,10 +31,16 @@ full marks. The order text never has to be parsed back: the spec it was rendered
 from is the ground truth.
 
 - **25 difficulty levels.** Driven by adaptive difficulty, not order count. A fast,
-  accurate pizza (earns the speed tip) nudges the level up; a refusal or a timeout
-  nudges it down. The stored level lives in `localStorage`, so a returning player
-  resumes where they were. Reaching a new personal-best level shows a **Level Up!**
-  celebration (record-gated in `LS.bestLevel`, so re-climbing a level is silent).
+  accurate pizza (earns the speed tip) nudges the level up; from **level 10** up it
+  takes two tipped wins in a row to climb one rung. A refusal or a timeout nudges it
+  down. The stored level lives in `localStorage`, so a returning player resumes where
+  they were. Reaching a new personal-best level shows a **Level Up!** celebration
+  (record-gated in `LS.bestLevel`, so re-climbing a level is silent); beating the game
+  is **five tipped wins in a row** at the top level.
+- **The pizza grows with the level.** The youngest levels use a small **6-slice** pie
+  (whole and halves only); quarters arrive on the **8-slice** pizza; the hardest levels
+  serve larger **10- and 12-slice** pizzas where more positions must be tracked. Fewer
+  slices render smaller, more slices larger.
 - **Economy.** Start with $20. Each pizza costs $3 to make. Accuracy pays it back
   (more for harder pizzas); a quick, accurate build adds a $1 tip. A wrong pizza is
   refused (you still lose the $3). Below $3 the day is over.

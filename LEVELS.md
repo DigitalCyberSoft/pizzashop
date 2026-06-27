@@ -17,7 +17,7 @@ a correct build scores 100% whichever way the child orients it.
 
 | # | Lever | Range (easy -> hard) |
 |---|-------|----------------------|
-| 1 | **Partition granularity** | whole -> half -> three-region -> quarter -> adjacent pair -> single slice -> full 8-slice sequence |
+| 1 | **Partition granularity** | whole -> half -> three-region -> quarter -> adjacent pair -> single slice -> full per-slice sequence |
 | 2 | **Distinct regions / slice-states** | 1 -> 2 -> 3 -> 4 -> up to 8 |
 | 3 | **Toppings per slice** | 1 -> 2 -> 3 stacked (and recipe sets of 2-5) |
 | 4 | **Distinct toppings in the order** | 1 -> 2 -> 3 -> 4+ |
@@ -30,8 +30,9 @@ a correct build scores 100% whichever way the child orients it.
 | 11 | **Distractor density** | none -> story-wrapper noise -> an in-order red herring naming a topping that must NOT be placed |
 | 12 | **Clause count** | 1 clause -> 2 -> 3 -> 4 sequential clauses |
 | 13 | **Ingredient palette** | unlocked = 4 + level (novelty/funny toppings appear from very early) |
-| 14 | **Time pressure** | tip window and patience window both scale with regions/taps; tip capped at 60s |
+| 14 | **Time pressure** | tip window and patience window scale with regions/taps; from level 10 the tip window tightens (~60s at L10 down to ~35s at L25) so the speed tip stays earned |
 | 15 | **Reward** | `4 + 0.5*(level-1)` per pizza, scaled by accuracy (Level 1 ~$4, Level 20 ~$13.5) |
+| 16 | **Slice count (pizza size + fractions)** | 6 slices (levels 1-2 whole/half, drawn smaller; thirds & sixths at mid tiers) -> 8 (quarters/eighths backbone) -> 10 (fifths + big relational, high tiers) -> 12 (thirds + biggest relational, top tiers, drawn larger) |
 
 ## Level-by-level spec
 

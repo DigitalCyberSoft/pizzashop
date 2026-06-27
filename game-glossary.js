@@ -16,8 +16,8 @@
 
   // same wedge angles as the game: wedge i spans [45i, 45(i+1)] deg clockwise from 12.
   function pt(a) { var r = a * Math.PI / 180; return [CX + R * Math.sin(r), CY - R * Math.cos(r)]; }
-  function wedgePath(i) {
-    var p0 = pt(45 * i), p1 = pt(45 * (i + 1));
+  function wedgePath(i, n) {
+    var seg = 360 / (n || N), p0 = pt(seg * i), p1 = pt(seg * (i + 1));
     return 'M' + CX + ',' + CY + ' L' + p0[0] + ',' + p0[1] + ' A' + R + ',' + R + ' 0 0 1 ' + p1[0] + ',' + p1[1] + ' Z';
   }
   var REG = {
@@ -27,21 +27,22 @@
   };
 
   // a mini pizza where `fills[i]` is the colour for slice i (default crust).
-  function miniPizza(fills) {
+  function miniPizza(fills, n) {
+    n = n || N;
     var svg = document.createElementNS(SVGNS, 'svg');
     svg.setAttribute('viewBox', '0 0 100 100');
     svg.setAttribute('class', 'gloss-pizza');
-    for (var i = 0; i < N; i++) {
+    for (var i = 0; i < n; i++) {
       var p = document.createElementNS(SVGNS, 'path');
-      p.setAttribute('d', wedgePath(i));
+      p.setAttribute('d', wedgePath(i, n));
       p.setAttribute('fill', fills[i] || CRUST);
       p.setAttribute('stroke', '#c98a3c'); p.setAttribute('stroke-width', '1.4');
       svg.appendChild(p);
     }
     return svg;
   }
-  function fillSet(slices, colour, base) {
-    var f = {}; for (var i = 0; i < N; i++) f[i] = base || CRUST;
+  function fillSet(slices, colour, base, n) {
+    var f = {}; for (var i = 0; i < (n || N); i++) f[i] = base || CRUST;
     slices.forEach(function (i) { f[i] = colour; });
     return f;
   }
@@ -170,9 +171,12 @@
   // The glossary. `syn` are phrases linkified in text (longest win, first per term).
   var TERMS = [
     { id: 'whole', label: 'Whole', syn: ['the whole pizza', 'whole'], def: 'The whole pizza means every single slice, all the way around.', math: 'all 8 slices = 1 whole (8/8)', demo: function () { return lit(REG.whole); } },
-    { id: 'half', label: 'Half', syn: ['halves', 'half'], def: 'A half is one of the two equal pieces when you split the pizza down the middle.', math: '4 of 8 slices = one half = 1/2', demo: function () { return lit(REG.top); } },
+    { id: 'half', label: 'Half', syn: ['halves', 'half'], def: 'A half is one of the two equal pieces when you split the pizza down the middle. A half is a half whatever the pizza size: just count to the middle.', math: '4 of 8, 3 of 6, 5 of 10 or 6 of 12 slices all = one half = 1/2', demo: function () { return lit(REG.top); } },
     { id: 'quarter', label: 'Quarter', syn: ['quarters', 'quarter'], def: 'A quarter is one of the four equal pieces, like cutting the pizza into 4.', math: '2 of 8 slices = one quarter = 1/4', demo: function () { return lit(REG['top-right']); } },
-    { id: 'slice', label: 'Slice', syn: ['slices', 'slice'], def: 'A slice is one single piece of the eight.', math: '1 of 8 slices = 1/8', demo: function () { return lit([0]); } },
+    { id: 'slice', label: 'Slice', syn: ['slices', 'slice'], def: 'A slice is one single piece of the pizza.', math: '1 of 8 slices = 1/8', demo: function () { return lit([0]); } },
+    { id: 'third', label: 'Third', syn: ['thirds', 'third'], def: 'A third is one of THREE equal pieces. Cut the pizza into 3 fair shares and each one is a third.', math: 'on a 6-slice pizza, 2 of 6 = one third = 1/3', demo: function () { var f = {}; [0, 1].forEach(function (i) { f[i] = TINT_A; }); [2, 3].forEach(function (i) { f[i] = TINT_B; }); [4, 5].forEach(function (i) { f[i] = ACCENT; }); return miniPizza(f, 6); } },
+    { id: 'fifth', label: 'Fifth', syn: ['fifths', 'fifth'], def: 'A fifth is one of FIVE equal pieces. A ten-slice pizza cuts into five fifths, two slices each.', math: 'on a 10-slice pizza, 2 of 10 = one fifth = 1/5', demo: function () { return miniPizza(fillSet([0, 1], ACCENT, DIM, 10), 10); } },
+    { id: 'sixth', label: 'Sixth', syn: ['sixths', 'sixth'], def: 'A sixth is one of SIX equal pieces. On a six-slice pizza, each single slice is a sixth.', math: 'on a 6-slice pizza, 1 of 6 = one sixth = 1/6', demo: function () { return miniPizza(fillSet([0], ACCENT, DIM, 6), 6); } },
     { id: 'twoPizzas', label: 'Two pizzas & big fractions', syn: ['my two pizzas', 'two pizzas', 'five eighths', 'three eighths', 'seven eighths', 'an eighth'], def: 'Two pizzas is 16 slices in all. An order asks for a fraction of the whole: half is 8 slices (one whole pizza), a quarter is 4, an eighth is 2. Some fractions are bigger than one pizza — five eighths is 10 slices, more than a whole pizza!', math: '16 slices = 2 pizzas; half = 8/16, three quarters = 12/16, five eighths = 10/16', demo: function () { var d = document.createElement('div'); d.style.cssText = 'display:flex;gap:8px;justify-content:center'; d.appendChild(miniPizza(fillSet(REG.whole, TINT_A))); d.appendChild(miniPizza(fillSet(REG.right, TINT_B, CRUST))); return d; } },
     { id: 'opposite', label: 'Opposite', syn: ['directly across', 'straight across', 'across from', 'opposite', 'across'], def: 'Opposite slices are straight across the pizza from each other, as far apart as they can be.', math: 'slice + 4 = the one opposite (1 and 5, 2 and 6...)', demo: function () { return lit([0, 4]); } },
     { id: 'nextTo', label: 'Next to', syn: ['next to each other', 'right next to', 'next to', 'side by side', 'touching', 'touch'], def: 'Slices next to each other share an edge, sitting side by side.', math: 'neighbours: slice and the one beside it', demo: function () { return lit([0, 1]); } },
@@ -212,6 +216,9 @@
     half: 'This order was about splitting the pizza into HALVES.',
     quarter: 'This order was about the QUARTERS of the pizza.',
     slice: 'This order was about single SLICES.',
+    thirds: 'This order was about splitting the pizza into THIRDS (three equal shares).',
+    fifths: 'This order was about FIFTHS of the pizza (five equal shares).',
+    sixths: 'This order was about SIXTHS of the pizza (six equal shares).',
     opposite: 'This order was about two slices OPPOSITE each other.',
     nextTo: 'This order was about slices NEXT TO each other.',
     everyOther: 'This order was about EVERY OTHER slice, going around.',

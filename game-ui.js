@@ -16,21 +16,27 @@
 
   // geometry in a 0..360 viewBox (the SVG is displayed larger than that).
   var CX = 180, CY = 180, R = 150;
-  function pt(a) { var r = a * Math.PI / 180; return [CX + R * Math.sin(r), CY - R * Math.cos(r)]; }
-  function wedgePath(i) {
-    var p0 = pt(45 * i), p1 = pt(45 * (i + 1));
+  // 8 slices = the established radius (150). Fewer slices draw a physically SMALLER
+  // pie, more slices a LARGER one, inside the fixed 360 viewBox (clamped so the crust
+  // ring still fits). pt/wedge* take the wedge count n and radius r so 6/8/10/12-slice
+  // pizzas all render from the same helpers; wedgeAt reads n/r back off the SVG.
+  function radiusFor(n) { return Math.max(130, Math.min(168, 150 + (n - 8) * 6)); }
+  function pt(a, r) { var t = a * Math.PI / 180; r = r || R; return [CX + r * Math.sin(t), CY - r * Math.cos(t)]; }
+  function wedgePath(i, n, r) {
+    var seg = 360 / n, p0 = pt(seg * i, r), p1 = pt(seg * (i + 1), r);
     return 'M' + CX + ',' + CY + ' L' + p0[0] + ',' + p0[1] +
-      ' A' + R + ',' + R + ' 0 0 1 ' + p1[0] + ',' + p1[1] + ' Z';
+      ' A' + r + ',' + r + ' 0 0 1 ' + p1[0] + ',' + p1[1] + ' Z';
   }
-  function wedgeCentroid(i, f) { var a = (45 * i + 22.5) * Math.PI / 180, rr = R * (f || 0.62); return [CX + rr * Math.sin(a), CY - rr * Math.cos(a)]; }
+  function wedgeCentroid(i, n, f, r) { var seg = 360 / n, a = (seg * i + seg / 2) * Math.PI / 180, rr = (r || R) * (f || 0.62); return [CX + rr * Math.sin(a), CY - rr * Math.cos(a)]; }
   function wedgeAt(clientX, clientY, svg) {
     svg = svg || el('pizza');
+    var n = +(svg.dataset.n) || 8, r = +(svg.dataset.r) || R, seg = 360 / n;
     var rect = svg.getBoundingClientRect();
     var x = (clientX - rect.left) / rect.width * 360, y = (clientY - rect.top) / rect.height * 360;
     var dx = x - CX, dy = y - CY;
-    if (Math.sqrt(dx * dx + dy * dy) > R) return -1;
+    if (Math.sqrt(dx * dx + dy * dy) > r) return -1;
     var ang = Math.atan2(dx, -dy) * 180 / Math.PI; if (ang < 0) ang += 360;
-    return Math.floor(ang / 45) % 8;
+    return Math.floor(ang / seg) % n;
   }
 
   function el(id) { return document.getElementById(id); }
@@ -80,7 +86,7 @@
     S = { money: LS.money, served: LS.served, aura: 0, order: null, layout: C.emptyLayout(),
       brush: null, tipDeadline: 0, tipWindowMs: 0, tipTimer: null, lastKey: null,
       patienceDeadline: 0, patienceWindowMs: 0, patienceTimer: null,
-      featureNext: null, difficulty: LS.difficulty, maxStreak: 0, won: false, awaitingStart: false, recordLevel: 0 };
+      featureNext: null, difficulty: LS.difficulty, maxStreak: 0, tipRun: 0, won: false, awaitingStart: false, recordLevel: 0 };
   }
   // Persist the whole run. Called at every order outcome so progress is never
   // more than one order stale. (Difficulty is also written in adjustDifficulty.)
@@ -216,38 +222,40 @@
     svg.setAttribute('width', sizePx); svg.setAttribute('height', sizePx);
     svg.setAttribute('viewBox', '0 0 360 360');
     while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var n = layout.length, r = radiusFor(n);
+    svg.dataset.n = n; svg.dataset.r = r; // wedgeAt reads these back on tap
     var defs = document.createElementNS(SVGNS, 'defs'); svg.appendChild(defs);
 
     // base wedges. A wedge with a textured base (tomato/cheese/bbq) gets the
     // base PNG clipped to its slice; everything else (plain dough, wildcard, or a
     // missing texture file) falls back to the flat colour fill so the game stays
     // playable without art.
-    for (var i = 0; i < 8; i++) {
+    for (var i = 0; i < n; i++) {
       var s = layout[i];
       var path = document.createElementNS(SVGNS, 'path');
-      path.setAttribute('d', wedgePath(i));
+      path.setAttribute('d', wedgePath(i, n, r));
       path.setAttribute('class', 'wedge');
       path.dataset.i = i;
       path.setAttribute('fill', s.wildcard ? '#e8e8e8' : C.BASES[s.base].color);
       svg.appendChild(path);
-      if (!s.wildcard && BASE_IMG_OK[s.base]) wedgeBaseImage(svg, defs, i, s.base, prefix);
+      if (!s.wildcard && BASE_IMG_OK[s.base]) wedgeBaseImage(svg, defs, i, s.base, prefix, n, r);
     }
     // toppings: scatter several single-piece images across each wedge so a slice
     // clearly shows multiple toppings at once
-    for (i = 0; i < 8; i++) {
+    for (i = 0; i < n; i++) {
       var sl = layout[i];
-      if (sl.wildcard) { centreText(svg, i, '❓'); continue; }
+      if (sl.wildcard) { centreText(svg, i, n, r, '❓'); continue; }
       // catCount specs ("any N <category>") carry no toppings array; guard so the
       // renderer never throws on a spec slice (the result's "what they wanted"
       // pizza is a raw acceptable layout that may contain these).
       var tops = sl.toppings || [];
-      tops.forEach(function (t, ti) { scatterTopping(svg, i, t, ti, tops.length); });
+      tops.forEach(function (t, ti) { scatterTopping(svg, i, t, ti, tops.length, n, r); });
     }
     // crust ring on top. Set presentation attributes directly: the `fill:none`
     // CSS rule is scoped to `#pizza .crust`, so the compare previews (no #pizza id)
     // would otherwise paint a solid black disc over the toppings.
     var crust = document.createElementNS(SVGNS, 'circle');
-    crust.setAttribute('cx', CX); crust.setAttribute('cy', CY); crust.setAttribute('r', R);
+    crust.setAttribute('cx', CX); crust.setAttribute('cy', CY); crust.setAttribute('r', r);
     crust.setAttribute('class', 'crust');
     crust.setAttribute('fill', 'none');
     crust.setAttribute('stroke', '#e0a85a'); // --crust
@@ -256,19 +264,19 @@
   }
   // Draw the seamless base texture for one wedge by clipping an <image> to the
   // wedge path. Each wedge needs its own clipPath id (unique across all SVGs).
-  function wedgeBaseImage(svg, defs, i, base, prefix) {
+  function wedgeBaseImage(svg, defs, i, base, prefix, n, r) {
     var id = 'wbc-' + (prefix || 'p') + '-' + (clipSeq++);
     var cp = document.createElementNS(SVGNS, 'clipPath');
     cp.setAttribute('id', id);
     var cpath = document.createElementNS(SVGNS, 'path');
-    cpath.setAttribute('d', wedgePath(i));
+    cpath.setAttribute('d', wedgePath(i, n, r));
     cp.appendChild(cpath); defs.appendChild(cp);
     var im = document.createElementNS(SVGNS, 'image');
     im.setAttributeNS(XLINK, 'href', 'assets/bases/' + base + '.png');
     im.setAttribute('href', 'assets/bases/' + base + '.png');
     // cover the whole pizza disc so the texture lines up across slices
-    im.setAttribute('x', CX - R); im.setAttribute('y', CY - R);
-    im.setAttribute('width', R * 2); im.setAttribute('height', R * 2);
+    im.setAttribute('x', CX - r); im.setAttribute('y', CY - r);
+    im.setAttribute('width', r * 2); im.setAttribute('height', r * 2);
     im.setAttribute('preserveAspectRatio', 'xMidYMid slice');
     im.setAttribute('clip-path', 'url(#' + id + ')');
     svg.appendChild(im);
@@ -286,26 +294,28 @@
   // pizza centre out to just inside the crust, with random jitter so pieces look
   // naturally scattered rather than sitting on rings. Keeps a margin off the
   // wedge's two straight edges and off the crust so pieces stay inside the slice.
-  function wedgePoint(i, ti, p) {
+  function wedgePoint(i, ti, p, n, r) {
+    var seg = 360 / n;
     // radius: sqrt() so points spread by area, not bunched near the centre; min
     // is small so the slice centre actually gets used.
     var u = rand01(i, ti, p, 1);
-    var rr = R * (0.14 + Math.sqrt(u) * 0.70); // ~0.14R .. 0.84R from centre
-    // angle: across the 45° span, but narrow the usable arc near the tip (small
+    var rr = r * (0.14 + Math.sqrt(u) * 0.70); // ~0.14r .. 0.84r from centre
+    // angle: across the wedge's span, but narrow the usable arc near the tip (small
     // rr) so a piece near the centre can't poke out of the straight edges.
-    var frac = rr / R;
+    var frac = rr / r;
     var margin = 7 * (1 - frac) + 4 * frac; // degrees of edge clearance
-    var lo = 45 * i + margin, hi = 45 * (i + 1) - margin;
+    var lo = seg * i + margin, hi = seg * (i + 1) - margin;
     var v = rand01(i, ti, p, 2);
     var a = (lo + (hi - lo) * v) * Math.PI / 180;
     return [CX + rr * Math.sin(a), CY - rr * Math.cos(a)];
   }
-  function scatterTopping(svg, i, t, ti, total) {
+  function scatterTopping(svg, i, t, ti, total, n, r) {
     var pieces = total <= 1 ? 5 : (total === 2 ? 3 : 2);
+    var size = Math.round(44 * Math.sqrt(8 / n)); // narrower wedges (more slices) -> smaller pieces
     for (var p = 0; p < pieces; p++) {
-      var xy = wedgePoint(i, ti, p);
+      var xy = wedgePoint(i, ti, p, n, r);
       var rot = Math.floor(rand01(i, ti, p, 3) * 360);
-      placePiece(svg, xy[0], xy[1], t, 44, rot);
+      placePiece(svg, xy[0], xy[1], t, size, rot);
     }
   }
   function placePiece(svg, x, y, t, size, rot) {
@@ -321,7 +331,7 @@
       centreTextAt(svg, x, y, C.TOPPING[t] ? C.TOPPING[t].icon : '?');
     }
   }
-  function centreText(svg, i, txt) { var c = wedgeCentroid(i, 0.6); centreTextAt(svg, c[0], c[1], txt); }
+  function centreText(svg, i, n, r, txt) { var c = wedgeCentroid(i, n, 0.6, r); centreTextAt(svg, c[0], c[1], txt); }
   function centreTextAt(svg, x, y, txt) {
     var tn = document.createElementNS(SVGNS, 'text');
     tn.setAttribute('class', 'top'); tn.setAttribute('x', x); tn.setAttribute('y', y);
@@ -560,7 +570,7 @@
       LS.taught = tg;
     }
     S.lastKey = S.order.key;
-    S.layout = C.emptyLayout();
+    S.layout = C.emptyLayout(orderN()); // match the order's slice count (6/8/10/12)
     S.layout1 = C.emptyLayout(); // second board (used only for multi-pizza orders)
     S.brush = null;
     renderPizza(); reflectBrush();
@@ -655,13 +665,21 @@
   }
   function startTipTimer(order) {
     var taps = countTaps(orderWorkSlices(order));
-    // Scales with the work, but the FLOOR is a generous 60s because a young
-    // child spends most of the window READING the order, not tapping, and the
-    // tip also gates levelling up (see adjustDifficulty) so it must be reachable.
-    // window = clamp(14s + 2.4s/tap, 60s .. 90s). For a single 8-slice pizza the
-    // computed value is below 60s, so almost every single-pizza order gets the
-    // full 60s; only big multi-pizza (16-slice) orders scale above the floor.
-    S.tipWindowMs = Math.min(90000, Math.max(60000, Math.round((14 + taps * 2.4) * 1000)));
+    // Work-scaled window = clamp(14s + 2.4s/tap, 60s .. 90s). The 60s floor is
+    // generous because a young child spends most of the window READING the order,
+    // not tapping, and the tip also gates levelling up (see adjustDifficulty) so
+    // it must be reachable. For a single 8-slice pizza the computed value is below
+    // 60s, so almost every single-pizza order gets the floor; only big multi-pizza
+    // (16-slice) orders scale above it.
+    var win = Math.min(90000, Math.max(60000, Math.round((14 + taps * 2.4) * 1000)));
+    // From level 10 up the window TIGHTENS as the child reads more fluently, so the
+    // speed tip (and the top-level win streak it gates) demands real pace rather than
+    // an unhurried-but-accurate finish: the whole window scales down to ~0.58x by
+    // Level 25, i.e. a single top pizza falls from ~60s to ~35s. Scaling (not
+    // re-flooring) keeps a big two-pizza order proportionally fair.
+    var tier = order.tier || 1;
+    var factor = tier <= 9 ? 1 : Math.max(0.58, 1 - (tier - 9) * 0.028);
+    S.tipWindowMs = Math.round(win * factor);
     S.tipDeadline = Date.now() + S.tipWindowMs;
     var wrap = el('tipbar-wrap'); wrap.classList.remove('gone', 'amber');
     if (S.tipTimer) clearInterval(S.tipTimer);
@@ -741,7 +759,10 @@
   function pizzaCount(order) { return (order && order.pizzas) || 1; }
   // Adaptive difficulty IS the level. It is driven only by performance, never by
   // how many pizzas have been served:
-  //   - finish fast AND accurately (you earn the speed tip) -> level UP
+  //   - finish fast AND accurately (you earn the speed tip) -> level UP. From
+  //     level 10 up it takes TWO tipped wins IN A ROW to climb one level: the
+  //     first tip arms the up-step, the second applies it; any non-tip in between
+  //     breaks the run and disarms it. Below 10, one tip still climbs.
   //   - get it accurate but too slow for the tip -> hold this level
   //   - refused (acc < 0.8) or the customer timed out and left -> level DOWN
   // `tip` is true only when the pizza was both accepted and fast (see boxIt). The
@@ -749,8 +770,16 @@
   // Persisted so a returning child resumes exactly at their level.
   function adjustDifficulty(acc, tip) {
     var d = S.difficulty;
-    if (tip) d += 0.7;             // fast + accurate: this is the only way up
-    else if (acc < 0.8) d -= 0.8;  // refused, or walked out (acc 0): drop a level
+    if (tip) {                      // fast + accurate: the only way up
+      // From level 10 up, climbing takes TWO tipped wins IN A ROW (first arms the
+      // step, second applies it). Below 10, a single tip climbs as before.
+      S.tipRun = (S.tipRun || 0) + 1;
+      var needed = Math.round(d) >= 10 ? 2 : 1;
+      if (S.tipRun >= needed) { d += 0.7; S.tipRun = 0; }
+    } else {
+      S.tipRun = 0;                 // a non-tip breaks the consecutive run
+      if (acc < 0.8) d -= 0.8;      // refused, or walked out (acc 0): drop a level
+    }
     d = Math.max(1, Math.min(C.MAX_TIER + 0.99, d));
     S.difficulty = d; LS.difficulty = d;
   }
@@ -858,9 +887,10 @@
       show('result-overlay');
       autoAdvance(3500); // quick win: auto-advance unless they click first
     } else {
-      var right = 8 - mistakes.length;
+      var total = orderN();
+      var right = total - mistakes.length;
       concept.innerHTML = window.Glossary.conceptExplanation(S.order) +
-        ' <span class="hint-line">You got <b>' + right + ' of 8</b> slices right.</span>';
+        ' <span class="hint-line">You got <b>' + right + ' of ' + total + '</b> slices right.</span>';
       concept.style.display = 'block';
       compare.style.display = 'flex';
       compare.appendChild(miniFig('What you made', S.layout));
@@ -945,6 +975,9 @@
     return '🧽 Kitchen Helper';
   }
   function curLevel() { return Math.max(1, Math.min(C.MAX_TIER, Math.round(S.difficulty || 1))); }
+  // Slice count of the current SINGLE-pizza order (6/8/10/12); multi-pizza boards stay 8.
+  // Sizes the blank player board and the "of N" result tally.
+  function orderN() { return (S && S.order && S.order.pizzas !== 2 && S.order.acceptable && S.order.acceptable[0]) ? S.order.acceptable[0].length : 8; }
   function statBlock(lvl) {
     return '🍕 Pizzas served: <b>' + S.served + '</b><br>' +
            '📖 Top level reached: <b>Level ' + lvl + '</b><br>' +
@@ -1074,7 +1107,7 @@
     el('restart-btn').onclick = function () { hide('over-overlay'); startGame(); };
     el('next-btn').onclick = nextCustomer;
     el('box-btn').onclick = boxIt;
-    el('clear-btn').onclick = function () { if (S) { S.layout = C.emptyLayout(); S.layout1 = C.emptyLayout(); renderPizza(); } };
+    el('clear-btn').onclick = function () { if (S) { S.layout = C.emptyLayout(orderN()); S.layout1 = C.emptyLayout(); renderPizza(); } };
     el('eraser-btn').onclick = function () {
       if (!S) return;
       if (S.brush && S.brush.kind === 'eraser') { S.brush = null; el('eraser-btn').classList.remove('on'); }
