@@ -151,7 +151,7 @@
     var lvl = Math.max(1, Math.min(C.MAX_TIER, Math.round(LS.difficulty)));
     items.push({ u: 'assets/customers/kid.png' }, { u: 'assets/scene/shopfront.png' },
       { u: 'assets/feature/level-up.png' },
-      // shop-1..20.png exist; levels 21-25 reuse the level-20 backdrop (SCENE_MAX).
+      // scene clamped to SCENE_MAX so a tier past the available art still resolves.
       { u: 'assets/scene/shop.png' }, { u: 'assets/scene/shop-' + Math.min(SCENE_MAX, lvl) + '.png' });
     var total = items.length, loaded = 0, finished = false, stall;
     // Reveal the welcome ONLY when every asset has loaded. The watchdog is a STALL
@@ -369,8 +369,9 @@
   // Robust to a missing per-tier file: preload via Image() and only switch once it
   // loads; on error we leave the current/default background (never blank it). The
   // current tier is tracked so the same scene isn't re-set every order.
-  // Only shop-1..20.png exist; levels 21-25 reuse the level-20 backdrop.
-  var sceneTier = 0, SCENE_MAX = 20;
+  // shop-1..25.png exist (one backdrop per level); SCENE_MAX clamps the lookup so a
+  // future tier past the art still resolves to a real file instead of 404ing.
+  var sceneTier = 0, SCENE_MAX = 25;
   function setScene(tier) {
     var t = Math.max(1, Math.min(C.MAX_TIER, Math.round(tier || 1)));
     if (t === sceneTier) return;

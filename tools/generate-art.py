@@ -105,7 +105,7 @@ TOPPINGS = [
     ("fish-heads", "one small silly cartoon fish head, googly eyes"),
 ]
 
-# One scene per level (tier 1..7), escalating in flair, plus a default "shop".
+# One scene per level (tier 1..25), escalating in flair, plus a default "shop".
 # All are a customer's-eye view across a front counter, no people, no text.
 _COUNTER = (" seen from a customer standing at the counter, a front counter across "
             "the bottom, a pizza oven behind it, warm inviting light")
@@ -131,6 +131,13 @@ SCENE = [
     ("shop-18", "a cartoon cloud-city sky pizzeria up among fluffy clouds and rainbows" + _COUNTER),
     ("shop-19", "a cartoon volcano-side lava pizza forge with glowing orange rock and steam" + _COUNTER),
     ("shop-20", "a grand cartoon rainbow wizard-tower pizza kitchen with sparkles, stars and floating books" + _COUNTER),
+    # Levels 21-25: the home stretch, climbing past the wizard tower to a Pizza
+    # Legend climax (matches the victory screen at the very top).
+    ("shop-21", "a dazzling cartoon galaxy-palace pizzeria among swirling purple nebulas, shooting comets and golden archways" + _COUNTER),
+    ("shop-22", "a magnificent cartoon crystal-cavern pizzeria with glowing rainbow gems, sparkling waterfalls and shimmering light" + _COUNTER),
+    ("shop-23", "an epic cartoon floating sky-island pizzeria above the clouds with cascading waterfalls and a shining golden bridge" + _COUNTER),
+    ("shop-24", "a legendary cartoon friendly-dragon's lair pizza forge with a smiling golden dragon, treasure piles and glowing embers" + _COUNTER),
+    ("shop-25", "the ultimate cartoon PIZZA LEGEND throne-room kitchen with a golden crown and trophy, fireworks, confetti and triumphant golden light, the grandest pizzeria of all" + _COUNTER),
     # The order-intro playbill background: the FRONT of the shop facing the
     # customer (the per-level scenes above face the oven/counter from inside).
     ("shopfront", "the OUTSIDE FRONT of a cosy cartoon pizzeria as a customer walking up to it sees it: a welcoming shopfront with a big glass window, a friendly door, a hanging round PIZZA sign, a striped awning, warm golden light glowing from inside, flower boxes by the door; no people, no readable text"),

@@ -63,7 +63,7 @@ assets/
   customers/*.png  AI-generated customer portraits (committed; regen with tools/)
   toppings/*.png   topping art (one transparent piece per ingredient)
   bases/*.png      tomato / cheese / bbq bases
-  scene/*.png      shop background per level (shop-1.png .. shop-20.png; levels 21-25 reuse shop-20)
+  scene/*.png      shop background, one per level (shop-1.png .. shop-25.png)
   favicon.svg
 tools/
   generate-art.py  dev-time OpenAI image generator (not needed to play)
