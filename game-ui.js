@@ -78,7 +78,18 @@
     get money() { var v = parseFloat(lsGet('pizzashop.money')); return (isFinite(v) && v >= 0) ? v : 20; },
     set money(v) { lsSet('pizzashop.money', v); },
     get served() { return +(lsGet('pizzashop.served') || 0); },
-    set served(v) { lsSet('pizzashop.served', v); }
+    set served(v) { lsSet('pizzashop.served', v); },
+    // Parent controls: cap the top level (0 = no cap) and switch off whole strands.
+    get capLevel() { var v = parseInt(lsGet('pizzashop.cap'), 10); return (isFinite(v) && v >= 1) ? v : 0; },
+    set capLevel(v) { lsSet('pizzashop.cap', v); },
+    get noMulti() { return lsGet('pizzashop.nomulti') === 'on'; },
+    set noMulti(v) { lsSet('pizzashop.nomulti', v ? 'on' : 'off'); },
+    get noFractions() { return lsGet('pizzashop.nofractions') === 'on'; },
+    set noFractions(v) { lsSet('pizzashop.nofractions', v ? 'on' : 'off'); },
+    get noPercent() { return lsGet('pizzashop.nopercent') === 'on'; },
+    set noPercent(v) { lsSet('pizzashop.nopercent', v ? 'on' : 'off'); },
+    get noDecimals() { return lsGet('pizzashop.nodecimals') === 'on'; },
+    set noDecimals(v) { lsSet('pizzashop.nodecimals', v ? 'on' : 'off'); }
   };
 
   var S = null;
@@ -559,8 +570,8 @@
     var require = (S.featureNext && C.TOPPING[S.featureNext]) ? S.featureNext : null;
     // Only offer a two-pizza order when the player can afford to make it (N×$3);
     // otherwise they could be forced into a $6 build with $4 in the till.
-    var canAffordMulti = S.money >= MAKE_COST * 2;
-    S.order = C.generateOrder({ ordersServed: S.served, unlocked: unlocked, difficulty: S.difficulty, avoidKey: S.lastKey, require: require, taught: LS.taught, multiPizza: canAffordMulti });
+    var canAffordMulti = S.money >= MAKE_COST * 2 && !LS.noMulti; // parent control: two-pizza orders off
+    S.order = C.generateOrder({ ordersServed: S.served, unlocked: unlocked, difficulty: S.difficulty, avoidKey: S.lastKey, require: require, taught: LS.taught, multiPizza: canAffordMulti, maxTier: LS.capLevel || undefined });
     S.featureNext = null; // used once, whether or not it landed
     // Once a recipe has been defined in an order, mark it taught so future orders
     // name it bare (the player must then recall the ingredients themselves).
@@ -759,10 +770,10 @@
   function pizzaCount(order) { return (order && order.pizzas) || 1; }
   // Adaptive difficulty IS the level. It is driven only by performance, never by
   // how many pizzas have been served:
-  //   - finish fast AND accurately (you earn the speed tip) -> level UP. From
-  //     level 10 up it takes TWO tipped wins IN A ROW to climb one level: the
-  //     first tip arms the up-step, the second applies it; any non-tip in between
-  //     breaks the run and disarms it. Below 10, one tip still climbs.
+  //   - finish fast AND accurately (you earn the speed tip) -> level UP. The climb
+  //     needs a RUN of tipped wins in a row: one below level 10, two from 10-24,
+  //     three from level 25 up. Each tip in the run arms the next; any non-tip
+  //     breaks the run and disarms it, so the wins must be CONSECUTIVE.
   //   - get it accurate but too slow for the tip -> hold this level
   //   - refused (acc < 0.8) or the customer timed out and left -> level DOWN
   // `tip` is true only when the pizza was both accepted and fast (see boxIt). The
@@ -771,16 +782,20 @@
   function adjustDifficulty(acc, tip) {
     var d = S.difficulty;
     if (tip) {                      // fast + accurate: the only way up
-      // From level 10 up, climbing takes TWO tipped wins IN A ROW (first arms the
-      // step, second applies it). Below 10, a single tip climbs as before.
+      // Climbing takes a RUN of tipped wins in a row: one below level 10, two from
+      // 10-24, three from level 25 up. At 25+ the step snaps to a clean whole level
+      // (lvl + 1) so "three wins to proceed to the next level" is exact, rather than
+      // the fractional +0.7 nudge the lower bands ride on.
       S.tipRun = (S.tipRun || 0) + 1;
-      var needed = Math.round(d) >= 10 ? 2 : 1;
-      if (S.tipRun >= needed) { d += 0.7; S.tipRun = 0; }
+      var lvl = Math.round(d);
+      var needed = lvl >= 25 ? 3 : (lvl >= 10 ? 2 : 1);
+      if (S.tipRun >= needed) { d = lvl >= 25 ? lvl + 1 : d + 0.7; S.tipRun = 0; }
     } else {
       S.tipRun = 0;                 // a non-tip breaks the consecutive run
       if (acc < 0.8) d -= 0.8;      // refused, or walked out (acc 0): drop a level
     }
     d = Math.max(1, Math.min(C.MAX_TIER + 0.99, d));
+    if (LS.capLevel) d = Math.min(d, LS.capLevel + 0.99); // parent control: don't climb past the cap
     S.difficulty = d; LS.difficulty = d;
   }
   function boxIt() {
@@ -1098,14 +1113,23 @@
     wipeProgress();
     unlockAudio(); startGame();
   }
-  // Settings panel: reflect the current Sound / Meme state in the row values.
+  // Settings panel: reflect the current Sound / Meme / parent-control state in the rows.
+  function setVal(id, text, on) { var e = el(id); if (e) { e.textContent = text; e.classList.toggle('off', !on); } }
   function refreshSettings() {
-    var sv = el('set-sound-val'); if (sv) sv.textContent = LS.muted ? 'Off' : 'On';
-    var mv = el('set-meme-val'); if (mv) mv.textContent = LS.meme ? 'On' : 'Off';
+    setVal('set-sound-val', LS.muted ? 'Off' : 'On', !LS.muted);
+    setVal('set-meme-val', LS.meme ? 'On' : 'Off', LS.meme);
+    setVal('set-cap-val', LS.capLevel ? ('Level ' + LS.capLevel) : 'No cap', LS.capLevel !== 0);
+    setVal('set-multi-val', LS.noMulti ? 'Off' : 'On', !LS.noMulti);
+    setVal('set-fractions-val', LS.noFractions ? 'Off' : 'On', !LS.noFractions);
+    setVal('set-percent-val', LS.noPercent ? 'Off' : 'On', !LS.noPercent);
+    setVal('set-decimals-val', LS.noDecimals ? 'Off' : 'On', !LS.noDecimals);
   }
+  // Push the fraction/percent strand toggles into game-core (cap + multi are read per-order).
+  function applyPrefs() { C.setPrefs({ noFractions: LS.noFractions, noPercent: LS.noPercent, noDecimals: LS.noDecimals }); }
 
   function init() {
     refreshHud();
+    applyPrefs(); // sync game-core's fraction/percent prefs with saved parent controls
     showResumeLevel();
     el('continue-btn').onclick = function () { if (el('continue-btn').disabled) return; unlockAudio(); startGame(); };
     el('newgame-btn').onclick = newGame;
@@ -1131,6 +1155,12 @@
     el('set-howto').onclick = function () { show('howto-overlay'); };
     el('set-words').onclick = function () { window.Glossary.openPage(); };
     el('howto-close').onclick = function () { hide('howto-overlay'); };
+    // Parent controls
+    el('set-cap').onclick = function () { var presets = [0, 25, 20, 15, 10, 5]; var i = presets.indexOf(LS.capLevel); LS.capLevel = presets[(i + 1) % presets.length]; refreshSettings(); };
+    el('set-multi').onclick = function () { LS.noMulti = !LS.noMulti; refreshSettings(); };
+    el('set-fractions').onclick = function () { LS.noFractions = !LS.noFractions; applyPrefs(); refreshSettings(); };
+    el('set-percent').onclick = function () { LS.noPercent = !LS.noPercent; applyPrefs(); refreshSettings(); };
+    el('set-decimals').onclick = function () { LS.noDecimals = !LS.noDecimals; applyPrefs(); refreshSettings(); };
     el('restart-btn').onclick = function () { hide('over-overlay'); startGame(); };
     el('next-btn').onclick = nextCustomer;
     el('box-btn').onclick = boxIt;

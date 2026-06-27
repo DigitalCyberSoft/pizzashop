@@ -234,14 +234,13 @@ button.eraser.on { --face: var(--ink); --edge: #1a120a; color: #fff; }
 .title-gloss { margin-top: 2px; }
 
 /* ---- Settings panel ---- */
-.settings-card { text-align: left; max-width: 460px; }
+.settings-card { text-align: left; max-width: 460px; max-height: 90vh; overflow-y: auto; }
 .settings-card h2 { text-align: center; }
 .set-list { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
 .set-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 13px 16px; border: 2px solid #f0e2c4; border-radius: 14px; background: #fffaf0; color: var(--ink); font-family: inherit; font-weight: 700; font-size: 1.02rem; cursor: pointer; }
 .set-row:active { transform: translateY(1px); }
-.set-row.danger { border-color: #f3c2b3; background: #fff2ee; }
 .set-row .set-val { font-weight: 800; color: var(--accent2); }
-.set-row.danger .set-val { color: var(--accent); }
+.set-row .set-val.off { color: #9a8c74; } /* a disabled/off toggle value reads grey */
 .set-section { margin: 8px 0 14px; padding: 14px 16px; border: 2px dashed #cfe2f5; border-radius: 14px; background: #f3f8fd; }
 .set-section h3 { margin: 0 0 6px; color: #2f6db0; font-size: 1.05rem; }
 .set-soon { margin: 0; font-size: .92rem; color: #5a6b7d; line-height: 1.4; }

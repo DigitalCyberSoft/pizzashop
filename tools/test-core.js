@@ -321,11 +321,11 @@ function fillWild(L) {
     return null;
   }
   var pcts = [
-    { t: 15, marker: 'eight-slice pizza (', name: 'pct8_quarters' },
-    { t: 16, marker: 'each slice is 10%), make it', name: 'pct10_split' },
-    { t: 17, marker: '100% minus', name: 'pct10_rest' },
+    { t: 15, marker: 'of this eight-slice pizza', name: 'pct8_quarters' },
+    { t: 16, marker: 'ten-slice pizza, make it', name: 'pct10_split' },
+    { t: 17, marker: 'ten slices. Make', name: 'pct10_rest' },
     { t: 18, marker: 'Cover exactly', name: 'pct10_target' },
-    { t: 20, marker: 'add up to 100%', name: 'pct10_three' }
+    { t: 20, marker: 'Going around:', name: 'pct10_three' }
   ];
   // groups every distinct slice into {signature: count}; a clean percent means every
   // group's count is a whole percent of the pizza (100*count % len === 0).
@@ -347,32 +347,98 @@ function fillWild(L) {
   });
   // pct10_three is the only percent template in the top band; it MUST be 3-state so it
   // satisfies the >=3-distinct-slice-states guard at tier >= 20 (see that block above).
-  var three = findPct(20, 'add up to 100%');
+  var three = findPct(20, 'Going around:');
   if (three) {
     var sig = {};
     three.acceptable[0].forEach(function (s) { sig[s.base + '|' + (s.toppings || []).join(',')] = 1; });
     ok(Object.keys(sig).length >= 3, 'pct10_three has >=3 distinct slice states (top-band safe)');
   }
-  // EARLY exposure: percent is TALKED ABOUT (an aside) on the early quarter/half levels
-  // without being graded. Confirm the aside surfaces, only ever names a round percent
-  // (25/50/75/100 - never a fractional one), and never changes the grading.
-  var asideSeen = 0, asideBad = 0, asideGradeOk = true, samples = 0;
-  for (var t = 1; t <= 5; t++) {
-    var r2 = lcg(700 + t);
-    for (var i = 0; i < 400; i++) {
+  // NO INLINE ANSWER (user mandate, replacing the earlier "percent aside on early levels"
+  // feature the user removed as distracting): a fraction/percent order states the problem
+  // and never spells the answer out in the text. The method is taught by the CLICKABLE
+  // glossary terms (Glossary.linkify wraps "fifths", "30%", a quarter...) and the Ready
+  // screen - not by a parenthetical giving the slice count or equivalent away. The shapes
+  // below are exactly the reveals that were stripped from the templates.
+  var hintRe = /\(that is (?:\d|the same|\w+ slices)|\(each slice is|\(\w+ slices\)|\(\w+ of the \w+ slices\)|100% minus|add up to 100%|Each third is/;
+  var hintBad = 0, mathSeen = 0, hintEg = '';
+  for (var t = 1; t <= Core.MAX_TIER; t++) {
+    var r2 = lcg(4000 + t);
+    for (var i = 0; i < 500; i++) {
       var o = Core.generateOrder({ difficulty: t, unlocked: Core.UNLOCK_ORDER, rng: r2 });
-      samples++;
-      var m = (o.text || '').match(/\(that is (\d+)%\)/);
-      if (m) {
-        asideSeen++;
-        if (['25', '50', '75', '100'].indexOf(m[1]) === -1) asideBad++;
-        if (o.pizzas !== 2 && Core.grade(fillWild(o.acceptable[0]), o.acceptable).accuracy !== 1) asideGradeOk = false;
-      }
+      var c = o.concept;
+      if (c === 'percent' || c === 'thirds' || c === 'fifths' || c === 'sixths' || c === 'whole') mathSeen++;
+      if (hintRe.test(o.core || '')) { hintBad++; if (!hintEg) hintEg = o.core; }
     }
   }
-  ok(asideSeen > 0, 'percent aside appears on early levels (got ' + asideSeen + ' of ' + samples + ')');
-  eq(asideBad, 0, 'early percent asides only name round percents (25/50/75/100)');
-  ok(asideGradeOk, 'a percent aside never changes the grading (text-only)');
+  ok(mathSeen > 0, 'fraction/percent orders are reachable (got ' + mathSeen + ')');
+  eq(hintBad, 0, 'no inline answer-hint in any order core' + (hintEg ? ' (e.g. "' + hintEg + '")' : ''));
+})();
+
+// ---- DECIMAL curriculum (graded, level 16+): a decimal reduces to an integer slice
+// count exactly like percent, so it only appears on the 8/10-slice boards (never the
+// 6/12 whose 0.083/0.166 a slice muddies place value). The METHOD is taught in the
+// glossary, never in the order: a decimal order states the decimal and nothing that
+// reveals the answer (no %, no '=', no slice count, no per-slice value). ----
+(function () {
+  var rng = lcg(515151);
+  function findDec(tier, marker, tries) {
+    for (var i = 0; i < (tries || 4000); i++) {
+      var o = Core.generateOrder({ difficulty: tier, unlocked: Core.UNLOCK_ORDER, rng: rng });
+      if (o.concept === 'decimal' && (o.core || '').indexOf(marker) !== -1) return o;
+    }
+    return null;
+  }
+  var decs = [
+    { t: 16, marker: 'of this eight-slice pizza', name: 'dec8_quarters' },
+    { t: 17, marker: 'On this ten-slice pizza, make', name: 'dec10_split' },
+    { t: 18, marker: 'ten slices. Make', name: 'dec10_rest' },
+    { t: 20, marker: 'Going around:', name: 'dec10_three' }
+  ];
+  decs.forEach(function (p) {
+    var o = findDec(p.t, p.marker);
+    ok(o, p.name + ' reachable at tier ' + p.t);
+    if (!o) return;
+    var len = o.acceptable[0].length;
+    ok(len === 8 || len === 10, p.name + ' is on a clean-decimal slice count (got ' + len + ', want 8 or 10)');
+    ok(Math.abs(Core.grade(Core.cloneLayout(o.acceptable[0]), o.acceptable).accuracy - 1) < 1e-9, p.name + ': exact build = 100%');
+    ok(Math.abs(Core.grade(Core.applyPerm(o.acceptable[0], Core.rot(1, len)), o.acceptable).accuracy - 1) < 1e-9, p.name + ': a rotation also = 100%');
+    ok(Core.grade(Core.emptyLayout(len), o.acceptable).accuracy < 1, p.name + ': blank board < 100%');
+  });
+  // NO HINTS: scan the FINAL (post-compose) text the child reads. Forbidden reveals are
+  // a percent, an '=' equivalence, an explicit slice COUNT in parens, or a per-slice
+  // value ('each slice is'). The board name ('ten-slice') and the decimal itself ('0.3')
+  // are the PROBLEM, not the answer, and are allowed.
+  var rngH = lcg(818181), hintBad = 0, decSeen = 0, hintEg = '';
+  for (var t = 16; t <= Core.MAX_TIER; t++) {
+    for (var i = 0; i < 600; i++) {
+      var oh = Core.generateOrder({ difficulty: t, unlocked: Core.UNLOCK_ORDER, rng: rngH });
+      if (oh.concept !== 'decimal') continue;
+      decSeen++;
+      var txt = oh.text || '';
+      if (/%|=|each slice is|\(\s*\d+\s+(?:of\b|slices?\b)|\bthat is \d/.test(txt)) { hintBad++; if (!hintEg) hintEg = txt; }
+    }
+  }
+  ok(decSeen > 0, 'decimal orders are reachable across the 16+ band (got ' + decSeen + ')');
+  eq(hintBad, 0, 'decimal order text never reveals the answer' + (hintEg ? ' (e.g. "' + hintEg + '")' : ''));
+  // dec10_three is the top-band decimal template; it MUST be 3-state to satisfy the
+  // >=3-distinct-slice-states guard at tier >= 20 (see that block above).
+  var three = findDec(20, 'Going around:');
+  if (three) {
+    var sig = {};
+    three.acceptable[0].forEach(function (s) { sig[s.base + '|' + (s.toppings || []).join(',')] = 1; });
+    ok(Object.keys(sig).length >= 3, 'dec10_three has >=3 distinct slice states (top-band safe)');
+  }
+  // PARENT CONTROL: noDecimals removes every decimal order across the band. setPrefs
+  // mutates module state, so restore defaults afterward for the blocks that follow.
+  Core.setPrefs({ noDecimals: true });
+  var rngP = lcg(929292), blockedSeen = 0;
+  for (var t2 = 16; t2 <= Core.MAX_TIER; t2++) {
+    for (var j = 0; j < 400; j++) {
+      if (Core.generateOrder({ difficulty: t2, unlocked: Core.UNLOCK_ORDER, rng: rngP }).concept === 'decimal') blockedSeen++;
+    }
+  }
+  eq(blockedSeen, 0, 'noDecimals parent control blocks every decimal order (16..MAX_TIER)');
+  Core.setPrefs({}); // restore defaults so later tests see decimals again
 })();
 
 // ---- Difficulty + creativity ----

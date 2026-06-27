@@ -702,17 +702,17 @@
       // set intersection, conditional, elimination) alongside the combo templates.
       14: [t_comboWhole, t_comboHalves, t_doubleHalf, t_catCountHalves, t_twoBaseConditional, t_dietary, t_eitherOr, t_notException, t_altRecipes],
       15: [t_comboHalves, t_comboQuarter, t_tripleHalf, t_threeBases, t_recipeRemove, t_eitherOr, t_intersectionCat, t_normative, t_altRecipes, pct8_quarters],
-      16: [t_comboQuarter, t7_nestedException, t7_share, t7_namedDiagonal, t_recipeSwap, t_intersectionCat, t_conditionTrue, t_notException, tSlice10_alt, tSlice10_fifths, pct8_quarters, pct10_split],
-      17: [t8_fourQuarters, t_composite3, t7_inOrderDistractor, t_threeBaseConditional, t_gapShare, t_recipeHalfMinus, t_notBoth, t_elimination, tSlice10_fifths, pct10_split, pct10_rest],
-      18: [t_composite3, t10_perSlice, t7_constraint, t7_layerConditional, t_threeBaseConditional, t_normative, t_unevenShare, tSlice10_run, pct10_rest, pct10_target],
+      16: [t_comboQuarter, t7_nestedException, t7_share, t7_namedDiagonal, t_recipeSwap, t_intersectionCat, t_conditionTrue, t_notException, tSlice10_alt, tSlice10_fifths, pct8_quarters, pct10_split, dec8_quarters],
+      17: [t8_fourQuarters, t_composite3, t7_inOrderDistractor, t_threeBaseConditional, t_gapShare, t_recipeHalfMinus, t_notBoth, t_elimination, tSlice10_fifths, pct10_split, pct10_rest, dec10_split],
+      18: [t_composite3, t10_perSlice, t7_constraint, t7_layerConditional, t_threeBaseConditional, t_normative, t_unevenShare, tSlice10_run, pct10_rest, pct10_target, dec10_rest],
       // The top band (19-25) stretches the old 17->20 cram into a smooth climb whose
       // peak (the old Level-20 "densest only" pool) now lands at Level 25.
       19: [t_composite3, t10_perSlice, t20_clockSequence, t7_constraint, t9_quarterRecipes, t_unevenShare, t_bufferRing, pct10_target, pct10_split],
-      20: [t_composite3, t10_perSlice, t20_clockSequence, t20_negateAndPlace, t9_quarterRecipes, t_dietaryShare, t_bufferRing, tSlice10_alt, pct10_three],
+      20: [t_composite3, t10_perSlice, t20_clockSequence, t20_negateAndPlace, t9_quarterRecipes, t_dietaryShare, t_bufferRing, tSlice10_alt, pct10_three, dec10_three],
       21: [t_composite3, t20_clockSequence, t20_negateAndPlace, t20_buildRemovePlace, t9_quarterRecipes, t_dietaryShare],
-      22: [t_composite4, t20_negateAndPlace, t20_buildRemovePlace, t9_quarterRecipes, t20_recipeHalvesException, t_dietaryShare, pct10_three],
+      22: [t_composite4, t20_negateAndPlace, t20_buildRemovePlace, t9_quarterRecipes, t20_recipeHalvesException, t_dietaryShare, pct10_three, dec10_three],
       23: [t_composite4, t20_buildRemovePlace, t20_negateAndPlace, t9_quarterRecipes, t20_recipeHalvesException, t_bufferRing, tSlice12_alt],
-      24: [t_composite4, t20_buildRemovePlace, t9_quarterRecipes, t20_recipeHalvesException, t_dietaryShare, tSlice12_run, tSlice12_thirds, pct10_three],
+      24: [t_composite4, t20_buildRemovePlace, t9_quarterRecipes, t20_recipeHalvesException, t_dietaryShare, tSlice12_run, tSlice12_thirds, pct10_three, dec10_three],
       25: [t_composite4, t9_quarterRecipes, t20_recipeHalvesException, t_dietaryShare, t_bufferRing, tSlice12_alt]
     };
     return T[tier] || T[1];
@@ -783,18 +783,22 @@
     var L = paint(emptyLayout(), REGION.whole, { base: B, addTopping: A });
     return { text: wholeFillPhrase(rng, B, A), acceptable: rotAcc(L), teach: null, concept: 'whole' };
   }
-  // Percent aside: on the clean fractions (half = 50%, quarter = 25%, three quarters =
-  // 75%, whole = 100%) drop the equivalent percent into the order ~half the time, so the
-  // child SEES percent on the early levels long before any order asks them to act on it.
-  // Text-only - grading is untouched. Mirrors t_fakeHalf's optional "(same as one half!)".
-  function pctAside(rng, pct) { return rng() < 0.5 ? ' (that is ' + pct + '%)' : ''; }
+  // No inline answer-hints: fraction/percent/decimal orders state the problem only. The
+  // method is taught by the CLICKABLE glossary terms (Glossary.linkify) and the Ready
+  // screen, never by a parenthetical that gives the slice count or equivalent away.
+  // Parent controls (set from the UI via Core.setPrefs): switch off curriculum strands to
+  // make the game easier. Read by buildOne (reject template by concept),
+  // and buildModeB (two-pizza phrasing). multiPizza-off and the level cap come via opts.
+  var PREFS = { noFractions: false, noPercent: false, noDecimals: false };
+  function setPrefs(p) { if (p) { PREFS.noFractions = !!p.noFractions; PREFS.noPercent = !!p.noPercent; PREFS.noDecimals = !!p.noDecimals; } }
+  function prefsBlock(concept) { return (PREFS.noFractions && (concept === 'thirds' || concept === 'fifths' || concept === 'sixths')) || (PREFS.noPercent && concept === 'percent') || (PREFS.noDecimals && concept === 'decimal'); }
   function t2_halfHalf(rng, av, un) {
     if (av.length < 2) return null;
     var B = pickBase(rng, un), ab = pickN(rng, av, 2);
     var L = paint(emptyLayout(), REGION.whole, { base: B });
     paint(L, REGION.right, { addTopping: ab[0] });
     paint(L, REGION.left, { addTopping: ab[1] });
-    return { text: baseWord(B) + ' base all over, then one half ' + tn(ab[0]) + pctAside(rng, 50) + ' and the other half ' + tn(ab[1]) + '.', acceptable: rotAcc(L), teach: null };
+    return { text: baseWord(B) + ' base all over, then one half ' + tn(ab[0]) + ' and the other half ' + tn(ab[1]) + '.', acceptable: rotAcc(L), teach: null };
   }
   // SIX-SLICE pizzas for the youngest levels (tiers 1-2): a physically smaller pie
   // that only does WHOLE and HALF (3+3), so the early game stays gentle and the pizza
@@ -803,7 +807,7 @@
   function t6_whole(rng, av, un) {
     var B = pickBase(rng, un), A = pick(rng, av);
     var L = paint(emptyLayout(6), [0, 1, 2, 3, 4, 5], { base: B, addTopping: A });
-    return { text: 'A whole pizza on a ' + baseWord(B) + ' base, covered all over in ' + tn(A) + pctAside(rng, 100) + '.', acceptable: rotAcc(L), teach: null, concept: 'whole' };
+    return { text: 'A whole pizza on a ' + baseWord(B) + ' base, covered all over in ' + tn(A) + '.', acceptable: rotAcc(L), teach: null, concept: 'whole' };
   }
   function t6_halfHalf(rng, av, un) {
     if (av.length < 2) return null;
@@ -817,8 +821,8 @@
   // quarters", so the child learns 4/8 = 2/4 = two quarters = one half. The layout
   // is a plain half-half graded normally (rotAcc); only the WORDS change. The first
   // region is the fake form, the second is "the other half" so the equivalence is
-  // anchored. A "(same as one half!)" hint appears ~half the time: teaches when
-  // present, makes the child decode it unaided when absent.
+  // anchored. No inline equivalence hint: the child decodes "4 out of 8" as a half
+  // unaided, with the clickable glossary terms there if they need the method.
   var FAKE_HALF = ['4/8 of the pizza', '2/4 of the pizza', '4 out of 8 slices', 'two quarters of the pizza'];
   function t_fakeHalf(rng, av, un) {
     if (av.length < 2) return null;
@@ -826,9 +830,8 @@
     var L = paint(emptyLayout(), REGION.whole, { base: B });
     paint(L, REGION.right, { addTopping: ab[0] });
     paint(L, REGION.left, { addTopping: ab[1] });
-    var f = pick(rng, FAKE_HALF), hint = rng() < 0.5 ? ' (that is the same as one half!)' : '';
-    var pa = hint ? '' : pctAside(rng, 50); // one parenthetical at a time: half-equivalence OR percent
-    var text = baseAllOver(rng, B) + ', with ' + tn(ab[0]) + ' on ' + f + hint + pa +
+    var f = pick(rng, FAKE_HALF);
+    var text = baseAllOver(rng, B) + ', with ' + tn(ab[0]) + ' on ' + f +
       ' and ' + tn(ab[1]) + ' on the other half.';
     return { text: text, acceptable: rotAcc(L), teach: null };
   }
@@ -839,16 +842,16 @@
     var restT = restTopping(rng, av, [A]);
     if (restT) {
       [REGION['top-left'], REGION['bottom-left'], REGION['bottom-right']].forEach(function (r) { paint(L, r, { addTopping: restT }); });
-      return { text: 'A ' + baseWord(B) + ' base, with ' + tn(A) + ' on just one quarter' + pctAside(rng, 25) + ' and ' + tn(restT) + ' on the other three quarters.', acceptable: rotAcc(L), teach: null };
+      return { text: 'A ' + baseWord(B) + ' base, with ' + tn(A) + ' on just one quarter and ' + tn(restT) + ' on the other three quarters.', acceptable: rotAcc(L), teach: null };
     }
-    return { text: 'A ' + baseWord(B) + ' base, with ' + tn(A) + ' on just one quarter' + pctAside(rng, 25) + '. The other three quarters are base only.', acceptable: rotAcc(L), teach: null };
+    return { text: 'A ' + baseWord(B) + ' base, with ' + tn(A) + ' on just one quarter. The other three quarters are base only.', acceptable: rotAcc(L), teach: null };
   }
   function t4_threeQuarters(rng, av, un) {
     if (av.length < 2) return null;
     var B = pickBase(rng, un), ab = pickN(rng, av, 2);
     var L = paint(emptyLayout(), REGION.whole, { base: B, addTopping: ab[0] });
     paint(L, REGION['top-right'], { setToppings: [ab[1]] });
-    return { text: baseWord(B) + ' base. Three quarters ' + tn(ab[0]) + pctAside(rng, 75) + ' and just one quarter ' + tn(ab[1]) + pctAside(rng, 25) + '.', acceptable: rotAcc(L), teach: null };
+    return { text: baseWord(B) + ' base. Three quarters ' + tn(ab[0]) + ' and just one quarter ' + tn(ab[1]) + '.', acceptable: rotAcc(L), teach: null };
   }
   function t4_twoQuarters(rng, av, un) {
     if (av.length < 2) return null;
@@ -921,7 +924,7 @@
     for (i = 0; i < 2 * t; i++) idx.push(i); // two thirds, contiguous
     var L = paint(emptyLayout(n), all, { base: B, addTopping: ab[1] });
     paint(L, idx, { setToppings: [ab[0]] });
-    return { text: baseWord(B) + ' base. Two THIRDS of the pizza ' + tn(ab[0]) + ', and the last third ' + tn(ab[1]) + '. (Each third is ' + numWord(t) + ' slices.)', acceptable: rotAcc(L), teach: null, concept: 'thirds' };
+    return { text: baseWord(B) + ' base. Two THIRDS of the pizza ' + tn(ab[0]) + ', and the last third ' + tn(ab[1]) + '.', acceptable: rotAcc(L), teach: null, concept: 'thirds' };
   }
   // Three-way thirds (one topping per third, named in order): three distinct slice
   // states, so it holds up as a top-tier order on the big 12-slice pizza.
@@ -931,7 +934,7 @@
     for (i = 0; i < n; i++) all.push(i);
     var L = paint(emptyLayout(n), all, { base: B });
     for (g = 0; g < 3; g++) { var idx = []; for (i = 0; i < t; i++) idx.push(g * t + i); paint(L, idx, { addTopping: abc[g] }); }
-    return { text: baseWord(B) + ' base, split into THIRDS. Going around in order, each third (' + numWord(t) + ' slices) is different: ' + tn(abc[0]) + ', then ' + tn(abc[1]) + ', then ' + tn(abc[2]) + '.', acceptable: rotAcc(L), teach: null, concept: 'thirds' };
+    return { text: baseWord(B) + ' base, split into THIRDS. Going around in order, each third is different: ' + tn(abc[0]) + ', then ' + tn(abc[1]) + ', then ' + tn(abc[2]) + '.', acceptable: rotAcc(L), teach: null, concept: 'thirds' };
   }
   function fracSixth(rng, av, un, n) {
     if (av.length < 2) return null;
@@ -940,7 +943,7 @@
     for (i = 0; i < s; i++) idx.push(i);
     var L = paint(emptyLayout(n), all, { base: B, addTopping: ab[1] });
     paint(L, idx, { setToppings: [ab[0]] });
-    return { text: baseWord(B) + ' base. Just one SIXTH of the pizza ' + tn(ab[0]) + ' (' + numWord(s) + ' of the ' + n + ' slices), and all the rest ' + tn(ab[1]) + '.', acceptable: rotAcc(L), teach: null, concept: 'sixths' };
+    return { text: baseWord(B) + ' base. Just one SIXTH of the pizza ' + tn(ab[0]) + ', and all the rest ' + tn(ab[1]) + '.', acceptable: rotAcc(L), teach: null, concept: 'sixths' };
   }
   function fracFifths(rng, av, un) {
     if (av.length < 2) return null;
@@ -949,7 +952,7 @@
     for (i = 0; i < 4; i++) idx.push(i); // two fifths = 4 of 10
     var L = paint(emptyLayout(10), all, { base: B, addTopping: ab[1] });
     paint(L, idx, { setToppings: [ab[0]] });
-    return { text: baseWord(B) + ' base. Two FIFTHS of this ten-slice pizza ' + tn(ab[0]) + ' (that is four slices), and the other three fifths ' + tn(ab[1]) + '.', acceptable: rotAcc(L), teach: null, concept: 'fifths' };
+    return { text: baseWord(B) + ' base. Two FIFTHS of this ten-slice pizza ' + tn(ab[0]) + ', and the other three fifths ' + tn(ab[1]) + '.', acceptable: rotAcc(L), teach: null, concept: 'fifths' };
   }
   function tSlice6_thirds(rng, av, un) { return fracThirds(rng, av, un, 6); }
   function tSlice12_thirds(rng, av, un) { return fracThirds3(rng, av, un, 12); }
@@ -968,7 +971,7 @@
     var L = paint(emptyLayout(8), [0, 1, 2, 3, 4, 5, 6, 7], { base: B, addTopping: ab[1] }), idx = [], i;
     for (i = 0; i < o.q; i++) idx.push(i);
     paint(L, idx, { setToppings: [ab[0]] });
-    return { text: baseWord(B) + ' base. Put ' + tn(ab[0]) + ' on ' + o.p + '% of this eight-slice pizza (' + numWord(o.q) + ' of the eight slices), and ' + tn(ab[1]) + ' on the rest.', acceptable: rotAcc(L), teach: null, concept: 'percent' };
+    return { text: baseWord(B) + ' base. Put ' + tn(ab[0]) + ' on ' + o.p + '% of this eight-slice pizza, and ' + tn(ab[1]) + ' on the rest.', acceptable: rotAcc(L), teach: null, concept: 'percent' };
   }
   function pct10_split(rng, av, un) {
     if (av.length < 2) return null;
@@ -976,7 +979,7 @@
     var L = paint(emptyLayout(10), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], { base: B, addTopping: ab[1] }), idx = [], i;
     for (i = 0; i < a; i++) idx.push(i);
     paint(L, idx, { setToppings: [ab[0]] });
-    return { text: baseWord(B) + ' base. On this ten-slice pizza (each slice is 10%), make it ' + (a * 10) + '% ' + tn(ab[0]) + ' and ' + ((10 - a) * 10) + '% ' + tn(ab[1]) + '.', acceptable: rotAcc(L), teach: null, concept: 'percent' };
+    return { text: baseWord(B) + ' base. On this ten-slice pizza, make it ' + (a * 10) + '% ' + tn(ab[0]) + ' and ' + ((10 - a) * 10) + '% ' + tn(ab[1]) + '.', acceptable: rotAcc(L), teach: null, concept: 'percent' };
   }
   function pct10_rest(rng, av, un) {
     if (av.length < 2) return null;
@@ -984,7 +987,7 @@
     var L = paint(emptyLayout(10), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], { base: B, addTopping: ab[1] }), idx = [], i;
     for (i = 0; i < a; i++) idx.push(i);
     paint(L, idx, { setToppings: [ab[0]] });
-    return { text: baseWord(B) + ' base, ten slices. Make ' + (a * 10) + '% ' + tn(ab[0]) + ', and the rest ' + tn(ab[1]) + '. (How much is the rest? 100% minus ' + (a * 10) + '% is ' + ((10 - a) * 10) + '%.)', acceptable: rotAcc(L), teach: null, concept: 'percent' };
+    return { text: baseWord(B) + ' base, ten slices. Make ' + (a * 10) + '% ' + tn(ab[0]) + ', and the rest ' + tn(ab[1]) + '.', acceptable: rotAcc(L), teach: null, concept: 'percent' };
   }
   function pct10_target(rng, av, un) {
     if (av.length < 1) return null;
@@ -992,7 +995,7 @@
     var L = paint(emptyLayout(10), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], { base: B }), idx = [], i;
     for (i = 0; i < a; i++) idx.push(i);
     paint(L, idx, { addTopping: A });
-    return { text: baseWord(B) + ' base. Cover exactly ' + (a * 10) + '% of this ten-slice pizza in ' + tn(A) + ' (' + numWord(a) + ' slices), and leave the other ' + ((10 - a) * 10) + '% as plain base.', acceptable: rotAcc(L), teach: null, concept: 'percent' };
+    return { text: baseWord(B) + ' base. Cover exactly ' + (a * 10) + '% of this ten-slice pizza in ' + tn(A) + ', and leave the other ' + ((10 - a) * 10) + '% as plain base.', acceptable: rotAcc(L), teach: null, concept: 'percent' };
   }
   function pct10_three(rng, av, un) {
     if (av.length < 3) return null;
@@ -1000,7 +1003,45 @@
     var sp = pick(rng, [[2, 3, 5], [2, 5, 3], [3, 2, 5], [5, 3, 2], [3, 5, 2], [5, 2, 3]]); // 20/30/50% in some order
     var L = paint(emptyLayout(10), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], { base: B }), pos = 0, g, i;
     for (g = 0; g < 3; g++) { var idx = []; for (i = 0; i < sp[g]; i++) idx.push(pos + i); paint(L, idx, { addTopping: abc[g] }); pos += sp[g]; }
-    return { text: baseWord(B) + ' base, ten slices. Going around: ' + (sp[0] * 10) + '% ' + tn(abc[0]) + ', then ' + (sp[1] * 10) + '% ' + tn(abc[1]) + ', then ' + (sp[2] * 10) + '% ' + tn(abc[2]) + '. (The three percents add up to 100%.)', acceptable: rotAcc(L), teach: null, concept: 'percent' };
+    return { text: baseWord(B) + ' base, ten slices. Going around: ' + (sp[0] * 10) + '% ' + tn(abc[0]) + ', then ' + (sp[1] * 10) + '% ' + tn(abc[1]) + ', then ' + (sp[2] * 10) + '% ' + tn(abc[2]) + '.', acceptable: rotAcc(L), teach: null, concept: 'percent' };
+  }
+  // DECIMALS: the third name for a part of the pizza, a parallel strand to percent on the
+  // SAME clean boards (10-slice = 0.1 a slice, 8-slice quarters = 0.25). NO answer hint in
+  // the order - the child reads the decimal and works out the slices; the 'decimal' glossary
+  // card teaches that each slice of a ten-slice pizza is 0.1 (and that 0.5 = 1/2 = 50%).
+  function decWord(a) { return '0.' + a; } // tenths: a in 1..9 -> "0.3"
+  function dec10_split(rng, av, un) {
+    if (av.length < 2) return null;
+    var B = pickBase(rng, un), ab = pickN(rng, av, 2), a = pick(rng, [3, 4, 6, 7]);
+    var L = paint(emptyLayout(10), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], { base: B, addTopping: ab[1] }), idx = [], i;
+    for (i = 0; i < a; i++) idx.push(i);
+    paint(L, idx, { setToppings: [ab[0]] });
+    return { text: baseWord(B) + ' base. On this ten-slice pizza, make ' + decWord(a) + ' ' + tn(ab[0]) + ' and ' + decWord(10 - a) + ' ' + tn(ab[1]) + '.', acceptable: rotAcc(L), teach: null, concept: 'decimal' };
+  }
+  function dec10_rest(rng, av, un) {
+    if (av.length < 2) return null;
+    var B = pickBase(rng, un), ab = pickN(rng, av, 2), a = pick(rng, [2, 3, 4]);
+    var L = paint(emptyLayout(10), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], { base: B, addTopping: ab[1] }), idx = [], i;
+    for (i = 0; i < a; i++) idx.push(i);
+    paint(L, idx, { setToppings: [ab[0]] });
+    return { text: baseWord(B) + ' base, ten slices. Make ' + decWord(a) + ' of it ' + tn(ab[0]) + ', and the rest ' + tn(ab[1]) + '.', acceptable: rotAcc(L), teach: null, concept: 'decimal' };
+  }
+  function dec10_three(rng, av, un) {
+    if (av.length < 3) return null;
+    var B = pickBase(rng, un), abc = pickN(rng, av, 3);
+    var sp = pick(rng, [[2, 3, 5], [2, 5, 3], [3, 2, 5], [5, 3, 2], [3, 5, 2], [5, 2, 3]]);
+    var L = paint(emptyLayout(10), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], { base: B }), pos = 0, g, i;
+    for (g = 0; g < 3; g++) { var idx = []; for (i = 0; i < sp[g]; i++) idx.push(pos + i); paint(L, idx, { addTopping: abc[g] }); pos += sp[g]; }
+    return { text: baseWord(B) + ' base, ten slices. Going around: ' + decWord(sp[0]) + ' ' + tn(abc[0]) + ', then ' + decWord(sp[1]) + ' ' + tn(abc[1]) + ', then ' + decWord(sp[2]) + ' ' + tn(abc[2]) + '.', acceptable: rotAcc(L), teach: null, concept: 'decimal' };
+  }
+  function dec8_quarters(rng, av, un) {
+    if (av.length < 2) return null;
+    var B = pickBase(rng, un), ab = pickN(rng, av, 2);
+    var o = pick(rng, [{ q: 2, d: '0.25' }, { q: 4, d: '0.5' }, { q: 6, d: '0.75' }]);
+    var L = paint(emptyLayout(8), [0, 1, 2, 3, 4, 5, 6, 7], { base: B, addTopping: ab[1] }), idx = [], i;
+    for (i = 0; i < o.q; i++) idx.push(i);
+    paint(L, idx, { setToppings: [ab[0]] });
+    return { text: baseWord(B) + ' base. Put ' + tn(ab[0]) + ' on ' + o.d + ' of this eight-slice pizza, and ' + tn(ab[1]) + ' on the rest.', acceptable: rotAcc(L), teach: null, concept: 'decimal' };
   }
   function t5_oneSlice(rng, av, un) {
     if (av.length < 2) return null;
@@ -2059,7 +2100,7 @@
     var picks = pickN(rng, cands, combo.length);
     var kinds = picks.map(function (k, i) { return { spec: k.spec, label: k.label, count: combo[i], recipe: k.recipe }; });
     var canon = []; kinds.forEach(function (k) { for (var c = 0; c < k.count; c++) canon.push(cloneSpec(k.spec)); });
-    var phrasing = tier >= 15 ? 'fraction' : 'count';
+    var phrasing = (tier >= 15 && !PREFS.noFractions) ? 'fraction' : 'count';
     var parts = kinds.map(function (k) {
       if (phrasing === 'fraction') { var f = reduceFraction(k.count, 16); return fractionWord(f[0], f[1]) + ' ' + k.label; }
       return k.count + ' slices of ' + k.label;
@@ -2118,7 +2159,8 @@
     // Tier is driven by the adaptive difficulty (tips raise it, fails/timeouts
     // lower it). The order-count ramp is only a seed for a brand-new player who
     // has no stored difficulty yet; it never gates a returning player.
-    var tier = opts.difficulty ? Math.max(1, Math.min(MAX_TIER, Math.round(opts.difficulty))) : tierFor(opts.ordersServed || 0);
+    var cap = opts.maxTier ? Math.min(MAX_TIER, opts.maxTier) : MAX_TIER; // parent control: cap the top level
+    var tier = opts.difficulty ? Math.max(1, Math.min(cap, Math.round(opts.difficulty))) : Math.min(cap, tierFor(opts.ordersServed || 0));
     var avoid = opts.avoidKey || null;
     var require = opts.require || null; // feature a just-unlocked ingredient
     var taught = opts.taught || []; // recipe names the player has already seen defined
@@ -2211,6 +2253,7 @@
       while (temps.length) {
         var tmpl = temps.splice(Math.floor(rng() * temps.length), 1)[0];
         var order = tmpl(rng, av, unlocked, taught);
+        if (order && prefsBlock(order.concept)) order = null; // parent controls: fractions/percent strand off
         if (order && !orderBuildable(order.acceptable, av)) order = null; // not buildable from inventory -> try another
         if (order) {
           order.tier = t; order.core = order.text;
@@ -2248,6 +2291,7 @@
   return {
     N: N, MAX_TIER: MAX_TIER, REGION: REGION, SLICE_NAME: SLICE_NAME,
     generateOrder: generateOrder, tierFor: tierFor, availableToppings: availableToppings, permutations: permutations,
+    setPrefs: setPrefs,
     opposite: opposite, neighbours: neighbours,
     rot: rot, reflectV: reflectV, applyPerm: applyPerm, ALL_ROTATIONS: ALL_ROTATIONS, orbit: orbit,
     makeSlice: makeSlice, emptyLayout: emptyLayout, cloneLayout: cloneLayout, paint: paint, isBare: isBare,
