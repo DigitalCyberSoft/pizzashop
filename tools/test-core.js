@@ -308,6 +308,73 @@ function fillWild(L) {
   }
 })();
 
+// ---- PERCENT curriculum (graded, level 15+): percent reduces to an integer slice
+// count, so it must only ever appear on slice counts where that count is whole
+// (8 or 10, never the 6/12 that give 16.6%/8.3% a slice). ----
+(function () {
+  var rng = lcg(424242);
+  function findPct(tier, marker, tries) {
+    for (var i = 0; i < (tries || 4000); i++) {
+      var o = Core.generateOrder({ difficulty: tier, unlocked: Core.UNLOCK_ORDER, rng: rng });
+      if (o.concept === 'percent' && (o.core || '').indexOf(marker) !== -1) return o;
+    }
+    return null;
+  }
+  var pcts = [
+    { t: 15, marker: 'eight-slice pizza (', name: 'pct8_quarters' },
+    { t: 16, marker: 'each slice is 10%), make it', name: 'pct10_split' },
+    { t: 17, marker: '100% minus', name: 'pct10_rest' },
+    { t: 18, marker: 'Cover exactly', name: 'pct10_target' },
+    { t: 20, marker: 'add up to 100%', name: 'pct10_three' }
+  ];
+  // groups every distinct slice into {signature: count}; a clean percent means every
+  // group's count is a whole percent of the pizza (100*count % len === 0).
+  function cleanPercent(spec) {
+    var len = spec.length, g = {};
+    spec.forEach(function (s) { g[s.wildcard ? 'w' : (s.base + '|' + (s.toppings || []).join(','))] = (g[s.base + '|' + (s.toppings || []).join(',')] || 0) + 1; });
+    return Object.keys(g).every(function (k) { return (100 * g[k]) % len === 0; });
+  }
+  pcts.forEach(function (p) {
+    var o = findPct(p.t, p.marker);
+    ok(o, p.name + ' reachable at tier ' + p.t);
+    if (!o) return;
+    var len = o.acceptable[0].length;
+    ok(len === 8 || len === 10, p.name + ' is on a clean-percent slice count (got ' + len + ', want 8 or 10)');
+    ok(cleanPercent(o.acceptable[0]), p.name + ' splits into whole-percent groups (no fractional %)');
+    ok(Math.abs(Core.grade(Core.cloneLayout(o.acceptable[0]), o.acceptable).accuracy - 1) < 1e-9, p.name + ': exact build = 100%');
+    ok(Math.abs(Core.grade(Core.applyPerm(o.acceptable[0], Core.rot(1, len)), o.acceptable).accuracy - 1) < 1e-9, p.name + ': a rotation also = 100%');
+    ok(Core.grade(Core.emptyLayout(len), o.acceptable).accuracy < 1, p.name + ': blank board < 100%');
+  });
+  // pct10_three is the only percent template in the top band; it MUST be 3-state so it
+  // satisfies the >=3-distinct-slice-states guard at tier >= 20 (see that block above).
+  var three = findPct(20, 'add up to 100%');
+  if (three) {
+    var sig = {};
+    three.acceptable[0].forEach(function (s) { sig[s.base + '|' + (s.toppings || []).join(',')] = 1; });
+    ok(Object.keys(sig).length >= 3, 'pct10_three has >=3 distinct slice states (top-band safe)');
+  }
+  // EARLY exposure: percent is TALKED ABOUT (an aside) on the early quarter/half levels
+  // without being graded. Confirm the aside surfaces, only ever names a round percent
+  // (25/50/75/100 - never a fractional one), and never changes the grading.
+  var asideSeen = 0, asideBad = 0, asideGradeOk = true, samples = 0;
+  for (var t = 1; t <= 5; t++) {
+    var r2 = lcg(700 + t);
+    for (var i = 0; i < 400; i++) {
+      var o = Core.generateOrder({ difficulty: t, unlocked: Core.UNLOCK_ORDER, rng: r2 });
+      samples++;
+      var m = (o.text || '').match(/\(that is (\d+)%\)/);
+      if (m) {
+        asideSeen++;
+        if (['25', '50', '75', '100'].indexOf(m[1]) === -1) asideBad++;
+        if (o.pizzas !== 2 && Core.grade(fillWild(o.acceptable[0]), o.acceptable).accuracy !== 1) asideGradeOk = false;
+      }
+    }
+  }
+  ok(asideSeen > 0, 'percent aside appears on early levels (got ' + asideSeen + ' of ' + samples + ')');
+  eq(asideBad, 0, 'early percent asides only name round percents (25/50/75/100)');
+  ok(asideGradeOk, 'a percent aside never changes the grading (text-only)');
+})();
+
 // ---- Difficulty + creativity ----
 (function () {
   ok(Core.generateOrder({ difficulty: Core.MAX_TIER, unlocked: Core.UNLOCK_ORDER, rng: lcg(5) }).tier === Core.MAX_TIER, 'difficulty MAX_TIER -> top tier (' + Core.MAX_TIER + ')');

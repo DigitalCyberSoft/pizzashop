@@ -41,6 +41,12 @@ from is the ground truth.
   (whole and halves only); quarters arrive on the **8-slice** pizza; the hardest levels
   serve larger **10- and 12-slice** pizzas where more positions must be tracked. Fewer
   slices render smaller, more slices larger.
+- **Fractions, then percents.** The slice count doubles as a fractions curriculum: thirds
+  and sixths on the 6-slice, quarters and eighths on the 8, fifths on the 10. From **level
+  15** orders also speak in **percent**, kept a clean integer by living only on the 8- and
+  10-slice (25% = a quarter, 30% = 3 of 10 since each slice is 10%). The early quarter/half
+  orders already name the percent in passing ("three quarters (that is 75%)"), so the word
+  is familiar long before it is graded.
 - **Economy.** Start with $20. Each pizza costs $3 to make. Accuracy pays it back
   (more for harder pizzas); a quick, accurate build adds a $1 tip. A wrong pizza is
   refused (you still lose the $3). Below $3 the day is over.

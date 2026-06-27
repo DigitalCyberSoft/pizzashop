@@ -33,6 +33,7 @@ a correct build scores 100% whichever way the child orients it.
 | 14 | **Time pressure** | tip window and patience window scale with regions/taps; from level 10 the tip window tightens (~60s at L10 down to ~35s at L25) so the speed tip stays earned |
 | 15 | **Reward** | `4 + 0.5*(level-1)` per pizza, scaled by accuracy (Level 1 ~$4, Level 20 ~$13.5) |
 | 16 | **Slice count (pizza size + fractions)** | 6 slices (levels 1-2 whole/half, drawn smaller; thirds & sixths at mid tiers) -> 8 (quarters/eighths backbone) -> 10 (fifths + big relational, high tiers) -> 12 (thirds + biggest relational, top tiers, drawn larger) |
+| 17 | **Percent** | the same split written "out of 100"; graded from level 15 on the 8- and 10-slice only, where the percent is a whole number (each 10-slice slice = 10%, each 8-slice quarter = 25%); early quarter/half/whole orders also name the percent as an ungraded aside ("...(that is 75%)"); concept `percent`, glossary card `percent` |
 
 ## Level-by-level spec
 

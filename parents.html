@@ -80,7 +80,8 @@
     .shots-note { font-weight: 700 !important; color: var(--parent); margin: 6px 0 4px !important; }
     .shots { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin-top: 8px; }
     .shots.solo { grid-template-columns: 1fr; max-width: 560px; margin: 8px auto 0; }
-    @media (max-width: 680px){ .shots { grid-template-columns: 1fr; } }
+    .shots.trio { grid-template-columns: repeat(3, 1fr); }
+    @media (max-width: 680px){ .shots, .shots.trio { grid-template-columns: 1fr; } }
     figure.shot { margin: 0; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: var(--shadow-sm); border: 2px solid #ffe2bb; }
     figure.shot img { display: block; width: 100%; }
     figure.shot figcaption { padding: 11px 14px; font-weight: 600; font-size: .95rem; line-height: 1.4; }
@@ -240,10 +241,11 @@
         the pizza, genuine Boolean logic (see below). The child has to parse, infer, and act exactly.</p>
       <div class="skills">
         <span>If / then &amp; true / false</span><span>Either-or, not both</span><span>Deduction by elimination</span>
-        <span>Inference (no meat → a veg)</span><span>Must / may / must not</span><span>Uneven sharing</span><span>Fractions over 16 (big fractions)</span>
+        <span>Inference (no meat → a veg)</span><span>Must / may / must not</span><span>Uneven sharing</span><span>Fractions over 16 (big fractions)</span><span>Percent → slices</span>
       </div>
       <div class="examples">
         <p><span class="lab">Big fractions (from level 15):</span> <span class="q">"For my two pizzas: five eighths cheese, three eighths Meat Feast."</span> (10 + 6 = 16; five eighths is more than a whole pizza)</p>
+        <p><span class="lab">Percent (from level 15):</span> <span class="q">"On this ten-slice pizza, 30% pepperoni and 70% mushroom."</span> (each slice is 10%, so 3 slices and 7)</p>
         <p><span class="lab">Rules (must / may / must not):</span> <span class="q">"Order rules! On a tomato base: you SHALL put pepper on one half. You SHOULD add chilli to the other half. And you SHALL NOT use any extra cheese."</span></p>
         <p><span class="lab">Uneven share:</span> <span class="q">"Give my other half to my two kids: Joey wants Brussels sprout, Ava wants sweetcorn, but Joey eats MORE than Ava, so Joey gets 3 slices and Ava just 1."</span></p>
         <p><span class="lab">Deduction:</span> <span class="q">"Mystery topping! It is NOT a meat, NOT a vegetable and NOT a fruit. Work out what is left, and put one on every slice."</span></p>
@@ -265,13 +267,19 @@
       <p>Each idea below is a real teaching target, and every <b>bold</b> word is tappable inside the game.
         The same cards live on a single review page at <a href="game.html#glossary">game.html#glossary</a>.</p>
 
-      <p class="cat">Fractions and sharing
-        <span class="why">Why: builds fraction sense from halves and quarters up to eighths, thirds, fifths and sixths, shows the same fraction across different-sized pizzas, and turns a worded situation into a division the child can act out.</span></p>
+      <p class="cat">Fractions, percents and sharing
+        <span class="why">Why: builds fraction sense from halves and quarters up to eighths, thirds, fifths and sixths, ties each fraction to its percent (a half is 50%, a quarter 25%), shows the same fraction across different-sized pizzas, and turns a worded situation into a division the child can act out.</span></p>
       <p>The pizza comes in different sizes, and the size is what unlocks each fraction: a small <b>6-slice</b> pie shows <b>thirds</b> and <b>sixths</b>, the everyday <b>8-slice</b> shows quarters and eighths, a <b>10-slice</b> shows <b>fifths</b>, and a big <b>12-slice</b> shows all of them. A half is always a half (just count to the middle), whether that is 3 of 6, 4 of 8, 5 of 10 or 6 of 12.</p>
+      <p class="shots-note">Every pizza below is a real order, read and built correctly, and the pizza grows with the slice count.</p>
+      <div class="shots trio">
+        <figure class="shot"><img src="assets/screenshots/frac-6-thirds.png" alt="A 6-slice pizza split into thirds, built correctly"><figcaption><b>Thirds</b> on a small <b>6-slice</b> pizza: two thirds one topping, the last third another (each third is 2 slices)</figcaption></figure>
+        <figure class="shot"><img src="assets/screenshots/frac-10-fifths.png" alt="A 10-slice pizza split into fifths, built correctly"><figcaption><b>Fifths</b> on a <b>10-slice</b> pizza: two fifths (4 slices) against three fifths (6 slices)</figcaption></figure>
+        <figure class="shot"><img src="assets/screenshots/frac-12-thirds.png" alt="A 12-slice pizza split into thirds, built correctly"><figcaption><b>Thirds</b> on a big <b>12-slice</b> pizza: 4 of 12 is still one third. Same 1/3, more slices</figcaption></figure>
+      </div>
       <ul>
-        <li><b>Whole</b> = every slice (8/8, or 6/6, 10/10, 12/12).</li>
-        <li><b>Half</b> = half the slices: 4 of 8, 3 of 6, 5 of 10 or 6 of 12 = 1/2.</li>
-        <li><b>Quarter</b> = 2 of 8 = 1/4 (and 3 of 12).</li>
+        <li><b>Whole</b> = every slice (8/8, or 6/6, 10/10, 12/12) = 100%.</li>
+        <li><b>Half</b> = half the slices: 4 of 8, 3 of 6, 5 of 10 or 6 of 12 = 1/2 = 50%.</li>
+        <li><b>Quarter</b> = 2 of 8 = 1/4 = 25% (and 3 of 12).</li>
         <li><b>Third</b> = a fair share of three: 2 of 6, or 4 of 12 = 1/3.</li>
         <li><b>Fifth</b> = a fair share of five: 2 of 10 = 1/5.</li>
         <li><b>Sixth</b> = a fair share of six: 1 of 6, or 2 of 12 = 1/6.</li>
@@ -282,6 +290,8 @@
         <li><b>Counts over 16 (from level 10)</b>: one order, both pizzas, any arrangement — <i>"2 slices of pepperoni, 10 of cheese, the rest Hawaiian"</i> (2 + 10 + 4 = 16).</li>
         <li><b>Fractions of the order (from level 15)</b>: the counts are phrased as fractions and the child converts them — <i>"an eighth pepperoni, five eighths cheese, a quarter Hawaiian"</i> = 2, 10 and 4 slices.</li>
         <li><b>Fractions bigger than one pizza</b>: a single kind can fill <i>more than a whole pizza</i> — <i>"three quarters bbq"</i> is 12 of 16, a whole pizza plus four more. Tapping a recipe name shows what is in it.</li>
+        <li><b>Percent, seen early</b>: from the first levels the order quietly names the percent beside the fraction (<i>"three quarters ham (that is 75%)"</i>, <i>"one half (50%)"</i>), so the word grows familiar long before it is asked for. Tapping any percent opens a card.</li>
+        <li><b>Percent, used later (from level 15)</b>: now the child must convert it to build. <i>"40% pepperoni, 60% mushroom"</i> on a ten-slice pizza is 4 and 6 slices (each slice is 10%); <i>"25% on this eight-slice pizza"</i> is one quarter, 2 slices.</li>
       </ul>
 
       <p class="cat">Position and shape
