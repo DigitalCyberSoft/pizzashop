@@ -706,7 +706,7 @@
     var wrap = document.createElement('div');
     wrap.id = 'patience-wrap';
     wrap.title = 'How long this customer will wait!';
-    wrap.style.cssText = 'width:320px;height:22px;background:#eee;border-radius:999px;' +
+    wrap.style.cssText = 'width:320px;height:22px;flex-shrink:0;background:#eee;border-radius:999px;' +
       'overflow:hidden;position:relative;box-shadow:inset 0 2px 4px rgba(0,0,0,.15);';
     var bar = document.createElement('div');
     bar.id = 'patiencebar';
@@ -1067,30 +1067,51 @@
   // =========================================================================
   // wiring
   // =========================================================================
-  // Show which level the saved progress will resume at, on the welcome page.
+  // Has the player a real save to CONTINUE, or is this a fresh shop? Fresh = level 1,
+  // nothing served, no personal best. Drives whether the title menu's Continue is live.
+  function hasSave() { return LS.served > 0 || Math.round(LS.difficulty) > 1 || LS.bestLevel > 1; }
+  // Title menu: point Continue at the saved level and grey it out when there's no save.
   function showResumeLevel() {
     var lvl = Math.max(1, Math.min(C.MAX_TIER, Math.round(LS.difficulty)));
-    var node = el('resume-level'); if (node) node.textContent = 'Level ' + lvl;
+    var has = hasSave();
+    var sub = el('continue-sub'); if (sub) sub.textContent = 'Level ' + lvl;
+    var cont = el('continue-btn');
+    // No save yet -> hide Continue entirely (not greyed); the menu is just New Game + Settings.
+    if (cont) { cont.style.display = has ? '' : 'none'; cont.classList.toggle('primary', has); cont.disabled = !has; }
+    var ng = el('newgame-btn'); if (ng) ng.classList.toggle('primary', !has); // no save -> New Game is the bright primary
   }
   // Hand the shop to a new player: clear the saved level and the "already taught"
   // progress so ingredients and recipes are introduced again from scratch. The
   // all-time high score (the shop's record) is left alone.
-  function resetPlayer() {
-    if (!window.confirm('Start fresh for a new player? This resets the level back to 1.')) return;
+  // Wipe saved progress back to a fresh shop (the all-time high score is left alone).
+  function wipeProgress() {
     LS.difficulty = 1;
     LS.bestLevel = 1; // a new player has no level record yet
     LS.seen = [];
     LS.taught = [];
     clearRun(); // fresh money + orders-served for the new player
     if (S) { S.difficulty = 1; S.recordLevel = 0; }
-    showResumeLevel();
+  }
+  // Title menu: New Game. Confirm only when there is progress worth losing, then play.
+  function newGame() {
+    if (hasSave() && !window.confirm('Start a New Game? This erases the current progress (back to Level 1).')) return;
+    wipeProgress();
+    unlockAudio(); startGame();
+  }
+  // Settings panel: reflect the current Sound / Meme state in the row values.
+  function refreshSettings() {
+    var sv = el('set-sound-val'); if (sv) sv.textContent = LS.muted ? 'Off' : 'On';
+    var mv = el('set-meme-val'); if (mv) mv.textContent = LS.meme ? 'On' : 'Off';
   }
 
   function init() {
     refreshHud();
     showResumeLevel();
-    el('start-btn').onclick = function () { unlockAudio(); startGame(); };
+    el('continue-btn').onclick = function () { if (el('continue-btn').disabled) return; unlockAudio(); startGame(); };
+    el('newgame-btn').onclick = newGame;
+    el('settings-btn').onclick = function () { refreshSettings(); show('settings-overlay'); };
     document.addEventListener('pointerdown', unlockAudio); // unlock audio on first touch anywhere
+    document.addEventListener('pointerdown', function (e) { var b = e.target.closest('button.big, .menu-btn'); if (b && !b.disabled) Snd.pick(); }); // tactile click on the chunky game buttons
     // No pause/resume hooks: the playbill gives the player time to read the order
     // BEFORE the timers start, so looking up a word or recipe mid-build no longer
     // freezes the tip/patience countdown.
@@ -1103,7 +1124,13 @@
     }));
     el('gloss-btn').onclick = function () { window.Glossary.openPage(); };
     el('welcome-gloss-btn').onclick = function () { window.Glossary.openPage(); };
-    el('reset-btn').onclick = resetPlayer;
+    // Settings panel
+    el('settings-close').onclick = function () { hide('settings-overlay'); };
+    el('set-sound').onclick = function () { LS.muted = !LS.muted; if (!LS.muted) { unlockAudio(); Snd.pick(); } refreshSettings(); refreshHud(); };
+    el('set-meme').onclick = function () { LS.meme = !LS.meme; refreshSettings(); refreshHud(); };
+    el('set-howto').onclick = function () { show('howto-overlay'); };
+    el('set-words').onclick = function () { window.Glossary.openPage(); };
+    el('howto-close').onclick = function () { hide('howto-overlay'); };
     el('restart-btn').onclick = function () { hide('over-overlay'); startGame(); };
     el('next-btn').onclick = nextCustomer;
     el('box-btn').onclick = boxIt;

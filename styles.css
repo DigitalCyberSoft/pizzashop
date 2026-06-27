@@ -8,6 +8,11 @@
   --accent: #e8542a;
   --accent2: #2aa877;
   --shadow: 0 6px 0 rgba(0,0,0,.12), 0 12px 24px rgba(0,0,0,.12);
+  /* game-UI skin: pressed undersides + framed-plate rims */
+  --accent-dark: #b73e18;
+  --accent2-dark: #1f8a5c;
+  --frame-rim: #ffd9a8;
+  --gold-rim: #ffdf91;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
@@ -59,7 +64,7 @@ body {
 
 /* ---- Kitchen (below the customer) ---- */
 #kitchen { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 10px; overflow: auto; }
-#tipbar-wrap { width: 320px; height: 26px; background: #eee; border-radius: 999px; overflow: hidden; position: relative; box-shadow: inset 0 2px 4px rgba(0,0,0,.15); }
+#tipbar-wrap { width: 320px; height: 26px; flex-shrink: 0; background: #eee; border-radius: 999px; overflow: hidden; position: relative; box-shadow: inset 0 2px 4px rgba(0,0,0,.15); }
 #tipbar { height: 100%; width: 100%; background: linear-gradient(90deg, #ffd34d, #ffb000); transition: width .25s linear; display: flex; align-items: center; }
 #tipbar-wrap.amber #tipbar { background: linear-gradient(90deg, #ff9d3c, #ff6a00); }
 #tipbar-wrap.gone { opacity: .35; }
@@ -72,11 +77,23 @@ body {
 #pizza .crust, #multi-wrap .crust { fill: none; stroke: var(--crust); stroke-width: 14; }
 #pizza text.top, #multi-wrap text.top { font-size: 26px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .kitchen-buttons { display: flex; gap: 10px; }
-button.big { border: none; border-radius: 14px; padding: 12px 22px; font-size: 1.1rem; font-weight: 800; cursor: pointer; box-shadow: var(--shadow); }
-button.box { background: var(--accent2); color: #fff; }
-button.clear { background: #fff; color: var(--ink); }
-button.eraser { background: #fff; color: var(--ink); }
-button.eraser.on { background: var(--ink); color: #fff; }
+/* Chunky, depressible game button (one system for kitchen + every modal). The solid
+   `0 5px 0 edge` underside collapses on :active so the button physically presses. */
+button.big {
+  --face: var(--accent2); --edge: var(--accent2-dark);
+  border: none; border-radius: 14px; padding: 12px 22px; font-family: inherit; font-size: 1.1rem; font-weight: 800; color: #fff; cursor: pointer;
+  background-color: var(--face);
+  background-image: linear-gradient(180deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,0) 42%);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.45), 0 5px 0 var(--edge), 0 9px 14px rgba(0,0,0,.26);
+  transition: transform .06s ease, box-shadow .06s ease, filter .1s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+button.big:hover { filter: brightness(1.05); }
+button.big:active { transform: translateY(4px); box-shadow: inset 0 2px 0 rgba(255,255,255,.35), 0 1px 0 var(--edge), 0 2px 5px rgba(0,0,0,.28); }
+button.big:focus-visible { outline: none; box-shadow: inset 0 2px 0 rgba(255,255,255,.45), 0 5px 0 var(--edge), 0 9px 14px rgba(0,0,0,.26), 0 0 0 4px #fff, 0 0 0 8px var(--accent); }
+button.box { --face: var(--accent2); --edge: var(--accent2-dark); color: #fff; }
+button.clear, button.eraser { --face: #fff; --edge: #d9c6a0; color: var(--ink); }
+button.eraser.on { --face: var(--ink); --edge: #1a120a; color: #fff; }
 
 /* ---- Tray ---- */
 #tray { overflow-y: auto; }
@@ -123,7 +140,7 @@ button.eraser.on { background: var(--ink); color: #fff; }
 #drag-ghost { position: fixed; pointer-events: none; font-size: 2rem; z-index: 1000; transform: translate(-50%,-50%); filter: drop-shadow(0 3px 3px rgba(0,0,0,.3)); }
 
 /* ---- Overlays ---- */
-.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: center; justify-content: center; z-index: 50; }
+.overlay { position: fixed; inset: 0; background: radial-gradient(125% 90% at 50% 36%, rgba(35,15,0,.28) 0%, rgba(15,6,0,.66) 78%); display: none; align-items: center; justify-content: center; z-index: 50; }
 .overlay.show { display: flex; }
 
 /* Loading screen: shown over everything until all level art is preloaded. */
@@ -156,7 +173,8 @@ button.eraser.on { background: var(--ink); color: #fff; }
   border: 8px solid transparent; border-bottom-color: var(--ink); }
 #oi-ready { width: 100%; }
 .order-intro.folding .oi-card { transform: translateY(-44vh) scale(.32); opacity: 0; }
-.card { background: #fff; border-radius: 22px; padding: 26px 28px; max-width: 540px; width: 90%; box-shadow: var(--shadow); text-align: center; }
+.card { background: linear-gradient(180deg, var(--panel) 0%, #fff6e6 100%); border: 3px solid var(--ink); border-radius: 26px; padding: 26px 28px; max-width: 540px; width: 90%; box-shadow: inset 0 3px 0 rgba(255,255,255,.85), inset 0 -7px 0 rgba(201,138,60,.16), 0 0 0 6px var(--frame-rim), 0 0 0 9px var(--crust-dark), var(--shadow); text-align: center; }
+.card h2 { text-shadow: 0 2px 0 rgba(0,0,0,.14); }
 .card h2 { margin: 0 0 8px; font-size: 1.8rem; }
 .card .reaction { font-size: 1.25rem; font-weight: 700; margin: 10px 0; }
 .card .money-line { font-size: 1.1rem; font-weight: 800; margin: 8px 0; }
@@ -175,9 +193,58 @@ button.eraser.on { background: var(--ink); color: #fff; }
 #levelup-overlay { z-index: 62; } /* a celebration sits above everything, incl. the playbill (58) */
 .card .levelup-art { width: 200px; max-width: 58%; height: auto; display: block; margin: -8px auto 4px; animation: lvlpop .5s ease-out both; }
 @keyframes lvlpop { 0% { transform: scale(.4) rotate(-10deg); opacity: 0; } 60% { transform: scale(1.1) rotate(4deg); opacity: 1; } 100% { transform: scale(1) rotate(0); } }
+/* ---- modal motion: pop-in entrance + idle bob (game feel) ---- */
+@keyframes pop-in { 0% { transform: translateY(16px) scale(.84); opacity: 0; } 62% { transform: translateY(0) scale(1.03); opacity: 1; } 100% { transform: scale(1); } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+.overlay.show { animation: fade-in .18s ease both; }
+.overlay.show > .card, .overlay.show > .title-menu { animation: pop-in .26s cubic-bezier(.34, 1.56, .64, 1) both; }
+.bob { animation: bob 2.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .overlay.show, .overlay.show > *, .bob, .loading-emoji, .card .levelup-art { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+  .btn-game, button.big, .menu-btn { transition: none; }
+}
 .card .rank { font-size: 1.25rem; font-weight: 800; color: var(--accent2); margin: 6px 0 10px; }
 .card .stat-block { font-size: 1.05rem; line-height: 1.75; font-weight: 600; margin: 12px auto; }
 .card .encourage { font-weight: 700; margin: 12px 0 4px; }
+
+/* ---- Title menu (video-game start screen). First-pass styling; the game-UI skin
+   pass refines this into the shared panel/button system. ---- */
+.title-menu { display: flex; flex-direction: column; align-items: center; gap: 16px; width: 90%; max-width: 420px; }
+.title-logo { width: min(320px, 80%); height: auto; filter: drop-shadow(0 6px 0 rgba(0,0,0,.18)); }
+.menu-btns { display: flex; flex-direction: column; gap: 14px; width: 100%; }
+.menu-btn {
+  --face: #fff; --edge: #d9c6a0;
+  display: flex; align-items: center; gap: 14px; width: 100%; padding: 16px 22px; border: none; border-radius: 18px;
+  color: var(--ink); font-family: inherit; font-weight: 800; font-size: 1.25rem; cursor: pointer; text-align: left;
+  background-color: var(--face);
+  background-image: linear-gradient(180deg, rgba(255,255,255,.5) 0%, rgba(255,255,255,0) 46%);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.7), 0 5px 0 var(--edge), 0 9px 14px rgba(0,0,0,.22);
+  transition: transform .06s ease, box-shadow .06s ease, filter .1s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.menu-btn:hover { filter: brightness(1.03); }
+.menu-btn:active { transform: translateY(4px); box-shadow: inset 0 2px 0 rgba(255,255,255,.5), 0 1px 0 var(--edge), 0 2px 5px rgba(0,0,0,.24); }
+.menu-btn:focus-visible { outline: none; box-shadow: inset 0 2px 0 rgba(255,255,255,.7), 0 5px 0 var(--edge), 0 9px 14px rgba(0,0,0,.22), 0 0 0 4px #fff, 0 0 0 8px var(--accent2); }
+.menu-btn.primary { --face: var(--accent2); --edge: var(--accent2-dark); color: #fff; background-image: linear-gradient(180deg, rgba(255,255,255,.25) 0%, rgba(255,255,255,0) 46%); }
+.menu-btn.disabled, .menu-btn:disabled { --face: #d8cdb6; --edge: #b6ab95; color: rgba(58,42,22,.55); cursor: default; filter: none; transform: none; box-shadow: inset 0 2px 0 rgba(255,255,255,.4), 0 5px 0 var(--edge); }
+.menu-btn .mb-ico { font-size: 1.55rem; width: 1.8rem; text-align: center; flex: none; }
+.menu-btn .mb-text { display: flex; flex-direction: column; line-height: 1.12; }
+.menu-btn .mb-sub { font-size: .8rem; font-weight: 700; opacity: .85; }
+.title-gloss { margin-top: 2px; }
+
+/* ---- Settings panel ---- */
+.settings-card { text-align: left; max-width: 460px; }
+.settings-card h2 { text-align: center; }
+.set-list { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+.set-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 13px 16px; border: 2px solid #f0e2c4; border-radius: 14px; background: #fffaf0; color: var(--ink); font-family: inherit; font-weight: 700; font-size: 1.02rem; cursor: pointer; }
+.set-row:active { transform: translateY(1px); }
+.set-row.danger { border-color: #f3c2b3; background: #fff2ee; }
+.set-row .set-val { font-weight: 800; color: var(--accent2); }
+.set-row.danger .set-val { color: var(--accent); }
+.set-section { margin: 8px 0 14px; padding: 14px 16px; border: 2px dashed #cfe2f5; border-radius: 14px; background: #f3f8fd; }
+.set-section h3 { margin: 0 0 6px; color: #2f6db0; font-size: 1.05rem; }
+.set-soon { margin: 0; font-size: .92rem; color: #5a6b7d; line-height: 1.4; }
 .coin-pop { position: fixed; font-size: 2rem; font-weight: 900; color: #c98a00; z-index: 60; pointer-events: none; animation: pop 1s ease-out forwards; }
 @keyframes pop { 0% { transform: translateY(0) scale(.6); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(-70px) scale(1.2); opacity: 0; } }
 .banner67 { position: fixed; top: 30%; left: 50%; transform: translateX(-50%) rotate(-6deg); font-size: 4rem; font-weight: 900; color: #e8542a; text-shadow: 3px 3px 0 #fff; z-index: 70; pointer-events: none; animation: pop67 1.4s ease-out forwards; }
