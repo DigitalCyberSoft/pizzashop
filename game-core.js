@@ -641,8 +641,8 @@
   // 25 difficulty tiers. Tier is driven by adaptive difficulty (tips raise it,
   // fails/timeouts lower it); TIER_AT is ONLY a first-play seed for a player with
   // no stored difficulty, never a gate on a returning player.
-  var MAX_TIER = 25;
-  var TIER_AT = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24];
+  var MAX_TIER = 30;
+  var TIER_AT = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29];
   function tierFor(ordersServed) {
     var t = 1;
     for (var i = 0; i < TIER_AT.length; i++) if (ordersServed >= TIER_AT[i]) t = i + 1;
@@ -713,7 +713,17 @@
       22: [t_composite4, t20_negateAndPlace, t20_buildRemovePlace, t9_quarterRecipes, t20_recipeHalvesException, t_dietaryShare, pct10_three, dec10_three],
       23: [t_composite4, t20_buildRemovePlace, t20_negateAndPlace, t9_quarterRecipes, t20_recipeHalvesException, t_bufferRing, tSlice12_alt],
       24: [t_composite4, t20_buildRemovePlace, t9_quarterRecipes, t20_recipeHalvesException, t_dietaryShare, tSlice12_run, tSlice12_thirds, pct10_three, dec10_three],
-      25: [t_composite4, t9_quarterRecipes, t20_recipeHalvesException, t_dietaryShare, t_bufferRing, tSlice12_alt]
+      25: [t_composite4, t9_quarterRecipes, t20_recipeHalvesException, t_dietaryShare, t_bufferRing, tSlice12_alt],
+      // Levels 26-30: the cross-denominator arc. Single-board holds at the composite4
+      // peak (rotating the heaviest constructs, narrowing 7->4 like 22-25); the NEW
+      // difficulty is the two-pizza variant, which becomes the 2x12 = 24-slice pool at
+      // tier 26+ (thirds and eighths in one order). Climbing each of 26-30 takes 3
+      // tipped wins in a row (the top-band gate in game-ui.js).
+      26: [t_composite4, t20_buildRemovePlace, t20_recipeHalvesException, t9_quarterRecipes, t_dietaryShare, tSlice12_thirds, pct10_three],
+      27: [t_composite4, t20_buildRemovePlace, t20_negateAndPlace, t20_recipeHalvesException, t_dietaryShare, tSlice12_run, dec10_three],
+      28: [t_composite4, t20_buildRemovePlace, t20_negateAndPlace, t_angleTwo, t20_recipeHalvesException, tSlice12_thirds],
+      29: [t_composite4, t20_buildRemovePlace, t_angleTwo, t20_recipeHalvesException, t_dietaryShare, tSlice12_alt],
+      30: [t_composite4, t_angleTwo, t20_recipeHalvesException, t9_quarterRecipes, tSlice12_thirds]
     };
     return T[tier] || T[1];
   }
@@ -880,6 +890,30 @@
     var L = paint(emptyLayout(), REGION.whole, { base: B, addTopping: ab[1] });
     paint(L, [0, 1, 2], { setToppings: [ab[0]] });
     return { text: baseWord(B) + ' base. Three slices in a row of ' + tn(ab[0]) + ', and all the rest ' + tn(ab[1]) + '.', acceptable: rotAcc(L), teach: null };
+  }
+  // ANGLES (degrees), a top-band construct (level 28+): a wedge of D degrees is k
+  // contiguous slices, where D = k*(360/n). Only the boards where the named angles land
+  // on whole slices: an 8-slice pizza is 45 deg/slice and a 12-slice is 30 deg/slice, so
+  // both hit the right angle (90) and the straight angle (180) cleanly (a 6- or 10-slice
+  // would make 90 fall between slices). TWO wedges, so it is a 3-state top-band order
+  // (not a trivial 2-state one) and the base is always left over. The degree is the
+  // problem; the clickable 'angle' glossary card teaches what it is and how many slices,
+  // with NO inline naming. Every pair below leaves >=1 base slice (k0 + k1 < board).
+  function t_angleTwo(rng, av, un) {
+    if (av.length < 2) return null;
+    var board = pick(rng, [8, 12]), per = 360 / board;
+    var pairs = board === 8
+      ? [[90, 180], [90, 90], [45, 90], [135, 90], [45, 180], [90, 135]]
+      : [[90, 180], [120, 90], [60, 180], [90, 90], [150, 90], [30, 120]];
+    var p = pick(rng, pairs), ab = pickN(rng, av, 2), B = pickBase(rng, un);
+    var k0 = p[0] / per, k1 = p[1] / per, all = [], i;
+    for (i = 0; i < board; i++) all.push(i);
+    var L = paint(emptyLayout(board), all, { base: B });
+    var i0 = []; for (i = 0; i < k0; i++) i0.push(i);
+    var i1 = []; for (i = 0; i < k1; i++) i1.push(k0 + i);
+    paint(L, i0, { addTopping: ab[0] });
+    paint(L, i1, { addTopping: ab[1] });
+    return { text: baseWord(B) + ' base on this ' + board + '-slice pizza. Going round from one slice: a ' + p[0] + '° wedge of ' + tn(ab[0]) + ', then a ' + p[1] + '° wedge of ' + tn(ab[1]) + ', and the rest just base.', acceptable: rotAcc(L), teach: null, concept: 'angle' };
   }
   // BIG-PIZZA relational orders (Phase A): the same block / "straight across"
   // relations as the 8-slice templates, but on 10- or 12-slice pizzas so MORE
@@ -2057,8 +2091,11 @@
   }
   function fractionWord(n, d) {
     if (d === 2) return 'half';
+    if (d === 3) return n === 1 ? 'a third' : 'two thirds';
     if (d === 4) return n === 1 ? 'a quarter' : (n === 3 ? 'three quarters' : n + '/4');
+    if (d === 6) { var s = { 1: 'a sixth', 5: 'five sixths' }; return s[n] || (n + '/6'); }
     if (d === 8) { var w = { 1: 'an eighth', 3: 'three eighths', 5: 'five eighths', 7: 'seven eighths' }; return w[n] || (n + '/8'); }
+    if (d === 12) return n === 1 ? 'a twelfth' : (n + '/12');
     return n + '/' + d;
   }
   function listJoin(a) { return a.length === 1 ? a[0] : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]; }
@@ -2074,6 +2111,20 @@
     [6, 6, 4], [2, 6, 8], [4, 6, 6],          // assorted 3-way mixes
     [2, 2, 4, 8], [2, 4, 4, 6]                // 4-way mixes
   ];
+  // 24-slice pool (two 12-slice pizzas): the cross-denominator board, where thirds,
+  // quarters, sixths, eighths and twelfths all land on whole slices and can SHARE one
+  // order (8/24 = a third beside 3/24 = an eighth, impossible on the 16 pool). Every
+  // part reduces to a clean fraction; all are 3-4 kinds so they stay top-level hard.
+  var MODEB_COMBOS_24 = [
+    [12, 8, 4],      // a half, a third and a sixth
+    [8, 9, 3, 4],    // a third, three eighths, an eighth and a sixth (thirds AND eighths in one order)
+    [8, 8, 8],       // three thirds
+    [3, 3, 6, 12],   // two eighths, a quarter and a half
+    [9, 6, 9],       // three eighths, a quarter, three eighths
+    [8, 4, 6, 6],    // a third, a sixth and two quarters
+    [6, 6, 6, 6],    // four quarters
+    [2, 4, 6, 12]    // a twelfth, a sixth, a quarter and a half
+  ];
   // Combo difficulty scales with tier so a high level is never trivially easy:
   //  - [8,8] (two halves) is just two whole pizzas (a Mode-A, ~level-3 idea) and
   //    reads like "one pizza each", so it is barred once we phrase as FRACTIONS (15+).
@@ -2086,23 +2137,28 @@
     if (tier >= 24 && c.length < 4) return false;
     return true;
   }
-  function pickModeBCombo(rng, maxKinds, tier) {
-    var ok = MODEB_COMBOS.filter(function (c) { return c.length <= maxKinds && comboAllowed(c, tier); });
-    if (!ok.length) ok = MODEB_COMBOS.filter(function (c) { return c.length <= maxKinds; }); // safety: never empty
+  function pickModeBCombo(rng, maxKinds, tier, combos) {
+    combos = combos || MODEB_COMBOS;
+    var gated = (combos === MODEB_COMBOS); // tier gates apply to the 16-pool; the 24 set is all top-level
+    var ok = combos.filter(function (c) { return c.length <= maxKinds && (!gated || comboAllowed(c, tier)); });
+    if (!ok.length) ok = combos.filter(function (c) { return c.length <= maxKinds; }); // safety: never empty
     var combo = pick(rng, ok).slice();
     for (var z = combo.length - 1; z > 0; z--) { var k = Math.floor(rng() * (z + 1)); var t = combo[z]; combo[z] = combo[k]; combo[k] = t; }
     return combo; // shuffled so the big kind (and "the rest") isn't always the same slot
   }
-  function buildModeB(rng, av, unlocked, tier, taught) {
+  function buildModeB(rng, av, unlocked, tier, taught, boardN) {
+    boardN = boardN || 8;
+    var total = boardN * 2;
+    var combos = boardN === 12 ? MODEB_COMBOS_24 : MODEB_COMBOS;
     var cands = poolKindCandidates(av, unlocked);
     if (cands.length < 2) return null;
-    var combo = pickModeBCombo(rng, cands.length, tier);
+    var combo = pickModeBCombo(rng, cands.length, tier, combos);
     var picks = pickN(rng, cands, combo.length);
     var kinds = picks.map(function (k, i) { return { spec: k.spec, label: k.label, count: combo[i], recipe: k.recipe }; });
     var canon = []; kinds.forEach(function (k) { for (var c = 0; c < k.count; c++) canon.push(cloneSpec(k.spec)); });
     var phrasing = (tier >= 15 && !PREFS.noFractions) ? 'fraction' : 'count';
     var parts = kinds.map(function (k) {
-      if (phrasing === 'fraction') { var f = reduceFraction(k.count, 16); return fractionWord(f[0], f[1]) + ' ' + k.label; }
+      if (phrasing === 'fraction') { var f = reduceFraction(k.count, total); return fractionWord(f[0], f[1]) + ' ' + k.label; }
       return k.count + ' slices of ' + k.label;
     });
     if (phrasing === 'count') parts[parts.length - 1] = 'the rest ' + kinds[kinds.length - 1].label;
@@ -2111,12 +2167,15 @@
     // FRACTION phrasing spells out that the fractions are of BOTH pizzas combined
     // (a "half" is one whole pizza's worth), so "half X, half Y" can't be misread as
     // "one pizza each". COUNT phrasing ("8 slices of X, the rest Y") is already clear.
+    // The 12-slice pool names its size so the child knows the denominator (24 in all).
+    var intro = boardN === 12 ? 'two twelve-slice pizzas' : 'both pizzas';
+    var intro2 = boardN === 12 ? 'two twelve-slice pizzas' : 'my two pizzas';
     var text = (phrasing === 'fraction'
-      ? 'Out of both pizzas together, I want ' + listJoin(parts) + '. Spread it over the two pizzas any way you like!'
-      : 'For my two pizzas: ' + listJoin(parts) + '. Build them in any order you like!') +
+      ? 'Out of ' + intro + ' together, I want ' + listJoin(parts) + '. Spread it over the two pizzas any way you like!'
+      : 'For ' + intro2 + ': ' + listJoin(parts) + '. Build them in any order you like!') +
       (names.length ? recipeReminder(names) : '');
-    return { pizzas: 2, mode: 'B', pool: { total: 16, phrasing: phrasing, kinds: kinds }, canonical16: canon,
-      acceptable: [canon.slice(0, 8)], text: text, concept: 'fraction',
+    return { pizzas: 2, mode: 'B', boardN: boardN, pool: { total: total, phrasing: phrasing, kinds: kinds }, canonical: canon,
+      acceptable: [canon.slice(0, boardN)], text: text, concept: 'fraction',
       teach: names.length ? { type: 'recipe', names: names } : null };
   }
   function buildMultiPizza(rng, av, unlocked, tier, taught) {
@@ -2125,12 +2184,13 @@
     // two-board order is always Mode B (the 16-slice count/fraction pool), which is
     // genuinely harder than a single pizza.
     if (tier < 3) return null;
+    if (tier >= 26) return buildModeB(rng, av, unlocked, tier, taught, 12); // cross-denominator: two 12-slice pizzas (24-slice pool)
     return tier >= 10
       ? buildModeB(rng, av, unlocked, tier, taught)
       : buildModeA(rng, av, unlocked, tier, taught);
   }
   function multiSlices(order) {
-    return order.mode === 'B' ? order.canonical16 : order.boards[0].acceptable[0].concat(order.boards[1].acceptable[0]);
+    return order.mode === 'B' ? order.canonical : order.boards[0].acceptable[0].concat(order.boards[1].acceptable[0]);
   }
   function multiUsesNovelty(order) {
     return multiSlices(order).some(function (s) {
@@ -2164,6 +2224,20 @@
     var avoid = opts.avoidKey || null;
     var require = opts.require || null; // feature a just-unlocked ingredient
     var taught = opts.taught || []; // recipe names the player has already seen defined
+
+    // Cross-denominator (two 12-slice pizzas = a 24-slice pool, where thirds and
+    // eighths coexist). Opt-in via opts.crossDenom; never emitted unless a level asks.
+    // Reuses the Mode B pool machinery at boardN = 12.
+    if (opts.crossDenom && !require) {
+      var xb = buildModeB(rng, av, unlocked, tier, taught, 12);
+      if (xb) {
+        xb.tier = tier; xb.core = xb.text;
+        xb.novelty = multiUsesNovelty(xb);
+        xb.key = 'multi:' + xb.mode + ':' + xb.text;
+        if (xb.teach === undefined) xb.teach = null;
+        return xb;
+      }
+    }
 
     // Multi-pizza (two-board) orders: opt-in via opts.multiPizza so the engine
     // never emits a shape the UI can't render. Skipped when an ingredient must be

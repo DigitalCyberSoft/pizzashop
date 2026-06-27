@@ -582,7 +582,7 @@
     }
     S.lastKey = S.order.key;
     S.layout = C.emptyLayout(orderN()); // match the order's slice count (6/8/10/12)
-    S.layout1 = C.emptyLayout(); // second board (used only for multi-pizza orders)
+    S.layout1 = C.emptyLayout(isMulti() ? orderN() : 8); // second board: matches a multi order's board size (8 or 12)
     S.brush = null;
     renderPizza(); reflectBrush();
 
@@ -771,9 +771,10 @@
   // Adaptive difficulty IS the level. It is driven only by performance, never by
   // how many pizzas have been served:
   //   - finish fast AND accurately (you earn the speed tip) -> level UP. The climb
-  //     needs a RUN of tipped wins in a row: one below level 10, two from 10-24,
-  //     three from level 25 up. Each tip in the run arms the next; any non-tip
-  //     breaks the run and disarms it, so the wins must be CONSECUTIVE.
+  //     needs a RUN of tipped wins in a row, and the run gets LONGER as you climb:
+  //     one below level 10, two from 10-24, then (level - 22) from level 25 up, so 3
+  //     in a row to leave 25, 4 to leave 26, ... 7 to leave 29 for the level-30 peak.
+  //     Each tip arms the next; any non-tip breaks the run, so the wins are CONSECUTIVE.
   //   - get it accurate but too slow for the tip -> hold this level
   //   - refused (acc < 0.8) or the customer timed out and left -> level DOWN
   // `tip` is true only when the pizza was both accepted and fast (see boxIt). The
@@ -782,13 +783,13 @@
   function adjustDifficulty(acc, tip) {
     var d = S.difficulty;
     if (tip) {                      // fast + accurate: the only way up
-      // Climbing takes a RUN of tipped wins in a row: one below level 10, two from
-      // 10-24, three from level 25 up. At 25+ the step snaps to a clean whole level
-      // (lvl + 1) so "three wins to proceed to the next level" is exact, rather than
-      // the fractional +0.7 nudge the lower bands ride on.
+      // Climbing takes a RUN of tipped wins in a row that LENGTHENS with the level:
+      // one below 10, two from 10-24, then (lvl - 22) from level 25 up (3 to leave 25,
+      // 4 to leave 26, ... 7 to leave 29). At 25+ the step snaps to a clean whole level
+      // (lvl + 1) so each gate lands exactly one level, not the fractional +0.7 nudge.
       S.tipRun = (S.tipRun || 0) + 1;
       var lvl = Math.round(d);
-      var needed = lvl >= 25 ? 3 : (lvl >= 10 ? 2 : 1);
+      var needed = lvl >= 25 ? (lvl - 22) : (lvl >= 10 ? 2 : 1);
       if (S.tipRun >= needed) { d = lvl >= 25 ? lvl + 1 : d + 0.7; S.tipRun = 0; }
     } else {
       S.tipRun = 0;                 // a non-tip breaks the consecutive run
@@ -992,7 +993,7 @@
   function curLevel() { return Math.max(1, Math.min(C.MAX_TIER, Math.round(S.difficulty || 1))); }
   // Slice count of the current SINGLE-pizza order (6/8/10/12); multi-pizza boards stay 8.
   // Sizes the blank player board and the "of N" result tally.
-  function orderN() { return (S && S.order && S.order.pizzas !== 2 && S.order.acceptable && S.order.acceptable[0]) ? S.order.acceptable[0].length : 8; }
+  function orderN() { return (S && S.order && S.order.acceptable && S.order.acceptable[0]) ? S.order.acceptable[0].length : 8; }
   function statBlock(lvl) {
     return '🍕 Pizzas served: <b>' + S.served + '</b><br>' +
            '📖 Top level reached: <b>Level ' + lvl + '</b><br>' +
@@ -1164,7 +1165,7 @@
     el('restart-btn').onclick = function () { hide('over-overlay'); startGame(); };
     el('next-btn').onclick = nextCustomer;
     el('box-btn').onclick = boxIt;
-    el('clear-btn').onclick = function () { if (S) { S.layout = C.emptyLayout(orderN()); S.layout1 = C.emptyLayout(); renderPizza(); } };
+    el('clear-btn').onclick = function () { if (S) { S.layout = C.emptyLayout(orderN()); S.layout1 = C.emptyLayout(isMulti() ? orderN() : 8); renderPizza(); } };
     el('eraser-btn').onclick = function () {
       if (!S) return;
       if (S.brush && S.brush.kind === 'eraser') { S.brush = null; el('eraser-btn').classList.remove('on'); }
@@ -1192,6 +1193,8 @@
     else if (location.hash.indexOf('multifailB') !== -1) devMulti('B', true, true);
     else if (location.hash.indexOf('multiA') !== -1) devMulti('A', false, false);
     else if (location.hash.indexOf('multiB') !== -1) devMulti('B', false, false);
+    else if (location.hash.indexOf('crossbox') !== -1) devCross(true);
+    else if (location.hash.indexOf('cross') !== -1) devCross(false);
     else if (location.hash.indexOf('solvebox') !== -1) devSolve(true);
     else if (location.hash.indexOf('failbox') !== -1) devFail();
     else if (location.hash.indexOf('solve') !== -1) devSolve(false);
@@ -1213,6 +1216,24 @@
     el('tier-pill').style.display = 'inline-block'; el('tier-pill').textContent = 'Level ' + o.tier;
     fillSolvedBoards();
     if (fail) C.REGION.right.forEach(function (i) { S.layout1[i] = C.makeSlice(S.layout1[i].base, ['olive']); });
+    renderPizza();
+    if (box) boxIt();
+  }
+  // Dev/QA hook for the two-12-slice cross-denominator pool (#cross / #crossbox).
+  function devCross(box) {
+    markSeen(C.UNLOCK_ORDER); startGame(); devReady();
+    S.difficulty = 27;
+    var o = null, guard = 0;
+    while (guard++ < 3000 && !o) {
+      var cand = C.generateOrder({ difficulty: 27, unlocked: C.UNLOCK_ORDER, taught: [], crossDenom: true });
+      if (cand && cand.boardN === 12) o = cand;
+    }
+    if (!o) return;
+    S.order = o; S.lastKey = o.key;
+    S.layout = C.emptyLayout(12); S.layout1 = C.emptyLayout(12);
+    renderBubble(o);
+    el('tier-pill').style.display = 'inline-block'; el('tier-pill').textContent = 'Level ' + o.tier;
+    fillSolvedBoards();
     renderPizza();
     if (box) boxIt();
   }
@@ -1259,8 +1280,8 @@
   // Fill both boards with a correct build (multi orders).
   function fillSolvedBoards() {
     if (S.order.mode === 'B') {
-      S.layout = canonicalFill(S.order.canonical16.slice(0, 8));
-      S.layout1 = canonicalFill(S.order.canonical16.slice(8, 16));
+      S.layout = canonicalFill(S.order.canonical.slice(0, S.order.boardN || 8));
+      S.layout1 = canonicalFill(S.order.canonical.slice(S.order.boardN || 8, (S.order.boardN || 8) * 2));
     } else {
       S.layout = canonicalFill(S.order.boards[0].acceptable[0]);
       S.layout1 = canonicalFill(S.order.boards[1].acceptable[0]);

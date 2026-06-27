@@ -917,13 +917,15 @@ function fillWild(L) {
         ok(Core.gradeMulti(o, [Core.emptyLayout(), Core.emptyLayout()]).accuracy < 1, 'Mode A blank fails');
       } else if (o.mode === 'B') {
         modeB++;
+        var bN = o.boardN || 8, tot = o.pool.total;
         var sum = o.pool.kinds.reduce(function (a, k) { return a + k.count; }, 0);
-        eq(sum, 16, 'Mode B kind counts sum to 16');
+        eq(sum, tot, 'Mode B kind counts sum to its pool total');
+        eq(tot, bN * 2, 'Mode B pool total is twice the board size (' + bN + ')');
         if (o.pool.kinds.some(function (k) { return k.count > 8; })) sawLargeFraction = true;
-        eq(o.canonical16.length, 16, 'Mode B canonical pool is 16 slices');
-        var P0 = o.canonical16.slice(0, 8), P1 = o.canonical16.slice(8, 16);
+        eq(o.canonical.length, tot, 'Mode B canonical pool has all ' + tot + ' slices');
+        var P0 = o.canonical.slice(0, bN), P1 = o.canonical.slice(bN, tot);
         ok(Math.abs(Core.gradeMulti(o, [P0, P1]).accuracy - 1) < 1e-9, 'Mode B canonical pool scores 1.0');
-        ok(Core.gradeMulti(o, [Core.emptyLayout(), Core.emptyLayout()]).accuracy < 1, 'Mode B blank fails');
+        ok(Core.gradeMulti(o, [Core.emptyLayout(bN), Core.emptyLayout(bN)]).accuracy < 1, 'Mode B blank fails');
         // every kind spec must be buildable from the unlocked palette
         o.pool.kinds.forEach(function (k) {
           (k.spec.toppings || []).forEach(function (t) { ok(Core.TOPPING[t], 'Mode B kind uses a real topping: ' + t); });
@@ -943,6 +945,79 @@ function fillWild(L) {
   ok(!anyMulti, 'no multi orders without multiPizza:true (UI opt-in gate)');
 })();
 
+// ---- Cross-denominator pool (two 12-slice pizzas = 24 slices): the only board where
+// thirds (8/24) and eighths (3/24) coexist in one order. Opt-in via crossDenom; reuses
+// the Mode B pool grader at boardN = 12. The fraction word IS the problem, no hint. ----
+(function () {
+  var built = 0, cleanDenoms = true, sawThird = false, sawEighth = false, sawBoth = false, gradeOk = true, hinted = 0;
+  var OKDEN = { 2: 1, 3: 1, 4: 1, 6: 1, 8: 1, 12: 1 };
+  for (var i = 0; i < 200; i++) {
+    var o = Core.generateOrder({ difficulty: 27, unlocked: Core.UNLOCK_ORDER, crossDenom: true, rng: lcg(3000 + i), taught: [] });
+    if (!o) continue;
+    eq(o.pizzas, 2, 'crossDenom order is two pizzas');
+    eq(o.mode, 'B', 'crossDenom uses the Mode B pool');
+    eq(o.boardN, 12, 'crossDenom board is 12 slices');
+    eq(o.pool.total, 24, 'crossDenom pool total is 24');
+    eq(o.canonical.length, 24, 'crossDenom canonical pool is 24 slices');
+    eq(o.acceptable[0].length, 12, 'crossDenom representative board is 12 slices');
+    eq(o.pool.kinds.reduce(function (a, k) { return a + k.count; }, 0), 24, 'crossDenom kind counts sum to 24');
+    built++;
+    o.pool.kinds.forEach(function (k) { if (!OKDEN[Core.reduceFraction(k.count, 24)[1]]) cleanDenoms = false; });
+    if (/\bthirds?\b/.test(o.text)) sawThird = true;
+    if (/eighths?\b/.test(o.text)) sawEighth = true;
+    if (/\bthirds?\b/.test(o.text) && /eighths?\b/.test(o.text)) sawBoth = true;
+    var b0 = o.canonical.slice(0, 12), b1 = o.canonical.slice(12, 24), sh = o.canonical.slice().reverse();
+    if (!(Math.abs(Core.gradeMulti(o, [b0, b1]).accuracy - 1) < 1e-9 &&
+          Math.abs(Core.gradeMulti(o, [sh.slice(0, 12), sh.slice(12, 24)]).accuracy - 1) < 1e-9 &&
+          Core.gradeMulti(o, [Core.emptyLayout(12), Core.emptyLayout(12)]).accuracy < 1)) gradeOk = false;
+    if (/\(that is|each slice is|\(\w+ slices\)|\(\w+ of the \w+ slices\)/.test(o.text)) hinted++;
+  }
+  ok(built > 0, 'crossDenom orders are reachable (got ' + built + ')');
+  ok(cleanDenoms, 'every crossDenom part reduces to a clean denominator (2/3/4/6/8/12)');
+  ok(sawThird && sawEighth, 'crossDenom reaches both thirds and eighths across the set');
+  ok(sawBoth, 'a single crossDenom order shows a third AND an eighth together (the cross-denominator point)');
+  ok(gradeOk, 'crossDenom solved + shuffled builds score 1.0, blank board < 1');
+  eq(hinted, 0, 'crossDenom orders carry no inline answer-hint');
+  var leak = false;
+  for (var j = 0; j < 300; j++) { var ox = Core.generateOrder({ difficulty: 20, unlocked: Core.UNLOCK_ORDER, multiPizza: true, rng: lcg(j * 13) }); if (ox && ox.boardN === 12) leak = true; }
+  ok(!leak, 'below tier 26, multiPizza uses the 16-pool (no 2x12 cross-denominator)');
+})();
+
+// ---- ANGLES (degrees), level 28+: a wedge of D degrees = k contiguous slices on a
+// board where D lands on whole slices (8-slice = 45 deg/slice, 12-slice = 30 deg/slice).
+// Two wedges => a 3-state top-band order. The degree is the problem; the 'angle' card
+// teaches it (no inline naming or slice-count answer). ----
+(function () {
+  function findAngle(tier) {
+    var rng = lcg(6100 + tier);
+    for (var i = 0; i < 5000; i++) {
+      var o = Core.generateOrder({ difficulty: tier, unlocked: Core.UNLOCK_ORDER, rng: rng });
+      if (o && o.concept === 'angle') return o;
+    }
+    return null;
+  }
+  var found = 0;
+  [28, 29, 30].forEach(function (tier) {
+    var o = findAngle(tier);
+    ok(o, 'angle order reachable at tier ' + tier);
+    if (!o) return;
+    found++;
+    var n = o.acceptable[0].length, per = 360 / n;
+    ok(n === 8 || n === 12, 'angle order is on an 8- or 12-slice board (got ' + n + ')');
+    var degs = (o.text.match(/(\d+)°/g) || []).map(function (s) { return parseInt(s, 10); });
+    ok(degs.length >= 2, 'angle order names two wedge angles (got ' + degs.length + ')');
+    degs.forEach(function (d) { eq(d % per, 0, d + '° lands on whole slices on a ' + n + '-slice board'); });
+    var sigs = {};
+    o.acceptable[0].forEach(function (s) { sigs[s.base + ':' + (s.toppings || []).join(',')] = 1; });
+    ok(Object.keys(sigs).length >= 3, 'angle order has >=3 distinct slice states (top-band safe)');
+    ok(Math.abs(Core.grade(Core.cloneLayout(o.acceptable[0]), o.acceptable).accuracy - 1) < 1e-9, 'angle canonical build = 100%');
+    ok(Math.abs(Core.grade(Core.applyPerm(o.acceptable[0], Core.rot(1, n)), o.acceptable).accuracy - 1) < 1e-9, 'angle order rotation also = 100%');
+    ok(Core.grade(Core.emptyLayout(n), o.acceptable).accuracy < 1, 'angle blank board < 100%');
+    ok(!/\((?:[^)]*(?:right angle|straight angle|slices?)[^)]*)\)/i.test(o.text), 'angle order gives no inline naming/answer: ' + o.text.slice(-70));
+  });
+  eq(found, 3, 'angle orders reachable at all of tiers 28-30');
+})();
+
 // ---- Mode B difficulty + phrasing by tier. A high-level two-pizza order must not
 // collapse to "half X, half Y" (= two whole pizzas, a level-3 idea): no [8,8] at
 // FRACTION tiers (15+), and at least 3 kinds at the top (18+). Fraction phrasing
@@ -956,11 +1031,12 @@ function fillWild(L) {
       if (!o || o.mode !== 'B') continue;
       checkedB++;
       var counts = o.pool.kinds.map(function (k) { return k.count; }).sort(function (a, b) { return a - b; });
+      var expTotal = tier >= 26 ? 24 : 16; // 2x12 cross-denominator pool from tier 26 up
       ok(!(counts.length === 2 && counts[0] === 8 && counts[1] === 8), 'tier ' + tier + ' Mode B is not two whole pizzas (8+8)');
       if (tier >= 18) ok(o.pool.kinds.length >= 3, 'tier ' + tier + ' Mode B has a real 3+ way mix (got ' + o.pool.kinds.length + ')');
-      ok(/both pizzas together/i.test(o.text), 'fraction Mode B clarifies the combined pool (not "one pizza each"): ' + o.text.slice(0, 60));
-      // every kind still sums to 16 and the canonical pool still grades 1.0.
-      eq(counts.reduce(function (a, b) { return a + b; }, 0), 16, 'tier ' + tier + ' Mode B counts sum to 16');
+      ok(/pizzas together/i.test(o.text), 'fraction Mode B clarifies the combined pool (not "one pizza each"): ' + o.text.slice(0, 60));
+      eq(o.pool.total, expTotal, 'tier ' + tier + ' Mode B pool total is ' + expTotal + ' (cross-denominator from 26)');
+      eq(counts.reduce(function (a, b) { return a + b; }, 0), expTotal, 'tier ' + tier + ' Mode B counts sum to ' + expTotal);
     }
   }
   ok(checkedB > 0, 'Mode B tier-difficulty test exercised orders (' + checkedB + ')');

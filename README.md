@@ -30,7 +30,7 @@ so any valid reading of a relational order ("two slices next to each other") ear
 full marks. The order text never has to be parsed back: the spec it was rendered
 from is the ground truth.
 
-- **25 difficulty levels.** Driven by adaptive difficulty, not order count. A fast,
+- **30 difficulty levels.** Driven by adaptive difficulty, not order count. A fast,
   accurate pizza (earns the speed tip) nudges the level up; from **level 10** up it
   takes two tipped wins in a row to climb one rung. A refusal or a timeout nudges it
   down. The stored level lives in `localStorage`, so a returning player resumes where
@@ -71,12 +71,12 @@ game-core.js       pure logic (no DOM): geometry, order generator, English
 game-ui.js         DOM, pointer (tap) input, wedge hit-test, render, game loop.
 styles.css         all game styling
 index.html         GitHub Pages landing page (kids + parents); links to game.html
-LEVELS.md          25-level design spec and difficulty levers
+LEVELS.md          30-level design spec and difficulty levers
 assets/
   customers/*.png  AI-generated customer portraits (committed; regen with tools/)
   toppings/*.png   topping art (one transparent piece per ingredient)
   bases/*.png      tomato / cheese / bbq bases
-  scene/*.png      shop background, one per level (shop-1.png .. shop-25.png)
+  scene/*.png      shop background (shop-1.png .. shop-25.png; levels 26-30 reuse shop-25)
   favicon.svg
 tools/
   generate-art.py  dev-time OpenAI image generator (not needed to play)
