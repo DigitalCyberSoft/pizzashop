@@ -71,6 +71,7 @@ a correct build scores 100% whichever way the child orients it.
 - **Construct family** strictly escalates: direct -> counting -> relational -> negation -> alternating/sequence -> intersection -> nested exception -> revision/removal -> distractor -> recipe -> recipe+exception -> compound.
 - **Recipe load**: none (1-13) -> 1 scaffolded (14) -> 2 (15-16) -> recall + single-slice exception (19-20) -> 4 (17, 19, 20). Scaffold fades to bare name once `taught`.
 - **Clauses**: 1 (L1-8) -> 2 (L9-13) -> 2-3 (L14-16) -> 3 (composite, L17-21) -> 4 (composite, L22-25). The composite ceiling rises one clause (3->4) at L22 and the floor climbs each level via the three hard single-construct templates (clock-sequence, negate-and-place, build-remove-place) so the climb stays smooth all the way to the relocated peak at 25.
+- **Vocabulary help fades**: hard words (glossary terms, ingredients, recipe names) are highlighted and tap-to-explain inside the order through level 17. From **level 18** that help moves to the Get Ready screen only; during play the order text is plain, so the child reads it unaided at the top levels (the order-intro playbill still highlights everything, at every level).
 - **Time pressure & palette & reward** scale continuously with the level number.
 
 ### Known knobs still available to tune later

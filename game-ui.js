@@ -101,6 +101,15 @@
     if (!RECIPE_NAMES) RECIPE_NAMES = Object.keys(C.RECIPE);
     return RECIPE_NAMES;
   }
+  // Render the IN-GAME order bubble. From level 18 the words are explained once on
+  // the Ready playbill only; during play the order text is PLAIN (no highlight, no
+  // tap-to-explain) so the child reads it unaided. Below 18, linkify as usual. The
+  // playbill (oi-bubble) always linkifies, at every level.
+  function renderBubble(order) {
+    var b = el('bubble');
+    if (order.tier >= 18) b.textContent = order.text;
+    else b.innerHTML = window.Glossary.linkify(order.text, ingredientNames(), recipeNames());
+  }
 
   // ---- ingredient unlock: grows with orders served AND current difficulty ----
   function unlockedFor(served) {
@@ -562,7 +571,7 @@
     setAvatar(cust);
     S.order._cust = cust;
 
-    el('bubble').innerHTML = window.Glossary.linkify(S.order.text, ingredientNames(), recipeNames());
+    renderBubble(S.order);
     el('tier-pill').style.display = 'inline-block';
     el('tier-pill').textContent = 'Level ' + S.order.tier;
     setScene(S.order.tier);
@@ -1109,7 +1118,7 @@
     if (!o) return;
     S.order = o; S.lastKey = o.key;
     S.layout = C.emptyLayout(); S.layout1 = C.emptyLayout();
-    el('bubble').innerHTML = window.Glossary.linkify(o.text, ingredientNames(), recipeNames());
+    renderBubble(o);
     el('tier-pill').style.display = 'inline-block'; el('tier-pill').textContent = 'Level ' + o.tier;
     fillSolvedBoards();
     if (fail) C.REGION.right.forEach(function (i) { S.layout1[i] = C.makeSlice(S.layout1[i].base, ['olive']); });

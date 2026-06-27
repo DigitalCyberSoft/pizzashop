@@ -32,7 +32,8 @@ from is the ground truth.
 - **25 difficulty levels.** Driven by adaptive difficulty, not order count. A fast,
   accurate pizza (earns the speed tip) nudges the level up; a refusal or a timeout
   nudges it down. The stored level lives in `localStorage`, so a returning player
-  resumes where they were.
+  resumes where they were. Reaching a new personal-best level shows a **Level Up!**
+  celebration (record-gated in `LS.bestLevel`, so re-climbing a level is silent).
 - **Economy.** Start with $20. Each pizza costs $3 to make. Accuracy pays it back
   (more for harder pizzas); a quick, accurate build adds a $1 tip. A wrong pizza is
   refused (you still lose the $3). Below $3 the day is over.
@@ -40,6 +41,9 @@ from is the ground truth.
   tray never overwhelms a young player and every food word is taught before use.
 - **Recipes** (Hawaiian, Meat Feast, ...) are defined the first time they appear,
   then named bare later; the player rebuilds them from raw chips from memory.
+- **Vocabulary help fades.** Hard words in an order are highlighted and tap-to-explain
+  through level 17. From **level 18** that help is shown only on the Get Ready screen;
+  during play the order is plain, so the child reads it unaided at the top levels.
 
 See [`LEVELS.md`](LEVELS.md) for the full per-level design and the levers tuned at
 each tier.
