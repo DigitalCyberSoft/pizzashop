@@ -142,6 +142,7 @@ SCENE = [
 FEATURE = [
     ("two-pizza-box", "an open cartoon pizza delivery box containing TWO whole pizzas side by side, cheerful, top-down view"),
     ("fraction-pizza", "a cartoon pizza divided into clearly different colored wedge groups like a pie chart, fun and simple, showing fractions of a pizza"),
+    ("level-up", "a cheerful smiling pizza-slice mascot character wearing a little gold crown, jumping for joy with both arms raised in celebration, surrounded by shiny gold stars and colorful confetti, bright happy flat colors"),
 ]
 
 # Brand logos (transparent). `logo` is the full wordmark badge for the landing

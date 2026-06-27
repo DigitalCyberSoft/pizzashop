@@ -60,6 +60,12 @@
     set taught(v) { lsSet('pizzashop.taught', JSON.stringify(v)); },
     get difficulty() { var v = parseFloat(lsGet('pizzashop.difficulty')); return (isFinite(v) && v >= 1) ? v : 1; },
     set difficulty(v) { lsSet('pizzashop.difficulty', v); },
+    // Highest level the player has EVER reached (their record). Used to congratulate
+    // only on a new personal best, never on dropping a level and re-climbing it.
+    // Defaults to the current level so a returning player isn't congratulated for
+    // standing where they already are.
+    get bestLevel() { var v = parseInt(lsGet('pizzashop.bestlevel'), 10); return (isFinite(v) && v >= 1) ? v : Math.round(this.difficulty); },
+    set bestLevel(v) { lsSet('pizzashop.bestlevel', v); },
     // The live run (money + orders served) is persisted too, so closing or
     // reloading mid-run resumes exactly where the child left off, not just at the
     // saved level. Cleared (back to a fresh $20 run) only on game-over or reset.
@@ -74,7 +80,7 @@
     S = { money: LS.money, served: LS.served, aura: 0, order: null, layout: C.emptyLayout(),
       brush: null, tipDeadline: 0, tipWindowMs: 0, tipTimer: null, lastKey: null,
       patienceDeadline: 0, patienceWindowMs: 0, patienceTimer: null,
-      featureNext: null, difficulty: LS.difficulty, maxStreak: 0, won: false, awaitingStart: false };
+      featureNext: null, difficulty: LS.difficulty, maxStreak: 0, won: false, awaitingStart: false, recordLevel: 0 };
   }
   // Persist the whole run. Called at every order outcome so progress is never
   // more than one order stale. (Difficulty is also written in adjustDifficulty.)
@@ -135,6 +141,7 @@
     C.CAST.forEach(function (c) { items.push({ u: 'assets/customers/' + c.id + '.png' }); });
     var lvl = Math.max(1, Math.min(C.MAX_TIER, Math.round(LS.difficulty)));
     items.push({ u: 'assets/customers/kid.png' }, { u: 'assets/scene/shopfront.png' },
+      { u: 'assets/feature/level-up.png' },
       // shop-1..20.png exist; levels 21-25 reuse the level-20 backdrop (SCENE_MAX).
       { u: 'assets/scene/shop.png' }, { u: 'assets/scene/shop-' + Math.min(SCENE_MAX, lvl) + '.png' });
     var total = items.length, loaded = 0, finished = false, stall;
@@ -762,6 +769,12 @@
     if (tier >= C.MAX_TIER && tip) S.maxStreak += 1; else S.maxStreak = 0;
     var victory = (S.maxStreak >= 5 && !S.won);
     if (victory) S.won = true;
+    // New personal-best LEVEL -> queue a congratulations screen (shown when the
+    // player advances to the next customer). Record-gated by LS.bestLevel, so a
+    // level only ever celebrates the FIRST time it is reached; dropping back and
+    // re-climbing the same level shows nothing. The win screen takes precedence.
+    var newLevel = curLevel();
+    if (!victory && newLevel > LS.bestLevel) { S.recordLevel = newLevel; LS.bestLevel = newLevel; }
     refreshHud();
     saveProgress();
     if (reward + tip > 0) kaching(reward + tip);
@@ -900,7 +913,17 @@
     S.served += 1; refreshHud();
     if (S.money < MAKE_COST) { gameOver(); return; }
     saveProgress();
+    // A new personal-best level was reached this round: celebrate it before the
+    // next order. The Keep cooking button (wired in init) carries on to nextOrder.
+    if (S.recordLevel) { showLevelUp(S.recordLevel); S.recordLevel = 0; return; }
     nextOrder();
+  }
+  // New personal-best level reached. One-time per record level (see LS.bestLevel).
+  function showLevelUp(lvl) {
+    Snd.fanfare(); Snd.cheer();
+    el('levelup-num').textContent = lvl;
+    el('levelup-rank').textContent = chefRank(lvl);
+    show('levelup-overlay');
   }
   // A friendly title for how far the player climbed (drives the game-over screen).
   function chefRank(lvl) {
@@ -1012,10 +1035,11 @@
   function resetPlayer() {
     if (!window.confirm('Start fresh for a new player? This resets the level back to 1.')) return;
     LS.difficulty = 1;
+    LS.bestLevel = 1; // a new player has no level record yet
     LS.seen = [];
     LS.taught = [];
     clearRun(); // fresh money + orders-served for the new player
-    if (S) S.difficulty = 1;
+    if (S) { S.difficulty = 1; S.recordLevel = 0; }
     showResumeLevel();
   }
 
@@ -1050,6 +1074,7 @@
     el('meme-toggle').onclick = function () { LS.meme = !LS.meme; refreshHud(); };
     el('mute-toggle').onclick = function () { LS.muted = !LS.muted; if (!LS.muted) { unlockAudio(); Snd.pick(); } refreshHud(); };
     el('victory-btn').onclick = function () { hide('victory-overlay'); hide('result-overlay'); nextCustomer(); };
+    el('levelup-btn').onclick = function () { hide('levelup-overlay'); nextOrder(); };
     loadingScreen();      // gate the welcome behind a progress bar until art is ready
     preloadClips();
     deferPreloadAll();    // the remaining per-level kitchen scenes warm in the background
@@ -1060,6 +1085,7 @@
     if (location.hash.indexOf('play') !== -1) startGame();
     if (location.hash.indexOf('demo') !== -1) demoFill();
     if (location.hash.indexOf('victory') !== -1) { markSeen(C.UNLOCK_ORDER); startGame(); showVictory(); }
+    else if (location.hash.indexOf('levelup') !== -1) { markSeen(C.UNLOCK_ORDER); startGame(); showLevelUp(7); }
     else if (location.hash.indexOf('win') !== -1) devWin();
     else if (location.hash.indexOf('multiboxA') !== -1) devMulti('A', true, false);
     else if (location.hash.indexOf('multiboxB') !== -1) devMulti('B', true, false);

@@ -172,6 +172,9 @@ button.eraser.on { background: var(--ink); color: #fff; }
 .compare { display: flex; gap: 24px; justify-content: center; margin: 12px 0; }
 .compare figure { margin: 0; text-align: center; font-weight: 700; font-size: .85rem; }
 .card .big-emoji { font-size: 4rem; line-height: 1.1; margin-bottom: 2px; }
+#levelup-overlay { z-index: 62; } /* a celebration sits above everything, incl. the playbill (58) */
+.card .levelup-art { width: 200px; max-width: 58%; height: auto; display: block; margin: -8px auto 4px; animation: lvlpop .5s ease-out both; }
+@keyframes lvlpop { 0% { transform: scale(.4) rotate(-10deg); opacity: 0; } 60% { transform: scale(1.1) rotate(4deg); opacity: 1; } 100% { transform: scale(1) rotate(0); } }
 .card .rank { font-size: 1.25rem; font-weight: 800; color: var(--accent2); margin: 6px 0 10px; }
 .card .stat-block { font-size: 1.05rem; line-height: 1.75; font-weight: 600; margin: 12px auto; }
 .card .encourage { font-weight: 700; margin: 12px 0 4px; }
