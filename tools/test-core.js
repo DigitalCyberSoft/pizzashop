@@ -308,7 +308,7 @@ function fillWild(L) {
   }
 })();
 
-// ---- PERCENT curriculum (graded, level 15+): percent reduces to an integer slice
+// ---- PERCENT curriculum (graded, level 16+): percent reduces to an integer slice
 // count, so it must only ever appear on slice counts where that count is whole
 // (8 or 10, never the 6/12 that give 16.6%/8.3% a slice). ----
 (function () {
@@ -321,8 +321,8 @@ function fillWild(L) {
     return null;
   }
   var pcts = [
-    { t: 15, marker: 'of this eight-slice pizza', name: 'pct8_quarters' },
-    { t: 16, marker: 'ten-slice pizza, make it', name: 'pct10_split' },
+    { t: 16, marker: 'of this eight-slice pizza', name: 'pct8_quarters' },
+    { t: 17, marker: 'ten-slice pizza, make it', name: 'pct10_split' },
     { t: 17, marker: 'ten slices. Make', name: 'pct10_rest' },
     { t: 18, marker: 'Cover exactly', name: 'pct10_target' },
     { t: 20, marker: 'Going around:', name: 'pct10_three' }
@@ -374,7 +374,7 @@ function fillWild(L) {
   eq(hintBad, 0, 'no inline answer-hint in any order core' + (hintEg ? ' (e.g. "' + hintEg + '")' : ''));
 })();
 
-// ---- DECIMAL curriculum (graded, level 16+): a decimal reduces to an integer slice
+// ---- DECIMAL curriculum (graded, level 15+): a decimal reduces to an integer slice
 // count exactly like percent, so it only appears on the 8/10-slice boards (never the
 // 6/12 whose 0.083/0.166 a slice muddies place value). The METHOD is taught in the
 // glossary, never in the order: a decimal order states the decimal and nothing that
@@ -389,7 +389,7 @@ function fillWild(L) {
     return null;
   }
   var decs = [
-    { t: 16, marker: 'of this eight-slice pizza', name: 'dec8_quarters' },
+    { t: 15, marker: 'of this eight-slice pizza', name: 'dec8_quarters' },
     { t: 17, marker: 'On this ten-slice pizza, make', name: 'dec10_split' },
     { t: 18, marker: 'ten slices. Make', name: 'dec10_rest' },
     { t: 20, marker: 'Going around:', name: 'dec10_three' }
@@ -409,7 +409,7 @@ function fillWild(L) {
   // value ('each slice is'). The board name ('ten-slice') and the decimal itself ('0.3')
   // are the PROBLEM, not the answer, and are allowed.
   var rngH = lcg(818181), hintBad = 0, decSeen = 0, hintEg = '';
-  for (var t = 16; t <= Core.MAX_TIER; t++) {
+  for (var t = 15; t <= Core.MAX_TIER; t++) {
     for (var i = 0; i < 600; i++) {
       var oh = Core.generateOrder({ difficulty: t, unlocked: Core.UNLOCK_ORDER, rng: rngH });
       if (oh.concept !== 'decimal') continue;
@@ -418,7 +418,7 @@ function fillWild(L) {
       if (/%|=|each slice is|\(\s*\d+\s+(?:of\b|slices?\b)|\bthat is \d/.test(txt)) { hintBad++; if (!hintEg) hintEg = txt; }
     }
   }
-  ok(decSeen > 0, 'decimal orders are reachable across the 16+ band (got ' + decSeen + ')');
+  ok(decSeen > 0, 'decimal orders are reachable across the 15+ band (got ' + decSeen + ')');
   eq(hintBad, 0, 'decimal order text never reveals the answer' + (hintEg ? ' (e.g. "' + hintEg + '")' : ''));
   // dec10_three is the top-band decimal template; it MUST be 3-state to satisfy the
   // >=3-distinct-slice-states guard at tier >= 20 (see that block above).
@@ -432,12 +432,12 @@ function fillWild(L) {
   // mutates module state, so restore defaults afterward for the blocks that follow.
   Core.setPrefs({ noDecimals: true });
   var rngP = lcg(929292), blockedSeen = 0;
-  for (var t2 = 16; t2 <= Core.MAX_TIER; t2++) {
+  for (var t2 = 15; t2 <= Core.MAX_TIER; t2++) {
     for (var j = 0; j < 400; j++) {
       if (Core.generateOrder({ difficulty: t2, unlocked: Core.UNLOCK_ORDER, rng: rngP }).concept === 'decimal') blockedSeen++;
     }
   }
-  eq(blockedSeen, 0, 'noDecimals parent control blocks every decimal order (16..MAX_TIER)');
+  eq(blockedSeen, 0, 'noDecimals parent control blocks every decimal order (15..MAX_TIER)');
   Core.setPrefs({}); // restore defaults so later tests see decimals again
 })();
 

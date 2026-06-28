@@ -701,8 +701,8 @@
       // tiers 14+ carry the harder LOGIC constructs (inference, either/or, not-both,
       // set intersection, conditional, elimination) alongside the combo templates.
       14: [t_comboWhole, t_comboHalves, t_doubleHalf, t_catCountHalves, t_twoBaseConditional, t_dietary, t_eitherOr, t_notException, t_altRecipes],
-      15: [t_comboHalves, t_comboQuarter, t_tripleHalf, t_threeBases, t_recipeRemove, t_eitherOr, t_intersectionCat, t_normative, t_altRecipes, pct8_quarters],
-      16: [t_comboQuarter, t7_nestedException, t7_share, t7_namedDiagonal, t_recipeSwap, t_intersectionCat, t_conditionTrue, t_notException, tSlice10_alt, tSlice10_fifths, pct8_quarters, pct10_split, dec8_quarters],
+      15: [t_comboHalves, t_comboQuarter, t_tripleHalf, t_threeBases, t_recipeRemove, t_eitherOr, t_intersectionCat, t_normative, t_altRecipes, dec8_quarters],
+      16: [t_comboQuarter, t7_nestedException, t7_share, t7_namedDiagonal, t_recipeSwap, t_intersectionCat, t_conditionTrue, t_notException, tSlice10_alt, tSlice10_fifths, pct8_quarters, dec8_quarters],
       17: [t8_fourQuarters, t_composite3, t7_inOrderDistractor, t_threeBaseConditional, t_gapShare, t_recipeHalfMinus, t_notBoth, t_elimination, tSlice10_fifths, pct10_split, pct10_rest, dec10_split],
       18: [t_composite3, t10_perSlice, t7_constraint, t7_layerConditional, t_threeBaseConditional, t_normative, t_unevenShare, tSlice10_run, pct10_rest, pct10_target, dec10_rest],
       // The top band (19-25) stretches the old 17->20 cram into a smooth climb whose
@@ -715,15 +715,17 @@
       24: [t_composite4, t20_buildRemovePlace, t9_quarterRecipes, t20_recipeHalvesException, t_dietaryShare, tSlice12_run, tSlice12_thirds, pct10_three, dec10_three],
       25: [t_composite4, t9_quarterRecipes, t20_recipeHalvesException, t_dietaryShare, t_bufferRing, tSlice12_alt],
       // Levels 26-30: the cross-denominator arc. Single-board holds at the composite4
-      // peak (rotating the heaviest constructs, narrowing 7->4 like 22-25); the NEW
-      // difficulty is the two-pizza variant, which becomes the 2x12 = 24-slice pool at
-      // tier 26+ (thirds and eighths in one order). Climbing each of 26-30 takes 3
-      // tipped wins in a row (the top-band gate in game-ui.js).
+      // peak (rotating the heaviest constructs, narrowing toward Level 30). 28-30 keep
+      // only t_angleTwo as a lighter draw (the NEW degrees skill); the bare thirds/alt
+      // 12-slice fillers were removed from 28-30 so a top draw can't fall back to a
+      // tier-9 parse (thirds-on-12 still teaches at 24/26). The real new difficulty is
+      // the two-pizza variant, which becomes the 2x12 = 24-slice pool at tier 26+
+      // (thirds and eighths in one order). The top-band gate lives in game-ui.js.
       26: [t_composite4, t20_buildRemovePlace, t20_recipeHalvesException, t9_quarterRecipes, t_dietaryShare, tSlice12_thirds, pct10_three],
       27: [t_composite4, t20_buildRemovePlace, t20_negateAndPlace, t20_recipeHalvesException, t_dietaryShare, tSlice12_run, dec10_three],
-      28: [t_composite4, t20_buildRemovePlace, t20_negateAndPlace, t_angleTwo, t20_recipeHalvesException, tSlice12_thirds],
-      29: [t_composite4, t20_buildRemovePlace, t_angleTwo, t20_recipeHalvesException, t_dietaryShare, tSlice12_alt],
-      30: [t_composite4, t_angleTwo, t20_recipeHalvesException, t9_quarterRecipes, tSlice12_thirds]
+      28: [t_composite4, t20_buildRemovePlace, t20_negateAndPlace, t_angleTwo, t20_recipeHalvesException],
+      29: [t_composite4, t20_buildRemovePlace, t_angleTwo, t20_recipeHalvesException, t_dietaryShare],
+      30: [t_composite4, t_angleTwo, t20_recipeHalvesException, t9_quarterRecipes]
     };
     return T[tier] || T[1];
   }
@@ -992,7 +994,7 @@
   function tSlice12_thirds(rng, av, un) { return fracThirds3(rng, av, un, 12); }
   function tSlice6_sixth(rng, av, un) { return fracSixth(rng, av, un, 6); }
   function tSlice10_fifths(rng, av, un) { return fracFifths(rng, av, un); }
-  // PERCENT curriculum (graded, level 15+): percent is just a fraction written "out of
+  // PERCENT curriculum (graded, level 16+): percent is just a fraction written "out of
   // 100", so it needs NO new grader - the child converts the percent to a slice count
   // and the existing rotAcc layout grades it. These live ONLY on slice counts where the
   // percent is a clean integer: each slice of a TEN-slice pizza is exactly 10%, and a
